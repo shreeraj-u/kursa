@@ -28,6 +28,7 @@ model Profile {
   workAuthorizations WorkAuthorization[]
   constraints        Constraint[]
   socialLinks        SocialLink[]
+  jobApplications    JobApplication[]
 
   @@map("profile")
 }
@@ -223,3 +224,32 @@ model SocialLink {
   @@index([profileId])
   @@map("social_link")
 }
+
+model JobApplication {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  jobId     String?
+  job       Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  company       String
+  roleTitle     String
+  stage         String   // "shortlisted" | "applied" | "phone_screen" | "technical" | "on_site" | "offer" | "closed"
+  status        String   @default("active") // "active" | "passed" | "closed"
+  fitScore      Int?
+
+  appliedAt     DateTime?
+  nextAction    String?
+  nextActionAt  DateTime?
+  url           String?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([jobId])
+  @@map("job_application")
+}
+
