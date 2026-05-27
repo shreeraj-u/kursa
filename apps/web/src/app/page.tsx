@@ -1,30 +1,25 @@
-"use client";
+import LandingNav from "@/components/landing/nav";
+import Hero from "@/components/landing/hero";
+import LogoRow from "@/components/landing/logo-row";
+import Steps from "@/components/landing/steps";
+import FeaturesSection from "@/components/landing/features";
+import Pricing from "@/components/landing/pricing";
+import FAQ from "@/components/landing/faq";
+import EndCTA from "@/components/landing/end-cta";
+import LandingFooter from "@/components/landing/footer";
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-        </section>
-      </div>
-    </div>
+    <main>
+      <LandingNav />
+      <Hero />
+      {/* <LogoRow /> */}
+      <Steps />
+      <FeaturesSection />
+      <Pricing />
+      <FAQ />
+      <EndCTA />
+      <LandingFooter />
+    </main>
   );
 }
