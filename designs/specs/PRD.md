@@ -104,6 +104,13 @@ The result is a career that drifts rather than one built with intention.
 - Needs honest assessment of transferable skills and gap analysis
 - High ambiguity, needs clarity above all else
 
+### Quaternary User: Student / New Graduate
+
+- Currently studying or recently graduated
+- Looking for internships, co-ops, or entry-level positions
+- Needs help translating academic experience to industry requirements
+- Success metric: Land a high-quality internship or first full-time role
+
 ---
 
 ## 5. Core Design Principles
@@ -141,10 +148,10 @@ These principles govern every product and engineering decision:
 └──────┬──────────────┬──────────────┬────────────────────┘
        │              │              │
 ┌──────▼──────┐ ┌─────▼──────┐ ┌───▼────────────────────┐
-│  Supabase   │ │  AI Layer  │ │   External Integrations  │
+│  Neon DB    │ │  AI Layer  │ │   External Integrations  │
 │  Postgres   │ │ Anthropic  │ │  LinkedIn · Job APIs     │
-│  Auth       │ │ Claude API │ │  Salary Data · ATS       │
-│  Storage    │ │            │ │                          │
+│  Prisma     │ │ Claude API │ │  Salary Data · ATS       │
+│             │ │            │ │                          │
 └─────────────┘ └────────────┘ └──────────────────────────┘
 ```
 
@@ -152,27 +159,29 @@ These principles govern every product and engineering decision:
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js (App Router) or TanStack Router + TanStack Query |
+| Frontend | Next.js (App Router) + Tailwind CSS + Shadcn UI |
 | Backend | Node.js + Express + TypeScript |
-| Database | Supabase (PostgreSQL) |
-| Auth | Better Auth (self-hosted, user data ownership) or Clerk |
+| Database | Neon Serverless (PostgreSQL) + Prisma ORM |
+| Auth | Better Auth (self-hosted, Prisma adapter) |
 | AI | Anthropic Claude API (primary reasoning and generation) |
 | Job Queue | BullMQ (background jobs: check-ins, market monitoring, alerts) |
-| Search | Supabase full-text or Typesense (for job/skill search) |
+| Search | Typesense or equivalent (for job/skill search) |
 | Deployment | Railway (monorepo, both apps) |
-| Repo Structure | Monorepo (Turborepo) |
+| Repo Structure | Monorepo (Turborepo + pnpm workspaces) |
 
 ### Monorepo Structure
 
 ```
 /
 ├── apps/
-│   ├── web/              # Next.js or TanStack frontend
+│   ├── web/              # Next.js frontend
 │   └── server/           # Express API backend
 ├── packages/
-│   ├── shared/           # Shared TypeScript types and schemas (Zod)
-│   ├── ai/               # AI prompt templates and Claude integration
-│   └── db/               # Supabase client, schema, and migrations
+│   ├── auth/             # Better Auth configuration
+│   ├── config/           # Shared TypeScript/ESLint configurations
+│   ├── db/               # Prisma ORM, schema, and Neon database client
+│   ├── env/              # Environment variables and validation (t3-env)
+│   └── ui/               # Shared UI components (Tailwind/Shadcn)
 ├── turbo.json
 └── package.json
 ```
