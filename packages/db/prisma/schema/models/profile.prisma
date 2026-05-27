@@ -1,0 +1,225 @@
+model Profile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Fields from integrated design
+  location          String?
+  bio               String?
+  targetRole        String?
+  yearsOfExperience Int?
+
+  // Storing complex layered data as JSON
+  aspirations Json? // e.g., target_roles, horizon, success definition
+  values      Json? // e.g., work_environment, risk_appetite, min_salary
+
+  onboardingDone Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  skills             Skill[]
+  learningGoals      LearningGoal[]
+  workHistories      WorkHistory[]
+  educations         Education[]
+  achievements       Achievement[]
+  projects           Project[]
+  languages          Language[]
+  workAuthorizations WorkAuthorization[]
+  constraints        Constraint[]
+  socialLinks        SocialLink[]
+
+  @@map("profile")
+}
+
+model Skill {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name             String
+  category         String // "technical", "soft", "tool"
+  proficiencyLevel String? // "beginner", "intermediate", "advanced", "expert"
+  confidenceRating Int? // 1-5
+  lastUsedDate     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Many-to-Many relations
+  achievements Achievement[]
+  projects     Project[]
+
+  @@unique([profileId, name])
+  @@map("skill")
+}
+
+model WorkHistory {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  companyName String
+  roleTitle   String
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+
+  outcomes Json? // key achievements, metrics, responsibilities
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // A work history can have associated projects
+  projects Project[]
+
+  @@index([profileId])
+  @@map("work_history")
+}
+
+model Education {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type           String // "degree", "certification", "course"
+  credentialName String
+  issuer         String
+  completionDate DateTime?
+
+  metadata Json? // e.g. GPA, honors, major, minor, coursework
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("education")
+}
+
+model Achievement {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type         AchievementType
+  title        String
+  issuer       String?
+  description  String?
+  url          String?
+  dateAchieved DateTime?
+
+  metadata Json? // flexible per type
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Many-to-Many with skills
+  skills Skill[]
+
+  @@index([profileId])
+  @@map("achievement")
+}
+
+model Project {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  workHistoryId String?
+  workHistory   WorkHistory? @relation(fields: [workHistoryId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  url         String?
+  startDate   DateTime?
+  endDate     DateTime?
+
+  outcomes Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Many-to-Many with skills
+  skills Skill[]
+
+  @@index([profileId])
+  @@index([workHistoryId])
+  @@map("project")
+}
+
+model Language {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name        String // e.g., "English", "Spanish"
+  proficiency String // "Native", "Fluent", "Conversational", "Basic"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("language")
+}
+
+model WorkAuthorization {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  country String // e.g., "US", "UK", "Canada"
+  status  String // e.g., "Citizen", "Permanent Resident", "H1B", "Requires Sponsorship"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("work_authorization")
+}
+
+model Constraint {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type  String // e.g., "visa_sponsorship_needed", "remote_only", "max_commute_time"
+  value String? // e.g., "true", "45 mins"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("constraint")
+}
+
+model LearningGoal {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  skillName         String
+  targetProficiency String? // e.g., "Advanced"
+  deadline          DateTime?
+  status            String    @default("PLANNED") // "PLANNED", "LEARNING", "COMPLETED"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("learning_goal")
+}
+
+model SocialLink {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  platform String // e.g., "github", "linkedin", "twitter", "website", "portfolio"
+  url      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@map("social_link")
+}
