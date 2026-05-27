@@ -1,0 +1,24 @@
+{
+    "name": "@kursa/auth",
+    "type": "module",
+    "exports": {
+        ".": {
+            "default": "./src/index.ts"
+        },
+        "./*": {
+            "default": "./src/*.ts"
+        }
+    },
+    "scripts": {},
+    "dependencies": {
+        "@kursa/db": "workspace:*",
+        "@kursa/env": "workspace:*",
+        "better-auth": "catalog:",
+        "dotenv": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@kursa/config": "workspace:*",
+        "typescript": "catalog:"
+    }
+}
