@@ -17,8 +17,8 @@ export function createAuth() {
     },
     socialProviders: {
       github: {
-        clientId: env.GITHUB_CLIENT_ID,
-        clientSecret: env.GITHUB_CLIENT_SECRET,
+        clientId: env.OAUTH_GITHUB_CLIENT_ID,
+        clientSecret: env.OAUTH_GITHUB_CLIENT_SECRET,
       },
     },
     secret: env.BETTER_AUTH_SECRET,

@@ -10,10 +10,18 @@ jobs:
   build:
     name: Build & Check
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+      CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+      OAUTH_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+      OAUTH_GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+      NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -24,14 +32,12 @@ jobs:
         with:
           node-version: 22.x
           cache: 'pnpm'
-        
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Type Check
         run: pnpm turbo check-types
-        
+
       - name: Build
         run: pnpm turbo build
