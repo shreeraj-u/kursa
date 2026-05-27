@@ -366,7 +366,7 @@ These principles govern every product and engineering decision:
 
 ---
 
-### Layer 5 — Personal Brand Management
+### Layer 5 (to be done as future features) — Personal Brand Management
 
 **Purpose:** Being found is as important as applying. Manage the user's professional visibility.
 
@@ -383,9 +383,10 @@ These principles govern every product and engineering decision:
 - Project presentation coaching: structure, documentation, framing
 - Regular prompts to keep portfolio current as profile evolves
 
+
 ---
 
-### Layer 6 — Resume Engine
+### Layer 6 (to be done later)— Resume Engine
 
 **Purpose:** The resume is not a document the user maintains — it is a live output of the system's knowledge of them.
 
