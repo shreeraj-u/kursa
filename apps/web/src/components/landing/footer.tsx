@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { FadeUp } from "@/components/motion/fade-up";
 
 const COLS = [
@@ -50,14 +51,8 @@ export default function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
-            <a href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-5 h-5 rounded-[4px] bg-[var(--ink)]" />
-              <span
-                className="font-semibold text-[var(--ink)] tracking-tight"
-                style={{ fontSize: "var(--text-md)" }}
-              >
-                Kursa
-              </span>
+            <a href="/" className="inline-block mb-4 text-[var(--ink)]">
+              <Logo size="sm" />
             </a>
             <p
               className="leading-relaxed max-w-[180px]"

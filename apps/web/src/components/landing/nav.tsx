@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 
 import { AnimatedButton } from "@/components/motion/animated-button";
+import { Logo } from "@/components/logo";
 
 export default function LandingNav() {
   const reduced = useReducedMotion();
@@ -18,14 +19,8 @@ export default function LandingNav() {
     >
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-14">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="w-5 h-5 rounded-[4px] bg-[var(--ink)]" />
-          <span
-            className="font-semibold text-[var(--ink)] tracking-tight"
-            style={{ fontSize: "var(--text-md)" }}
-          >
-            Kursa
-          </span>
+        <Link href="/" className="text-[var(--ink)]">
+          <Logo size="sm" />
         </Link>
 
         {/* Center links */}
