@@ -1,0 +1,9 @@
+enum AchievementType {
+  HACKATHON
+  AWARD
+  PUBLICATION
+  SPEAKING
+  OPEN_SOURCE
+  VOLUNTEER
+  OTHER
+}
