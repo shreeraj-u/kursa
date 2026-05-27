@@ -112,7 +112,7 @@ These principles govern every product and engineering decision:
 
 1. **Depth over breadth** — A mediocre career advisor is worse than no advisor. Ship fewer features with genuine intelligence rather than many shallow ones.
 
-2. **Earned trust** — Users will make life-altering decisions based on what this system tells them. Every recommendation must be traceable, reasoned, and framed as a perspective — never a directive.
+2. **Earned trust** — Users will make life-altering decisions based on what this system tells them. Every recommendation must be traceable, reasoned, and framed as a perspective — never a directive. very important)
 
 3. **The profile is the product** — Every feature is only as good as the user's profile. Onboarding, check-ins, and every interaction should advance the quality of the profile model.
 
