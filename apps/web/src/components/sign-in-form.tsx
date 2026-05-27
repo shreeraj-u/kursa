@@ -4,6 +4,7 @@ import { Label } from "@kursa/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
@@ -116,6 +117,30 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
           )}
         </form.Subscribe>
       </form>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white dark:bg-zinc-950 px-2 text-gray-500">Or continue with</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={async () => {
+          await authClient.signIn.social({
+            provider: "github",
+            callbackURL: "/dashboard",
+          });
+        }}
+      >
+        <GitHubLogoIcon className="mr-2 h-4 w-4" />
+        GitHub
+      </Button>
 
       <div className="mt-4 text-center">
         <Button
