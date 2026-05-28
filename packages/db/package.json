@@ -14,7 +14,8 @@
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
         "postinstall": "prisma generate",
-        "db:studio": "prisma studio"
+        "db:studio": "prisma studio",
+        "seed:dashboard": "SEED_SCENARIO=dashboard pnpm prisma db seed"
     },
     "dependencies": {
         "@kursa/env": "workspace:*",
