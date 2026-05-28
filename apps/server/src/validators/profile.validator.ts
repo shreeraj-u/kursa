@@ -73,7 +73,7 @@ const valuesSchema = z.preprocess(
       teamSizePreference: raw.teamSizePreference ?? raw.team_size_preference,
       minSalary: raw.minSalary ?? raw.salary_min,
       maxSalary: raw.maxSalary ?? raw.salary_max,
-      currency: raw.currency,
+      currency: raw.currency ?? raw.salary_currency,
       geographicConstraints: raw.geographicConstraints ?? raw.geographic_constraints,
     };
   },
