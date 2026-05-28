@@ -27,6 +27,10 @@
     "devDependencies": {
         "@kursa/config": "workspace:*",
         "prisma": "^7.8.0",
+        "tsx": "^4.22.3",
         "typescript": "catalog:"
+    },
+    "prisma": {
+        "seed": "tsx --env-file=../../apps/server/.env prisma/seed.ts"
     }
 }
