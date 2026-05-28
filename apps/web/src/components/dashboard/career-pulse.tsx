@@ -10,7 +10,7 @@ const HEIGHTS = [3, 8, 14];
 export default function CareerPulse({ metrics }: CareerPulseProps) {
     if (!metrics) {
         return (
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--mute-3)" }}>
+            <p className="text-xs text-mute-3">
                 Build your profile to start tracking career signals.
             </p>
         );
@@ -22,10 +22,10 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
         { label: "progression", ...metrics.pulse.progression },
     ];
 
-    const trendColor = (trend: string) => {
-        if (trend === "rising" || trend === "strong" || trend === "on track") return "var(--accent)";
-        if (trend === "building" || trend === "steady" || trend === "in progress") return "var(--mute-2)";
-        return "var(--mute-3)";
+    const trendClass = (trend: string) => {
+        if (trend === "rising" || trend === "strong" || trend === "on track") return "text-accent";
+        if (trend === "building" || trend === "steady" || trend === "in progress") return "text-mute-2";
+        return "text-mute-3";
     };
 
     return (
@@ -33,10 +33,10 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
             {cols.map((col) => (
                 <div key={col.label} className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                        <span className="mono" style={{ fontSize: 9, color: "var(--mute-2)" }}>
+                        <span className="mono text-2xs text-mute-2">
                             {col.label}
                         </span>
-                        <span className="mono" style={{ fontSize: 9, color: trendColor(col.trend) }}>
+                        <span className={`mono text-2xs ${trendClass(col.trend)}`}>
                             {col.trend}
                         </span>
                     </div>
@@ -49,7 +49,7 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
                                     height: HEIGHTS[v],
                                     background:
                                         i >= 10 && v > 0
-                                            ? "oklch(0.42 0.04 160)"
+                                            ? "var(--accent)"
                                             : v > 0
                                                 ? "var(--line-2)"
                                                 : "var(--line)",
@@ -57,14 +57,7 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
                             />
                         ))}
                     </div>
-                    <p
-                        style={{
-                            fontSize: "var(--text-xs)",
-                            color: "var(--mute)",
-                            lineHeight: 1.5,
-                            marginTop: 6,
-                        }}
-                    >
+                    <p className="text-xs text-mute leading-normal mt-1.5">
                         {col.observation}
                     </p>
                 </div>

@@ -20,24 +20,10 @@ export default function Greeting({ user, metrics }: GreetingProps) {
 
     return (
         <div>
-            <h1
-                style={{
-                    fontSize: "var(--text-2xl)",
-                    fontWeight: 700,
-                    letterSpacing: "-0.03em",
-                    color: "var(--ink)",
-                }}
-            >
+            <h1 className="text-2xl font-bold tracking-tighter text-ink">
                 {greeting}, {firstName}.
             </h1>
-            <p
-                style={{
-                    fontSize: "var(--text-sm)",
-                    color: "var(--mute)",
-                    lineHeight: 1.55,
-                    marginTop: 6,
-                }}
-            >
+            <p className="text-sm text-mute leading-relaxed mt-1.5">
                Lets start grinding!
             </p>
         </div>

@@ -202,17 +202,6 @@ export interface FormattedApplication {
   stageLabel: string;
   stageIdx: number;
   formattedDate: string;
-  chip: {
-    className: string;
-    style?: {
-      background?: string;
-      color?: string;
-      fontSize?: number;
-      borderRadius?: number;
-      padding?: string;
-      fontFamily?: string;
-    };
-  };
 }
 
 export interface DashboardMetrics {
