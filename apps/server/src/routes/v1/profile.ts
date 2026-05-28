@@ -9,9 +9,16 @@ const router: Router = Router();
 // Apply authentication middleware to all profile routes
 router.use(requireAuth);
 
-router.get("/me", profileController.getMe);
-router.put("/me", profileController.updateMe);
-router.get("/me/observations", profileController.getObservations);
-router.get("/me/dashboard", dashboardController.getDashboardMetrics);
+const meRouter: Router = Router();
+
+meRouter.get("/", profileController.getMe);
+meRouter.put("/", profileController.updateMe);
+meRouter.get("/observations", profileController.getObservations);
+meRouter.get("/dashboard", dashboardController.getDashboardMetrics);
+meRouter.post("/social-links", profileController.createSocialLink);
+meRouter.put("/social-links/:id", profileController.updateSocialLink);
+meRouter.delete("/social-links/:id", profileController.deleteSocialLink);
+
+router.use("/me", meRouter);
 
 export default router;

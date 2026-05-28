@@ -4,24 +4,40 @@ import { z } from "zod";
 
 const aspirationsCamelCaseSchema = z.object({
   targetRoles: z.array(z.string()).optional(),
+  targetIndustries: z.array(z.string()).optional(),
   horizon: z.string().optional(),
   successDefinition: z.string().optional(),
+  threeYear: z.string().optional(),
+  fiveYear: z.string().optional(),
 });
 
 const aspirationsSnakeCaseSchema = z.object({
   target_roles: z.array(z.string()).optional(),
+  target_industries: z.array(z.string()).optional(),
   horizon: z.string().optional(),
   success_definition: z.string().optional(),
+  three_year: z.string().optional(),
+  five_year: z.string().optional(),
 });
 
 const aspirationsSchema = z
   .union([aspirationsCamelCaseSchema, aspirationsSnakeCaseSchema])
   .transform((aspirations) => {
-    if ("target_roles" in aspirations || "success_definition" in aspirations) {
+    const isSnake =
+      "target_roles" in aspirations ||
+      "target_industries" in aspirations ||
+      "success_definition" in aspirations ||
+      "three_year" in aspirations ||
+      "five_year" in aspirations;
+
+    if (isSnake) {
       return {
         targetRoles: aspirations.target_roles,
+        targetIndustries: aspirations.target_industries,
         horizon: aspirations.horizon,
         successDefinition: aspirations.success_definition,
+        threeYear: aspirations.three_year,
+        fiveYear: aspirations.five_year,
       };
     }
     return aspirations;
@@ -36,8 +52,13 @@ const valuesSchemaShape = z.object({
   riskAppetite: z
     .enum(["stability_seeking", "balanced", "high_growth"])
     .optional(),
+  teamSizePreference: z
+    .enum(["small", "medium", "large", "any"])
+    .optional(),
   minSalary: z.number().optional(),
+  maxSalary: z.number().optional(),
   currency: z.string().optional(),
+  geographicConstraints: z.array(z.string()).optional(),
 });
 
 const valuesSchema = z.preprocess(
@@ -49,8 +70,11 @@ const valuesSchema = z.preprocess(
     return {
       workEnvironment: raw.workEnvironment ?? raw.work_environment,
       riskAppetite: raw.riskAppetite ?? raw.risk_appetite,
+      teamSizePreference: raw.teamSizePreference ?? raw.team_size_preference,
       minSalary: raw.minSalary ?? raw.salary_min,
-      currency: raw.currency,
+      maxSalary: raw.maxSalary ?? raw.salary_max,
+      currency: raw.currency ?? raw.salary_currency,
+      geographicConstraints: raw.geographicConstraints ?? raw.geographic_constraints,
     };
   },
   valuesSchemaShape.optional().nullable()
@@ -71,3 +95,17 @@ export const profileUpdateSchema = z.object({
 // ── Inferred types ────────────────────────────────────────────────────────────
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+
+// ── Social link schemas ───────────────────────────────────────────────────────
+
+export const socialLinkCreateSchema = z.object({
+  platform: z.enum(["github", "linkedin", "twitter", "website", "portfolio"]),
+  url: z.string().url().max(500),
+});
+
+export const socialLinkUpdateSchema = z.object({
+  url: z.string().url().max(500),
+});
+
+export type SocialLinkCreateInput = z.infer<typeof socialLinkCreateSchema>;
+export type SocialLinkUpdateInput = z.infer<typeof socialLinkUpdateSchema>;

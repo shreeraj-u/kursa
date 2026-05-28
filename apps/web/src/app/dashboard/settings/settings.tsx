@@ -1,0 +1,55 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
+import PageHeader from "@/components/dashboard/page-header";
+import AccountSection from "@/components/dashboard/settings/account-section";
+import CareerSection from "@/components/dashboard/settings/career-section";
+import ConnectionsSection from "@/components/dashboard/settings/connections-section";
+import NotificationsSection from "@/components/dashboard/settings/notifications-section";
+import PlanSection from "@/components/dashboard/settings/plan-section";
+import PrivacySection from "@/components/dashboard/settings/privacy-section";
+import ProfileSection from "@/components/dashboard/settings/profile-section";
+import SettingsNav from "@/components/dashboard/settings/settings-nav";
+import type { UserProfile } from "@/types/profile";
+
+interface SettingsProps {
+  profile: UserProfile | null;
+  user: { name: string; email: string };
+}
+
+function SettingsBody({ profile, user }: SettingsProps) {
+  const searchParams = useSearchParams();
+  const section = searchParams.get("section") ?? "profile";
+
+  return (
+    <div className="flex gap-8 min-h-[calc(100vh-44px)]">
+      <div className="w-[180px] shrink-0">
+        <SettingsNav activeSection={section} user={user} />
+      </div>
+      <div className="flex-1 max-w-[640px]">
+        {section === "profile" && <ProfileSection profile={profile} user={user} />}
+        {section === "career" && <CareerSection profile={profile} />}
+        {section === "connections" && <ConnectionsSection socialLinks={profile?.socialLinks ?? []} />}
+        {section === "account" && <AccountSection user={user} />}
+        {section === "notifications" && <NotificationsSection />}
+        {section === "privacy" && <PrivacySection />}
+        {section === "plan" && <PlanSection />}
+      </div>
+    </div>
+  );
+}
+
+export default function Settings({ profile, user }: SettingsProps) {
+  return (
+    <>
+      <PageHeader pageTitle="Settings" />
+      <div className="pt-6 px-8 pb-8">
+        <Suspense fallback={null}>
+          <SettingsBody profile={profile} user={user} />
+        </Suspense>
+      </div>
+    </>
+  );
+}
