@@ -5,7 +5,7 @@ import { Globe, Link } from "lucide-react";
 import { GitHubLogoIcon, LinkedInLogoIcon, TwitterLogoIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 
-import { env } from "@kursa/env/web";
+import { api } from "@/lib/api";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import type { UserSocialLink } from "@/types/profile";
@@ -38,29 +38,12 @@ function LinkRow({ platform, label, Icon, existing, onSaved, onDeleted }: LinkRo
     setSaving(true);
     try {
       if (existing) {
-        const res = await fetch(
-          `${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/social-links/${existing.id}`,
-          {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: url.trim() }),
-          },
-        );
-        if (!res.ok) throw new Error("Failed to update");
-        const json = await res.json();
-        onSaved(json.data.socialLink);
+        const result = await api.updateSocialLink(existing.id, { url: url.trim() });
+        onSaved(result.socialLink);
         toast.success(`${label} updated`);
       } else {
-        const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/social-links`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform, url: url.trim() }),
-        });
-        if (!res.ok) throw new Error("Failed to save");
-        const json = await res.json();
-        onSaved(json.data.socialLink);
+        const result = await api.createSocialLink({ platform, url: url.trim() });
+        onSaved(result.socialLink);
         toast.success(`${label} connected`);
       }
     } catch (err: unknown) {
@@ -74,14 +57,7 @@ function LinkRow({ platform, label, Icon, existing, onSaved, onDeleted }: LinkRo
     if (!existing) return;
     setDeleting(true);
     try {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/social-links/${existing.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-      if (!res.ok) throw new Error("Failed to remove");
+      await api.deleteSocialLink(existing.id);
       onDeleted(existing.id);
       setUrl("");
       toast.success(`${label} removed`);

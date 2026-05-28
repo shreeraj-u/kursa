@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { Errors } from "../errors/http-error.js";
 import { ok, created } from "../lib/respond.js";
 import * as profileService from "../services/profile.service.js";
+import * as insightsService from "../services/insights.service.js";
 import { z } from "zod";
 import { profileUpdateSchema, socialLinkCreateSchema, socialLinkUpdateSchema } from "../validators/profile.validator.js";
 
@@ -46,7 +47,7 @@ export async function getObservations(
   const page = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const limit = !isNaN(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : 4;
 
-  const observations = await profileService.getObservations(req.user!.id, page, limit);
+  const observations = await insightsService.getObservations(req.user!.id, page, limit);
   if (!observations) {
     throw Errors.notFound("Profile");
   }
