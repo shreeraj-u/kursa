@@ -170,7 +170,7 @@ export async function getDashboardMetrics(userId: string) {
         company: app.company,
         roleTitle: app.roleTitle,
         stage: app.stage,
-        stageLabel: (app.stage === "closed" || app.stage === "passed") ? "not aligned" : app.stage.replace(/_/g, " "),
+        stageLabel: (app.status === "closed" || app.status === "passed") ? "not aligned" : app.stage.replace(/_/g, " "),
         stageIdx: getStageIndex(app.stage),
         formattedDate: formatDate(app),
     }));
