@@ -28,7 +28,7 @@ This refactor introduces a new `/api/v1/profile/me/dashboard` endpoint that pre-
   inFlight: {
     activeCount: number;
     closedCount: number;
-    applications: { id: string; company: string; roleTitle: string; stage: string; stageLabel: string; stageIdx: number; formattedDate: string; chip: any }[];
+    applications: { id: string; company: string; roleTitle: string; stage: string; stageLabel: string; stageIdx: number; formattedDate: string }[];
   };
   greeting: {
     dayN: number;

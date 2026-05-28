@@ -39,8 +39,11 @@ export async function getObservations(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 4;
+  const parsedPage = parseInt(req.query.page as string, 10);
+  const parsedLimit = parseInt(req.query.limit as string, 10);
+  
+  const page = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const limit = !isNaN(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : 4;
 
   const observations = await profileService.getObservations(req.user!.id, page, limit);
   if (!observations) {

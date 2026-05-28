@@ -7,7 +7,7 @@ async function main() {
     // Clean up existing data for idempotency
     await prisma.jobApplication.deleteMany({ where: { profile: { userId: testUserId } } });
     await prisma.profile.deleteMany({ where: { userId: testUserId } });
-    await prisma.job.deleteMany({});
+    await prisma.job.deleteMany({ where: { source: "seed-dashboard" } });
     // Check if test user exists (they should have created it via UI)
     let testUser = await prisma.user.findUnique({
         where: { id: testUserId }
@@ -74,6 +74,7 @@ async function main() {
             currency: "USD",
             skills: ["React", "TypeScript", "CSS"],
             isActive: true,
+            source: "seed-dashboard",
         },
     });
 
@@ -92,6 +93,7 @@ async function main() {
             currency: "USD",
             skills: ["Node.js", "PostgreSQL", "Go"],
             isActive: true,
+            source: "seed-dashboard",
         },
     });
 
@@ -110,6 +112,7 @@ async function main() {
             currency: "USD",
             skills: ["React", "Node.js", "TypeScript"],
             isActive: true,
+            source: "seed-dashboard",
         },
     });
 
