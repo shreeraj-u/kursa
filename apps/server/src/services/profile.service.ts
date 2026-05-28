@@ -147,7 +147,7 @@ export async function updateSocialLink(userId: string, linkId: string, data: Soc
 export async function deleteSocialLink(userId: string, linkId: string) {
   const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
   if (!profile) throw Errors.notFound("Profile");
-  const link = await prisma.socialLink.findUnique({ where: { id: linkId, profileId: profile.id } });
+  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId: profile.id } });
   if (!link) throw Errors.notFound("Social link");
   return prisma.socialLink.delete({ where: { id: linkId } });
 }
