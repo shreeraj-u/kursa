@@ -165,6 +165,27 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Design System Colors mapped to Tailwind v4 */
+  --color-bg: var(--bg);
+  --color-bg-sub: var(--bg-sub);
+  --color-bg-sub-2: var(--bg-sub-2);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-mute: var(--mute);
+  --color-mute-2: var(--mute-2);
+  --color-mute-3: var(--mute-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+
+  /* Dense text typography variables */
+  --text-2xs: 9px;
+  --text-3xs: 7.5px;
 }
 
 @layer base {

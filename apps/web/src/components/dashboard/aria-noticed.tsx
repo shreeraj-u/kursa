@@ -1,0 +1,111 @@
+"use client";
+
+import { useState } from "react";
+import type { Observation, PaginatedResponse } from "@/types/profile";
+import { env } from "@kursa/env/web";
+
+interface AriaNoticedProps {
+    initialObservations: PaginatedResponse<Observation>;
+}
+
+export default function AriaNoticed({ initialObservations }: AriaNoticedProps) {
+    const [data, setData] = useState<PaginatedResponse<Observation>>(initialObservations);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const observations = data.data || [];
+    const newCount = data.pagination.total;
+
+    const fetchPage = async (page: number) => {
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=${page}&limit=4`, {
+                credentials: "include"
+            });
+            if (res.ok) {
+                const json = await res.json();
+                if (json.success && json.data) {
+                    setData(json.data);
+                }
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-3">
+                <span className="mono text-2xs text-mute-2">
+                    aria noticed · {newCount} new · 0 dismissed
+                </span>
+            </div>
+
+            {observations.length === 0 ? (
+                <div className="flex flex-col gap-2 py-3">
+                    {[0, 1, 2].map((i) => (
+                        <div key={i} className="flex gap-2.5 items-center opacity-30">
+                            <span className="rounded-full flex-shrink-0 w-[5px] h-[5px] bg-line-2" />
+                            <div
+                                className="h-2 rounded bg-border"
+                                style={{ width: `${60 + i * 15}%` }}
+                            />
+                        </div>
+                    ))}
+                    <p className="mono mt-2 text-2xs text-mute-3">
+                        Aria is watching. Observations will surface as your profile grows.
+                    </p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-3">
+                    <div className={`flex flex-col gap-3 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {observations.map((obs, i) => (
+                            <div key={i} className="flex gap-2.5">
+                                <span
+                                    className={`mt-1.5 flex-shrink-0 rounded-full w-[5px] h-[5px] ${obs.type === "opportunity" ? "bg-accent" : "bg-warn"}`}
+                                />
+                                <div className="flex-1">
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        {obs.text}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <span className="mono text-2xs text-mute-3">
+                                            {obs.timeAgo}
+                                        </span>
+                                        <span className="text-2xs text-accent cursor-pointer hover:underline">
+                                            open
+                                        </span>
+                                        <span className="text-2xs text-mute-3 cursor-pointer hover:underline">
+                                            dis
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {data.pagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
+                            <button
+                                onClick={() => fetchPage(data.pagination.page - 1)}
+                                disabled={data.pagination.page <= 1 || isLoading}
+                                className="mono text-2xs text-mute-3 hover:text-foreground disabled:opacity-30 disabled:hover:text-mute-3 transition-colors"
+                            >
+                                ← prev
+                            </button>
+                            <span className="mono text-2xs text-mute-2">
+                                page {data.pagination.page} / {data.pagination.totalPages}
+                            </span>
+                            <button
+                                onClick={() => fetchPage(data.pagination.page + 1)}
+                                disabled={data.pagination.page >= data.pagination.totalPages || isLoading}
+                                className="mono text-2xs text-mute-3 hover:text-foreground disabled:opacity-30 disabled:hover:text-mute-3 transition-colors"
+                            >
+                                next →
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
