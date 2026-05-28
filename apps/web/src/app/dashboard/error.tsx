@@ -85,10 +85,6 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
           <FileText className="h-3 w-3" />
           view documentation
         </span>
-        <span className="text-line-3 select-none">|</span>
-        <span className="hover:text-ink transition-colors cursor-pointer">
-          system status: healthy
-        </span>
       </div>
     </div>
   );

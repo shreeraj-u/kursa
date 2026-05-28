@@ -24,7 +24,7 @@ export default function Greeting({ user, metrics }: GreetingProps) {
                 {greeting}, {firstName}.
             </h1>
             <p className="text-sm text-mute leading-relaxed mt-1.5">
-               Lets start grinding!
+               Let's start grinding!
             </p>
         </div>
     );
