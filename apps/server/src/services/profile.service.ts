@@ -1,6 +1,7 @@
 import prisma, { Prisma } from "@kursa/db";
 
-import type { ProfileUpdateInput } from "../validators/profile.validator.js";
+import type { ProfileUpdateInput, SocialLinkCreateInput, SocialLinkUpdateInput } from "../validators/profile.validator.js";
+import { Errors } from "../errors/http-error.js";
 
 const PROFILE_INCLUDE = {
   skills: true,
@@ -118,4 +119,35 @@ export async function getObservations(userId: string, page: number, limit: numbe
       totalPages: Math.ceil(total / limit) || 1
     }
   };
+}
+
+/**
+ * Creates a social link for a user's profile.
+ */
+export async function createSocialLink(userId: string, data: SocialLinkCreateInput) {
+  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) throw Errors.notFound("Profile");
+  return prisma.socialLink.create({ data: { profileId: profile.id, ...data } });
+}
+
+/**
+ * Updates a social link belonging to a user's profile.
+ */
+export async function updateSocialLink(userId: string, linkId: string, data: SocialLinkUpdateInput) {
+  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) throw Errors.notFound("Profile");
+  const link = await prisma.socialLink.findUnique({ where: { id: linkId, profileId: profile.id } });
+  if (!link) throw Errors.notFound("Social link");
+  return prisma.socialLink.update({ where: { id: linkId }, data });
+}
+
+/**
+ * Deletes a social link belonging to a user's profile.
+ */
+export async function deleteSocialLink(userId: string, linkId: string) {
+  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) throw Errors.notFound("Profile");
+  const link = await prisma.socialLink.findUnique({ where: { id: linkId, profileId: profile.id } });
+  if (!link) throw Errors.notFound("Social link");
+  return prisma.socialLink.delete({ where: { id: linkId } });
 }

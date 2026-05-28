@@ -143,6 +143,7 @@ export interface ProfileValues {
   salary_min?: number;
   salary_max?: number;
   salary_currency?: string;
+  geographic_constraints?: string[];
 }
 
 export interface UserProfile {

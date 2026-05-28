@@ -134,19 +134,13 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                 className="flex items-center gap-2 px-3 py-3 justify-between"
                 style={{ borderBottom: "1px solid var(--line)" }}
             >
-                <Logo
-                    size={"sm"}
-                />
+                <Logo size="sm" />
                 <div className="flex items-center gap-2">
                     <ModeToggle />
-                    {/* Settings pushed to right */}
                     <Link
                         href={"/dashboard/settings" as Route}
                         className="ml-auto flex items-center justify-center rounded transition-colors"
-                        style={{
-                            color: "var(--mute-2)",
-                            padding: 2,
-                        }}
+                        style={{ color: "var(--mute-2)", padding: 2 }}
                         title="Settings"
                     >
                         <Settings size={13} />
@@ -178,6 +172,7 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                             rightSlot={
                                 key === "aria" ? (
                                     <button
+                                        type="button"
                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/dashboard/aria" as Route); }}
                                         className="flex items-center justify-center rounded"
                                         style={{
@@ -249,52 +244,47 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
             </div>
 
             {/* ── User footer ─────────────────────────────────── */}
-            <div
-                className="flex items-center gap-2 px-3 py-3"
+            <Link
+                href="/dashboard/settings"
+                className="flex items-center justify-between gap-2 px-3 py-3"
                 style={{ borderTop: "1px solid var(--line)" }}
             >
-                {/* Avatar */}
-                <div
-                    className="flex items-center justify-center rounded-full flex-shrink-0"
-                    style={{
-                        width: 26,
-                        height: 26,
-                        background: "var(--accent-soft)",
-                        border: "1px solid var(--accent-line)",
-                    }}
-                >
-                    <span
-                        className="mono font-semibold"
-                        style={{ fontSize: 8, color: "var(--accent)", letterSpacing: "0.03em" }}
+                <div className="flex items-center gap-2">
+                    <div
+                        className="flex items-center justify-center rounded-full flex-shrink-0"
+                        style={{
+                            width: 26,
+                            height: 26,
+                            background: "var(--accent-soft)",
+                            border: "1px solid var(--accent-line)",
+                        }}
                     >
-                        {initials}
-                    </span>
+                        <span
+                            className="mono font-semibold"
+                            style={{ fontSize: 8, color: "var(--accent)", letterSpacing: "0.03em" }}
+                        >
+                            {initials}
+                        </span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                        <div
+                            className="truncate font-medium"
+                            style={{ fontSize: "var(--text-xs)", color: "var(--ink)", lineHeight: 1.3 }}
+                        >
+                            {user.name}
+                        </div>
+                        <div
+                            className="truncate mono"
+                            style={{ fontSize: 9, color: "var(--mute-2)", lineHeight: 1.3 }}
+                        >
+                            kursa member
+                        </div>
+                    </div>
                 </div>
 
-                {/* Name + sub */}
-                <div className="flex-1 min-w-0">
-                    <div
-                        className="truncate font-medium"
-                        style={{ fontSize: "var(--text-xs)", color: "var(--ink)", lineHeight: 1.3 }}
-                    >
-                        {user.name}
-                    </div>
-                    <div
-                        className="truncate mono"
-                        style={{ fontSize: 9, color: "var(--mute-2)", lineHeight: 1.3 }}
-                    >
-                        kursa member
-                    </div>
-                </div>
-
-                {/* Chevron */}
-                <span
-                    className="mono flex-shrink-0"
-                    style={{ fontSize: 10, color: "var(--mute-3)" }}
-                >
-                    <ChevronRight size={12} style={{ color: "var(--mute-3)" }} />
-                </span>
-            </div>
+                <ChevronRight size={12} style={{ color: "var(--mute-3)" }} />
+            </Link>
         </aside>
     );
 }
