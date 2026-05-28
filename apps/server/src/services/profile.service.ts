@@ -136,7 +136,7 @@ export async function createSocialLink(userId: string, data: SocialLinkCreateInp
 export async function updateSocialLink(userId: string, linkId: string, data: SocialLinkUpdateInput) {
   const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
   if (!profile) throw Errors.notFound("Profile");
-  const link = await prisma.socialLink.findUnique({ where: { id: linkId, profileId: profile.id } });
+  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId: profile.id } });
   if (!link) throw Errors.notFound("Social link");
   return prisma.socialLink.update({ where: { id: linkId }, data });
 }
