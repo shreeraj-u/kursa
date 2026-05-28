@@ -52,10 +52,10 @@ export function FormField({
         {label}
       </Label>
       {children}
-      {errors?.map((e) =>
+      {errors?.map((e, i) =>
         e?.message ? (
           <p
-            key={e.message}
+            key={`${i}:${e.message}`}
             className="text-warn"
             style={{ fontSize: "var(--text-xs)" }}
           >
