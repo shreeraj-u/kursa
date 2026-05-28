@@ -1,12 +1,12 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { env } from "@kursa/env/web";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import { toast } from "sonner";
 import z from "zod";
 
+import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import type { UserProfile } from "@/types/profile";
 import { SectionHeader, FormField } from "./settings-ui";
@@ -43,13 +43,7 @@ export default function ProfileSection({ profile, user }: Props) {
           const { error } = await authClient.updateUser({ name: value.name });
           if (error) throw new Error(error.message ?? "Failed to update name");
         }
-        const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me`, {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bio: value.bio || null, location: value.location || null }),
-        });
-        if (!res.ok) throw new Error("Failed to update profile");
+        await api.updateProfile({ bio: value.bio || null, location: value.location || null });
         toast.success("Profile updated");
       } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");

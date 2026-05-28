@@ -1,15 +1,16 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { env } from "@kursa/env/web";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import { Label } from "@kursa/ui/components/label";
 import { toast } from "sonner";
 import z from "zod";
 
+import { api } from "@/lib/api";
 import type { UserProfile } from "@/types/profile";
 import { SectionHeader, FormField } from "./settings-ui";
+import { normalizeCareerDefaults, serializeCareerSubmission } from "./career-section.utils";
 import { SectionDivider, ToggleGroup, Textarea } from "./settings-controls";
 
 const WORK_ENV_OPTIONS = [
@@ -52,59 +53,11 @@ const schema = z.object({
 });
 
 export default function CareerSection({ profile }: { profile: UserProfile | null }) {
-  const v = profile?.values as Record<string, any> | null | undefined;
-  const a = profile?.aspirations as Record<string, any> | null | undefined;
-
   const form = useForm({
-    defaultValues: {
-      targetRole: profile?.targetRole ?? "",
-      yearsOfExperience: profile?.yearsOfExperience ?? null,
-      workEnvironment: v?.workEnvironment ?? v?.work_environment ?? "",
-      riskAppetite: v?.riskAppetite ?? v?.risk_appetite ?? "",
-      teamSizePreference: v?.teamSizePreference ?? v?.team_size_preference ?? "",
-      minSalary: v?.minSalary ?? v?.salary_min ?? null,
-      maxSalary: v?.maxSalary ?? v?.salary_max ?? null,
-      currency: v?.currency ?? v?.salary_currency ?? "USD",
-      geographicConstraints: (v?.geographicConstraints ?? v?.geographic_constraints ?? []).join(", "),
-      targetRoles: (a?.targetRoles ?? a?.target_roles ?? []).join(", "),
-      targetIndustries: (a?.targetIndustries ?? a?.target_industries ?? []).join(", "),
-      threeYear: a?.threeYear ?? a?.three_year ?? "",
-      fiveYear: a?.fiveYear ?? a?.five_year ?? "",
-      successDefinition: a?.successDefinition ?? a?.success_definition ?? "",
-    },
+    defaultValues: normalizeCareerDefaults(profile),
     onSubmit: async ({ value }) => {
       try {
-        const splitTrim = (s: string) =>
-          s ? s.split(",").map((x) => x.trim()).filter(Boolean) : undefined;
-
-        const body = {
-          targetRole: value.targetRole || null,
-          yearsOfExperience: value.yearsOfExperience,
-          values: {
-            workEnvironment: value.workEnvironment || undefined,
-            riskAppetite: value.riskAppetite || undefined,
-            teamSizePreference: value.teamSizePreference || undefined,
-            minSalary: value.minSalary ?? undefined,
-            maxSalary: value.maxSalary ?? undefined,
-            currency: value.currency || undefined,
-            geographicConstraints: splitTrim(value.geographicConstraints),
-          },
-          aspirations: {
-            targetRoles: splitTrim(value.targetRoles),
-            targetIndustries: splitTrim(value.targetIndustries),
-            successDefinition: value.successDefinition || undefined,
-            threeYear: value.threeYear || undefined,
-            fiveYear: value.fiveYear || undefined,
-          },
-        };
-
-        const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me`, {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error("Failed to update career preferences");
+        await api.updateProfile(serializeCareerSubmission(value));
         toast.success("Career preferences saved");
       } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");

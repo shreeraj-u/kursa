@@ -1,0 +1,15 @@
+{
+    "name": "@kursa/types",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": {
+            "default": "./src/index.ts"
+        }
+    },
+    "devDependencies": {
+        "@kursa/config": "workspace:*",
+        "typescript": "catalog:"
+    }
+}
