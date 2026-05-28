@@ -52,22 +52,25 @@ const schema = z.object({
 });
 
 export default function CareerSection({ profile }: { profile: UserProfile | null }) {
+  const v = profile?.values as Record<string, any> | null | undefined;
+  const a = profile?.aspirations as Record<string, any> | null | undefined;
+
   const form = useForm({
     defaultValues: {
       targetRole: profile?.targetRole ?? "",
       yearsOfExperience: profile?.yearsOfExperience ?? null,
-      workEnvironment: profile?.values?.work_environment ?? "",
-      riskAppetite: profile?.values?.risk_appetite ?? "",
-      teamSizePreference: profile?.values?.team_size_preference ?? "",
-      minSalary: profile?.values?.salary_min ?? null,
-      maxSalary: profile?.values?.salary_max ?? null,
-      currency: profile?.values?.salary_currency ?? "USD",
-      geographicConstraints: (profile?.values?.geographic_constraints ?? []).join(", "),
-      targetRoles: (profile?.aspirations?.target_roles ?? []).join(", "),
-      targetIndustries: (profile?.aspirations?.target_industries ?? []).join(", "),
-      threeYear: profile?.aspirations?.three_year ?? "",
-      fiveYear: profile?.aspirations?.five_year ?? "",
-      successDefinition: profile?.aspirations?.success_definition ?? "",
+      workEnvironment: v?.workEnvironment ?? v?.work_environment ?? "",
+      riskAppetite: v?.riskAppetite ?? v?.risk_appetite ?? "",
+      teamSizePreference: v?.teamSizePreference ?? v?.team_size_preference ?? "",
+      minSalary: v?.minSalary ?? v?.salary_min ?? null,
+      maxSalary: v?.maxSalary ?? v?.salary_max ?? null,
+      currency: v?.currency ?? v?.salary_currency ?? "USD",
+      geographicConstraints: (v?.geographicConstraints ?? v?.geographic_constraints ?? []).join(", "),
+      targetRoles: (a?.targetRoles ?? a?.target_roles ?? []).join(", "),
+      targetIndustries: (a?.targetIndustries ?? a?.target_industries ?? []).join(", "),
+      threeYear: a?.threeYear ?? a?.three_year ?? "",
+      fiveYear: a?.fiveYear ?? a?.five_year ?? "",
+      successDefinition: a?.successDefinition ?? a?.success_definition ?? "",
     },
     onSubmit: async ({ value }) => {
       try {
