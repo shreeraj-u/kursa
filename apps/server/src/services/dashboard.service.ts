@@ -161,9 +161,9 @@ export async function getDashboardMetrics(userId: string) {
     const recentActivity = events.sort((a, b) => b.ts - a.ts).slice(0, 6);
 
     // --- 3. In Flight ---
-    const CLOSED_STAGES = ["closed", "passed"];
-    const activeCount = profile.jobApplications.filter((a) => !CLOSED_STAGES.includes(a.stage)).length;
-    const closedCount = profile.jobApplications.filter((a) => CLOSED_STAGES.includes(a.stage)).length;
+    const CLOSED_STATUSES = ["closed", "passed"];
+    const activeCount = profile.jobApplications.filter((a) => !CLOSED_STATUSES.includes(a.status)).length;
+    const closedCount = profile.jobApplications.filter((a) => CLOSED_STATUSES.includes(a.status)).length;
     
     const formattedApps = profile.jobApplications.map((app) => ({
         id: app.id,
