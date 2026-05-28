@@ -23,7 +23,14 @@ const aspirationsSnakeCaseSchema = z.object({
 const aspirationsSchema = z
   .union([aspirationsCamelCaseSchema, aspirationsSnakeCaseSchema])
   .transform((aspirations) => {
-    if ("target_roles" in aspirations || "success_definition" in aspirations) {
+    const isSnake =
+      "target_roles" in aspirations ||
+      "target_industries" in aspirations ||
+      "success_definition" in aspirations ||
+      "three_year" in aspirations ||
+      "five_year" in aspirations;
+
+    if (isSnake) {
       return {
         targetRoles: aspirations.target_roles,
         targetIndustries: aspirations.target_industries,
