@@ -22,9 +22,16 @@ export async function generateObservations(signals: ProfileSignals): Promise<Obs
   });
 
   const content = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(content) as {
+  let parsed: {
     observations?: Array<{ text: string; type: string }>;
   };
+  try {
+    parsed = JSON.parse(content) as {
+      observations?: Array<{ text: string; type: string }>;
+    };
+  } catch {
+    throw new Error("OpenAI observations response was not valid JSON");
+  }
   const raw = parsed.observations ?? [];
 
   return raw

@@ -12,7 +12,6 @@ export interface ProfileSignals {
   aspirationsSet: boolean;
   skillsNeverDated: string[];
   noRecentSkillActivity: boolean;
-  
 }
 
 export interface ProfileInput {

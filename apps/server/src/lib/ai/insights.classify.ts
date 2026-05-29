@@ -42,7 +42,12 @@ export async function classifyCareerTrajectory(
   });
 
   const content = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(content) as { trajectory?: string };
+  let parsed: { trajectory?: string };
+  try {
+    parsed = JSON.parse(content) as { trajectory?: string };
+  } catch {
+    return CareerTrajectory.linear;
+  }
   const t = parsed.trajectory;
 
   if (

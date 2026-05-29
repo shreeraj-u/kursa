@@ -5,8 +5,28 @@ import { computeProfileSignals } from "../compute/insight.compute.js";
 import { classifyCareerTrajectory } from "../lib/ai/insights.classify.js";
 import { generateObservations, type Observation } from "../lib/ai/insights.generate.js";
 
-// Keyed by profileId:updatedAt.getTime() — entries auto-evict when profile changes
-const observationCache = new Map<string, Observation[]>();
+const MAX_OBSERVATION_CACHE_ENTRIES = 500;
+
+type ObservationCacheEntry = {
+  updatedAtMs: number;
+  observations: Observation[];
+};
+
+type ObservationProfile = {
+  bio: ProfileInput["bio"];
+  targetRole: ProfileInput["targetRole"];
+  location: ProfileInput["location"];
+  yearsOfExperience: ProfileInput["yearsOfExperience"];
+  aspirations: ProfileInput["aspirations"];
+  skills: ProfileInput["skills"];
+  workHistories: ProfileInput["workHistories"];
+  learningGoals: ProfileInput["learningGoals"];
+  jobApplications: ProfileInput["jobApplications"];
+  socialLinks: ProfileInput["socialLinks"];
+};
+
+// Keyed by profileId so each profile occupies at most one cache slot.
+const observationCache = new Map<string, ObservationCacheEntry>();
 
 export async function getObservations(userId: string, page: number, limit: number) {
   const profile = await prisma.profile.findUnique({
@@ -55,21 +75,51 @@ export async function getObservations(userId: string, page: number, limit: numbe
 
   if (!profile) return null;
 
-  // Lazy trajectory classification — computed once from work history, stored on Profile
-  let { careerTrajectory } = profile;
-  let profileUpdatedAt = profile.updatedAt;
+  const cached = getCachedObservations(profile.id, profile.updatedAt.getTime());
+  if (cached) return paginateObservations(cached, page, limit);
 
-  if (!careerTrajectory && profile.workHistories.length > 0) {
-    careerTrajectory = await classifyCareerTrajectory(profile.workHistories);
-    const saved = await prisma.profile.update({
-      where: { id: profile.id },
-      data: { careerTrajectory },
-      select: { updatedAt: true },
-    });
-    profileUpdatedAt = saved.updatedAt;
+  const sparseProfile = profile.skills.length < 2 && profile.workHistories.length < 1;
+  let profileInput = toProfileInput(profile, profile.careerTrajectory);
+  let signals = computeProfileSignals(profileInput);
+
+  if (sparseProfile) {
+    const observations = buildFallbackObservations(signals);
+    setCachedObservations(profile.id, profile.updatedAt.getTime(), observations);
+    return paginateObservations(observations, page, limit);
   }
 
-  const profileInput: ProfileInput = {
+  let observations: Observation[];
+  let profileUpdatedAt = profile.updatedAt;
+
+  try {
+    let { careerTrajectory } = profile;
+
+    if (!careerTrajectory && profile.workHistories.length > 0) {
+      careerTrajectory = await classifyCareerTrajectory(profile.workHistories);
+      const saved = await prisma.profile.update({
+        where: { id: profile.id },
+        data: { careerTrajectory },
+        select: { updatedAt: true },
+      });
+      profileUpdatedAt = saved.updatedAt;
+    }
+
+    profileInput = toProfileInput(profile, careerTrajectory);
+    signals = computeProfileSignals(profileInput);
+    observations = await generateObservations(signals);
+  } catch {
+    observations = buildFallbackObservations(signals);
+  }
+
+  setCachedObservations(profile.id, profileUpdatedAt.getTime(), observations);
+  return paginateObservations(observations, page, limit);
+}
+
+function toProfileInput(
+  profile: ObservationProfile,
+  careerTrajectory: ProfileInput["careerTrajectory"],
+): ProfileInput {
+  return {
     bio: profile.bio,
     targetRole: profile.targetRole,
     location: profile.location,
@@ -82,21 +132,34 @@ export async function getObservations(userId: string, page: number, limit: numbe
     jobApplications: profile.jobApplications,
     socialLinks: profile.socialLinks,
   };
+}
 
-  const signals = computeProfileSignals(profileInput);
+function getCachedObservations(profileId: string, updatedAtMs: number): Observation[] | null {
+  const entry = observationCache.get(profileId);
+  if (!entry || entry.updatedAtMs !== updatedAtMs) return null;
 
-  const cacheKey = `${profile.id}:${profileUpdatedAt.getTime()}`;
-  let observations = observationCache.get(cacheKey);
+  // Refresh insertion order for simple LRU behavior.
+  observationCache.delete(profileId);
+  observationCache.set(profileId, entry);
+  return entry.observations;
+}
 
-  if (!observations) {
-    try {
-      observations = await generateObservations(signals);
-    } catch {
-      observations = buildFallbackObservations(signals);
-    }
-    observationCache.set(cacheKey, observations);
+function setCachedObservations(
+  profileId: string,
+  updatedAtMs: number,
+  observations: Observation[],
+) {
+  observationCache.delete(profileId);
+  observationCache.set(profileId, { updatedAtMs, observations });
+
+  while (observationCache.size > MAX_OBSERVATION_CACHE_ENTRIES) {
+    const oldestKey = observationCache.keys().next().value;
+    if (!oldestKey) break;
+    observationCache.delete(oldestKey);
   }
+}
 
+function paginateObservations(observations: Observation[], page: number, limit: number) {
   const total = observations.length;
   const paginated = observations.slice((page - 1) * limit, page * limit);
 

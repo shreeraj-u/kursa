@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Observation, PaginatedResponse } from "@/types/profile";
 import { env } from "@kursa/env/web";
 
 interface AriaNoticedProps {
-    initialObservations: PaginatedResponse<Observation>;
+    initialObservations: PaginatedResponse<Observation> | null;
 }
 
+const emptyObservations: PaginatedResponse<Observation> = {
+    data: [],
+    pagination: { total: 0, page: 1, limit: 4, totalPages: 1 },
+};
+
 export default function AriaNoticed({ initialObservations }: AriaNoticedProps) {
-    const [data, setData] = useState<PaginatedResponse<Observation>>(initialObservations);
-    const [isLoading, setIsLoading] = useState(false);
+    const [data, setData] = useState<PaginatedResponse<Observation>>(
+        initialObservations ?? emptyObservations,
+    );
+    const [isLoading, setIsLoading] = useState(initialObservations === null);
 
     const observations = data.data || [];
     const newCount = data.pagination.total;
@@ -32,6 +39,12 @@ export default function AriaNoticed({ initialObservations }: AriaNoticedProps) {
         }
     };
 
+    useEffect(() => {
+        if (initialObservations === null) {
+            void fetchPage(1);
+        }
+    }, [initialObservations]);
+
     return (
         <div>
             <div className="flex items-center justify-between mb-3">
@@ -52,7 +65,9 @@ export default function AriaNoticed({ initialObservations }: AriaNoticedProps) {
                         </div>
                     ))}
                     <p className="mono mt-2 text-2xs text-mute-3">
-                        Aria is watching. Observations will surface as your profile grows.
+                        {isLoading
+                            ? "Aria is reading your latest career signals."
+                            : "Aria is watching. Observations will surface as your profile grows."}
                     </p>
                 </div>
             ) : (
