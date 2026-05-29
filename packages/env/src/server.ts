@@ -17,4 +17,9 @@ export const env = createEnv({
     },
     runtimeEnv: process.env,
     emptyStringAsUndefined: true,
+    // Compile without real secrets during `next build` / explicit opt-out.
+    // Runtime still validates because neither flag is set when serving.
+    skipValidation:
+        !!process.env.SKIP_ENV_VALIDATION ||
+        process.env.NEXT_PHASE === "phase-production-build",
 });
