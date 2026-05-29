@@ -56,7 +56,7 @@ export default function SettingsNav({
         })}
       </div>
 
-      {/* User identity at bottom */}
+      {/* User identity at bottom
       <div className="flex items-center gap-2 mt-6 pt-4 border-t border-line">
         <div
           className="mono flex items-center justify-center shrink-0 w-7 h-7 rounded-full bg-bg-sub-2 border border-line text-ink-2 font-medium"
@@ -72,7 +72,7 @@ export default function SettingsNav({
             {user.email}
           </span>
         </div>
-      </div>
+      </div> */}
     </nav>
   );
 }
