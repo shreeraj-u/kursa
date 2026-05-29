@@ -6,12 +6,7 @@ import { Toggle } from "./settings-controls";
 
 const STORAGE_KEY = "kursa_notification_prefs";
 
-interface NotificationPrefs {
-  checkInReminders: boolean;
-  weeklyDigest: boolean;
-  marketAlerts: boolean;
-  applicationUpdates: boolean;
-}
+import type { NotificationPrefs } from "@kursa/types";
 
 const DEFAULTS: NotificationPrefs = {
   checkInReminders: true,

@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 
-import { AnimatedButton } from "@/components/motion/animated-button";
+import { Button } from "@kursa/ui/components/button";
 import { Logo } from "@/components/logo";
 
 export default function LandingNav() {
@@ -51,9 +51,9 @@ export default function LandingNav() {
           >
             Log in
           </Link>
-          <AnimatedButton href="/login" className="btn sm">
+          <Button size="sm" render={<a href="/login" />} nativeButton={false}>
             Get started
-          </AnimatedButton>
+          </Button>
         </div>
       </div>
     </motion.nav>

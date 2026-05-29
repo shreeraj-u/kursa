@@ -1,11 +1,9 @@
 import { headers } from "next/headers";
 
 import { env } from "@kursa/env/web";
+import type { ApiResponse } from "@kursa/types";
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+
 
 /**
  * Typed fetch for Next.js server components.
