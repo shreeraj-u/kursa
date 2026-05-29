@@ -1,6 +1,6 @@
 import prisma, { Prisma } from "@kursa/db";
 
-import type { ProfileUpdateInput, SocialLinkCreateInput, SocialLinkUpdateInput } from "../validators/profile.validator.js";
+import type { ProfileUpdateInput, SocialLinkCreateInput, SocialLinkUpdateInput } from "@kursa/types";
 import { Errors } from "../errors/http-error.js";
 
 const PROFILE_INCLUDE = {
@@ -31,11 +31,11 @@ export async function getProfile(userId: string): Promise<Prisma.ProfileGetPaylo
  * Creates or updates the profile for a given user.
  * Returns the updated profile (without nested relations — caller can re-fetch if needed).
  */
-export async function upsertProfile(userId: string, data: ProfileUpdateInput) {
+export async function upsertProfile(userId: string, data: ProfileUpdateInput): Promise<Prisma.ProfileGetPayload<{}>> {
   const updateData = {
     ...data,
-    aspirations: data.aspirations === null ? Prisma.JsonNull : data.aspirations,
-    values: data.values === null ? Prisma.JsonNull : data.values,
+    aspirations: data.aspirations === null ? Prisma.JsonNull : (data.aspirations as Prisma.InputJsonObject | undefined),
+    values: data.values === null ? Prisma.JsonNull : (data.values as Prisma.InputJsonObject | undefined),
   };
 
   return prisma.profile.upsert({
