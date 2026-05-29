@@ -13,6 +13,8 @@ model Profile {
   aspirations Json? // e.g., target_roles, horizon, success definition
   values      Json? // e.g., work_environment, risk_appetite, min_salary
 
+  careerTrajectory CareerTrajectory? // "linear" | "accelerating" | "stagnating" | "pivoting"
+
   onboardingDone Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -39,8 +41,8 @@ model Skill {
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   name             String
-  category         String // "technical", "soft", "tool"
-  proficiencyLevel String? // "beginner", "intermediate", "advanced", "expert"
+  category         SkillCategory // "technical", "soft", "tool"
+  proficiencyLevel SkillProficiency? // "beginner", "intermediate", "advanced", "expert"
   confidenceRating Int? // 1-5
   lastUsedDate     DateTime?
 
@@ -83,7 +85,7 @@ model Education {
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  type           String // "degree", "certification", "course"
+  type           EducationType // "degree", "certification", "course"
   credentialName String
   issuer         String
   completionDate DateTime?
@@ -154,7 +156,7 @@ model Language {
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   name        String // e.g., "English", "Spanish"
-  proficiency String // "Native", "Fluent", "Conversational", "Basic"
+  proficiency LanguageProficiency // "Native", "Fluent", "Conversational", "Basic"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,7 +203,7 @@ model LearningGoal {
   skillName         String
   targetProficiency String? // e.g., "Advanced"
   deadline          DateTime?
-  status            String    @default("PLANNED") // "PLANNED", "LEARNING", "COMPLETED"
+  status            LearningGoalStatus @default(PLANNED) // "PLANNED", "LEARNING", "COMPLETED"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -230,20 +232,20 @@ model JobApplication {
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  jobId     String?
-  job       Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  jobId String?
+  job   Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
 
-  company       String
-  roleTitle     String
-  stage         String   // "shortlisted" | "applied" | "phone_screen" | "technical" | "on_site" | "offer" | "closed"
-  status        String   @default("active") // "active" | "passed" | "closed"
-  fitScore      Int?
+  company   String
+  roleTitle String
+  stage     JobApplicationStage // "shortlisted" | "applied" | "phone_screen" | "technical" | "on_site" | "offer" | "closed"
+  status    JobApplicationStatus @default(active) // "active" | "passed" | "closed"
+  fitScore  Int?
 
-  appliedAt     DateTime?
-  nextAction    String?
-  nextActionAt  DateTime?
-  url           String?
-  notes         String?
+  appliedAt    DateTime?
+  nextAction   String?
+  nextActionAt DateTime?
+  url          String?
+  notes        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -252,4 +254,3 @@ model JobApplication {
   @@index([jobId])
   @@map("job_application")
 }
-

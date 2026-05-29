@@ -1,68 +1,107 @@
-// Insight generation for a user's profile.
-// Separated from profile.service so observation/AI logic has its own seam.
-// TODO: Replace rule-based generation with AI analysis.
-
 import prisma from "@kursa/db";
+import type { ProfileInput } from "@kursa/types";
+
+import { computeProfileSignals } from "../compute/insight.compute.js";
+import { classifyCareerTrajectory } from "../lib/ai/insights.classify.js";
+import { generateObservations, type Observation } from "../lib/ai/insights.generate.js";
+
+// Keyed by profileId:updatedAt.getTime() — entries auto-evict when profile changes
+const observationCache = new Map<string, Observation[]>();
 
 export async function getObservations(userId: string, page: number, limit: number) {
   const profile = await prisma.profile.findUnique({
     where: { userId },
-    select: { id: true, targetRole: true },
+    select: {
+      id: true,
+      updatedAt: true,
+      bio: true,
+      targetRole: true,
+      location: true,
+      yearsOfExperience: true,
+      aspirations: true,
+      careerTrajectory: true,
+      skills: {
+        select: {
+          name: true,
+          confidenceRating: true,
+          lastUsedDate: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      workHistories: {
+        select: {
+          roleTitle: true,
+          companyName: true,
+          startDate: true,
+          endDate: true,
+          isCurrent: true,
+          outcomes: true,
+        },
+      },
+      learningGoals: {
+        select: {
+          skillName: true,
+          deadline: true,
+          status: true,
+        },
+      },
+      jobApplications: {
+        select: { appliedAt: true },
+      },
+      socialLinks: true,
+    },
   });
 
   if (!profile) return null;
 
-  const obs: { text: string; timeAgo: string; type: "opportunity" | "warning" | "info" }[] = [];
-  const now = Date.now();
-  const sixMonthsAgo = new Date(now - 86400000 * 30 * 6);
+  // Lazy trajectory classification — computed once from work history, stored on Profile
+  let { careerTrajectory } = profile;
+  let profileUpdatedAt = profile.updatedAt;
 
-  const dormantSkills = await prisma.skill.findMany({
-    where: { profileId: profile.id, lastUsedDate: { lt: sixMonthsAgo } },
-  });
-
-  dormantSkills.forEach((skill) => {
-    obs.push({
-      text:
-        `Your ${skill.name} work has slowed down. ` +
-        (skill.confidenceRating && skill.confidenceRating > 3
-          ? "You've built strong depth here — worth keeping active."
-          : ""),
-      timeAgo: "noticed · today",
-      type: "warning",
+  if (!careerTrajectory && profile.workHistories.length > 0) {
+    careerTrajectory = await classifyCareerTrajectory(profile.workHistories);
+    const saved = await prisma.profile.update({
+      where: { id: profile.id },
+      data: { careerTrajectory },
+      select: { updatedAt: true },
     });
-  });
-
-  const overdueGoals = await prisma.learningGoal.findMany({
-    where: { profileId: profile.id, deadline: { lt: new Date() }, status: { not: "COMPLETED" } },
-  });
-
-  if (overdueGoals.length > 0) {
-    obs.push({
-      text: `${overdueGoals.length === 1 ? "One learning goal is" : `${overdueGoals.length} learning goals are`} past deadline: ${overdueGoals
-        .slice(0, 2)
-        .map((g) => g.skillName)
-        .join(", ")}.`,
-      timeAgo: "noticed · today",
-      type: "warning",
-    });
+    profileUpdatedAt = saved.updatedAt;
   }
 
-  if (profile.targetRole) {
-    const applicationsCount = await prisma.jobApplication.count({ where: { profileId: profile.id } });
-    if (applicationsCount === 0) {
-      obs.push({
-        text: `You haven't applied to any ${profile.targetRole} roles yet. Your profile is strong enough to start.`,
-        timeAgo: "noticed · today",
-        type: "opportunity",
-      });
+  const profileInput: ProfileInput = {
+    bio: profile.bio,
+    targetRole: profile.targetRole,
+    location: profile.location,
+    yearsOfExperience: profile.yearsOfExperience,
+    aspirations: profile.aspirations,
+    careerTrajectory,
+    skills: profile.skills,
+    workHistories: profile.workHistories,
+    learningGoals: profile.learningGoals,
+    jobApplications: profile.jobApplications,
+    socialLinks: profile.socialLinks,
+  };
+
+  const signals = computeProfileSignals(profileInput);
+
+  const cacheKey = `${profile.id}:${profileUpdatedAt.getTime()}`;
+  let observations = observationCache.get(cacheKey);
+
+  if (!observations) {
+    try {
+      observations = await generateObservations(signals);
+    } catch {
+      observations = buildFallbackObservations(signals);
     }
+    observationCache.set(cacheKey, observations);
   }
 
-  const total = obs.length;
-  const paginatedObs = obs.slice((page - 1) * limit, page * limit);
+  const total = observations.length;
+  const paginated = observations.slice((page - 1) * limit, page * limit);
 
   return {
-    data: paginatedObs,
+    data: paginated,
     pagination: {
       total,
       page,
@@ -70,4 +109,37 @@ export async function getObservations(userId: string, page: number, limit: numbe
       totalPages: Math.ceil(total / limit) || 1,
     },
   };
+}
+
+function buildFallbackObservations(
+  signals: ReturnType<typeof computeProfileSignals>,
+): Observation[] {
+  const obs: Observation[] = [];
+
+  if (signals.dormantHighValueSkills.length > 0) {
+    obs.push({
+      text: `Your ${signals.dormantHighValueSkills[0]} work has slowed down. You've built strong depth here — worth keeping active.`,
+      timeAgo: "noticed · today",
+      type: "warning",
+    });
+  }
+
+  if (signals.overdueGoals.length > 0) {
+    const count = signals.overdueGoals.length;
+    obs.push({
+      text: `${count === 1 ? "One learning goal is" : `${count} learning goals are`} past deadline: ${signals.overdueGoals.slice(0, 2).join(", ")}.`,
+      timeAgo: "noticed · today",
+      type: "warning",
+    });
+  }
+
+  if (signals.targetRole && !signals.hasAppliedToTargetRole) {
+    obs.push({
+      text: `You haven't applied to any ${signals.targetRole} roles yet. Your profile is strong enough to start.`,
+      timeAgo: "noticed · today",
+      type: "opportunity",
+    });
+  }
+
+  return obs;
 }

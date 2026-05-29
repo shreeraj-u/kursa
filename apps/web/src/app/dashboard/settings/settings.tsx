@@ -46,7 +46,7 @@ export default function Settings({ profile, user }: SettingsProps) {
     <>
       <PageHeader pageTitle="Settings" />
       <div className="pt-6 px-8 pb-8">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="h-[calc(100vh-44px)]" />}>
           <SettingsBody profile={profile} user={user} />
         </Suspense>
       </div>
