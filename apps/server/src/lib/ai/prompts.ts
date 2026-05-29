@@ -19,3 +19,40 @@ Rules:
 - Each observation has a type: "opportunity" (action the user should take), "warning" (risk or gap), "info" (neutral context)
 
 Respond with JSON: {"observations": [{"text": "...", "type": "opportunity"|"warning"|"info"}, ...]}`;
+
+export const EXTRACT_RESUME_DATA_PROMPT = `You are a resume data extractor. Given resume text, extract structured professional data.
+
+Return a JSON object with these fields:
+
+skills (max 30):
+- name: canonical form (e.g. "TypeScript" not "ts", "PostgreSQL" not "postgres")
+- category: "technical" (languages, frameworks, engineering concepts) | "tool" (platforms, services, software) | "soft" (interpersonal/leadership)
+- confidenceRating: 3 (mentioned once) | 4 (mentioned twice) | 5 (in skills section or 3+ mentions)
+
+workHistory (max 10, reverse chronological):
+- companyName, roleTitle, outcomes (one concise sentence on impact/scope)
+- isCurrent: true only if explicitly marked "present" or "current"
+
+education (max 5):
+- type: "degree" | "certification" | "course"
+- credentialName (e.g. "BSc Computer Science", "AWS Solutions Architect")
+- issuer (university or certifying body)
+- completionDate: ISO year string e.g. "2019" or null
+
+languages (max 5):
+- name (e.g. "English", "Mandarin")
+- proficiency: "Native" | "Fluent" | "Conversational" | "Basic"
+
+socialLinks (max 4, from contact section only):
+- platform: "github" | "linkedin" | "twitter" | "website" | "portfolio"
+- url: full URL
+
+basics:
+- bio: one sentence professional summary if a summary/objective section exists, else null
+- location: city/country from contact section if present, else null
+
+Rules:
+- Only include data explicitly present in the text — never invent or infer
+- Omit any field where nothing was found (use empty arrays, null values)
+
+Respond with valid JSON only.`;

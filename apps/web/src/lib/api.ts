@@ -21,6 +21,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data;
 }
 
+export type ResumeUploadResult = {
+  resumeFileName: string;
+  rawText: string;
+  importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
+  importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; isCurrent: boolean }>;
+  importedEducation: Array<{ type: "degree" | "certification" | "course"; credentialName: string; issuer: string; completionDate: string | null }>;
+  importedLanguages: Array<{ name: string; proficiency: "Native" | "Fluent" | "Conversational" | "Basic" }>;
+  importedSocialLinks: Array<{ platform: "github" | "linkedin" | "twitter" | "website" | "portfolio"; url: string }>;
+  importedBasics: { bio: string | null; location: string | null };
+  skillsFound: number;
+};
+
 export const api = {
   updateProfile: (body: unknown) =>
     request<{ profile: unknown }>("/api/v1/profile/me", {
@@ -44,4 +56,27 @@ export const api = {
     request<{ deleted: boolean }>(`/api/v1/profile/me/social-links/${id}`, {
       method: "DELETE",
     }),
+
+  onboarding: {
+    complete: (payload: unknown) =>
+      request<{ ok: true }>("/api/v1/onboarding/complete", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+
+    uploadResume: async (formData: FormData): Promise<ResumeUploadResult> => {
+      // No Content-Type header — let the browser set the multipart boundary
+      const res = await fetch(`${BASE}/api/v1/onboarding/resume`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(json?.error?.message ?? `Upload failed (${res.status})`);
+      }
+      const json = (await res.json()) as { data: ResumeUploadResult };
+      return json.data;
+    },
+  },
 };

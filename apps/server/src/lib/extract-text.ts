@@ -2,22 +2,12 @@ export type ResumeFileKind = "pdf" | "docx" | "txt";
 
 export function resolveResumeFileKind(fileName: string): ResumeFileKind | null {
   const lower = fileName.toLowerCase();
-  if (lower.endsWith(".pdf")) {
-    return "pdf";
-  }
-  if (lower.endsWith(".docx")) {
-    return "docx";
-  }
-  if (lower.endsWith(".txt")) {
-    return "txt";
-  }
+  if (lower.endsWith(".pdf")) return "pdf";
+  if (lower.endsWith(".docx")) return "docx";
+  if (lower.endsWith(".txt")) return "txt";
   return null;
 }
 
-/**
- * Collapses excessive whitespace while preserving line breaks, which the
- * skill/section scoring relies on to detect headings like "Skills".
- */
 function normalizeWhitespace(text: string): string {
   return text
     .replace(/\r\n?/g, "\n")
@@ -26,10 +16,9 @@ function normalizeWhitespace(text: string): string {
     .trim();
 }
 
-async function extractPdf(bytes: Uint8Array): Promise<string> {
-  // unpdf bundles a serverless build of pdf.js; no native deps required.
+async function extractPdf(buffer: Buffer): Promise<string> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(bytes);
+  const pdf = await getDocumentProxy(new Uint8Array(buffer));
   const { text } = await extractText(pdf, { mergePages: true });
   return Array.isArray(text) ? text.join("\n") : text;
 }
@@ -45,26 +34,20 @@ export type ExtractResult = {
   kind: ResumeFileKind;
 };
 
-/**
- * Extracts plain text from a supported resume file. Throws a user-facing
- * error if the format is unsupported or the document yields no readable text.
- */
-export async function extractResumeText(file: File): Promise<ExtractResult> {
-  const kind = resolveResumeFileKind(file.name);
+export async function extractResumeText(buffer: Buffer, originalName: string): Promise<ExtractResult> {
+  const kind = resolveResumeFileKind(originalName);
   if (!kind) {
     throw new Error("Only PDF, DOCX, or TXT resumes are supported.");
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-
   let rawText = "";
   if (kind === "pdf") {
-    rawText = await extractPdf(new Uint8Array(arrayBuffer));
+    rawText = await extractPdf(buffer);
   } else if (kind === "docx") {
     rawText = await extractDocx(buffer);
   } else {
-    rawText = buffer.toString("utf8").replaceAll("\u0000", "");
+    // Strip null bytes that can appear in binary-encoded text files
+    rawText = buffer.toString("utf8").replace(/\0/g, "");
   }
 
   const text = normalizeWhitespace(rawText).slice(0, 80_000);
