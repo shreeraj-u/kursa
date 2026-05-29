@@ -157,3 +157,22 @@ export interface UserProfile {
   socialLinks: UserSocialLink[];
   jobApplications: JobApplication[];
 }
+
+export interface ProfileUpdateInput {
+  location?: string | null;
+  bio?: string | null;
+  targetRole?: string | null;
+  yearsOfExperience?: number | null;
+  aspirations?: ProfileAspirations | null;
+  values?: ProfileValues | null;
+  onboardingDone?: boolean;
+}
+
+export interface SocialLinkCreateInput {
+  platform: "github" | "linkedin" | "twitter" | "website" | "portfolio";
+  url: string;
+}
+
+export interface SocialLinkUpdateInput {
+  url: string;
+}
