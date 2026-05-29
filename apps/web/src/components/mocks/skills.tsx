@@ -1,6 +1,6 @@
-type Skill = { n: string; w: number; total?: number; since: string; faded?: boolean; label?: string };
+import type { SkillMock } from "@kursa/types";
 
-const TECH: Skill[] = [
+const TECH: SkillMock[] = [
   { n: "TypeScript", w: 6, since: "used now"  },
   { n: "React",      w: 5, since: "used now"  },
   { n: "Python",     w: 3, since: "4mo ago",  faded: true },
@@ -9,13 +9,13 @@ const TECH: Skill[] = [
   { n: "Kubernetes", w: 2, since: "1yr ago",  faded: true },
 ];
 
-const LEAD: Skill[] = [
+const LEAD: SkillMock[] = [
   { n: "1:1 coaching",     w: 3, since: "used now" },
   { n: "Hiring loops",     w: 2, since: "3wk ago"  },
   { n: "Roadmap planning", w: 3, since: "used now" },
 ];
 
-const BUILD: Skill[] = [
+const BUILD: SkillMock[] = [
   { n: "Systems design", w: 3, total: 5, since: "", label: "in progress" },
   { n: "Eng management", w: 1, total: 5, since: "", label: "in progress" },
 ];
@@ -26,7 +26,7 @@ const GAPS = [
   { n: "Budget ownership",          why: "differentiator at series-C and beyond"              },
 ];
 
-function SkillRow({ skill, maxW }: { skill: Skill; maxW: number }) {
+function SkillRow({ skill, maxW }: { skill: SkillMock; maxW: number }) {
   return (
     <div className="flex items-center gap-2" style={{ marginBottom: 5 }}>
       <span
@@ -72,7 +72,7 @@ function SkillRow({ skill, maxW }: { skill: Skill; maxW: number }) {
   );
 }
 
-function Cat({ name, count, skills, maxW = 6 }: { name: string; count: string; skills: Skill[]; maxW?: number }) {
+function Cat({ name, count, skills, maxW = 6 }: { name: string; count: string; skills: SkillMock[]; maxW?: number }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div

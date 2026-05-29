@@ -227,3 +227,43 @@ export interface DashboardMetrics {
     attentionCount: number;
   };
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+export interface NotificationPrefs {
+  checkInReminders: boolean;
+  weeklyDigest: boolean;
+  marketAlerts: boolean;
+  applicationUpdates: boolean;
+}
+
+export interface ProfileUpdateInput {
+  location?: string | null;
+  bio?: string | null;
+  targetRole?: string | null;
+  yearsOfExperience?: number | null;
+  aspirations?: ProfileAspirations | null;
+  values?: ProfileValues | null;
+  onboardingDone?: boolean;
+}
+
+export interface SocialLinkCreateInput {
+  platform: "github" | "linkedin" | "twitter" | "website" | "portfolio";
+  url: string;
+}
+
+export interface SocialLinkUpdateInput {
+  url: string;
+}
+
+export type SkillMock = {
+  n: string;
+  w: number;
+  total?: number;
+  since: string;
+  faded?: boolean;
+  label?: string;
+};

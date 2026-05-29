@@ -94,7 +94,7 @@ export const profileUpdateSchema = z.object({
 
 // ── Inferred types ────────────────────────────────────────────────────────────
 
-export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+// Type inference moved to @kursa/types
 
 // ── Social link schemas ───────────────────────────────────────────────────────
 
@@ -107,5 +107,4 @@ export const socialLinkUpdateSchema = z.object({
   url: z.string().url().max(500),
 });
 
-export type SocialLinkCreateInput = z.infer<typeof socialLinkCreateSchema>;
-export type SocialLinkUpdateInput = z.infer<typeof socialLinkUpdateSchema>;
+// Type inference moved to @kursa/types
