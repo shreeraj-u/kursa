@@ -12,6 +12,8 @@ export const env = createEnv({
         OAUTH_GITHUB_CLIENT_ID: z.string(),
         OAUTH_GITHUB_CLIENT_SECRET: z.string(),
         OPENAI_API_KEY: z.string().min(1),
+        OAUTH_LINKEDIN_CLIENT_ID: z.string().optional(),
+        OAUTH_LINKEDIN_CLIENT_SECRET: z.string().optional(),
     },
     runtimeEnv: process.env,
     emptyStringAsUndefined: true,

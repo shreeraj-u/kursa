@@ -5,6 +5,20 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 export function createAuth() {
   const prisma = createPrismaClient();
+  const socialProviders = {
+    github: {
+      clientId: env.OAUTH_GITHUB_CLIENT_ID,
+      clientSecret: env.OAUTH_GITHUB_CLIENT_SECRET,
+    },
+    ...(env.OAUTH_LINKEDIN_CLIENT_ID && env.OAUTH_LINKEDIN_CLIENT_SECRET
+      ? {
+          linkedin: {
+            clientId: env.OAUTH_LINKEDIN_CLIENT_ID,
+            clientSecret: env.OAUTH_LINKEDIN_CLIENT_SECRET,
+          },
+        }
+      : {}),
+  };
 
   return betterAuth({
     database: prismaAdapter(prisma, {
@@ -15,12 +29,7 @@ export function createAuth() {
     emailAndPassword: {
       enabled: true,
     },
-    socialProviders: {
-      github: {
-        clientId: env.OAUTH_GITHUB_CLIENT_ID,
-        clientSecret: env.OAUTH_GITHUB_CLIENT_SECRET,
-      },
-    },
+    socialProviders,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {

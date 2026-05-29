@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import prisma from "@kursa/db";
 import { authClient } from "@/lib/auth-client";
 import { serverFetch } from "@/lib/server-fetch";
 import type { UserProfile, DashboardMetrics } from "@/types/profile";
@@ -17,6 +18,17 @@ export default async function DashboardPage() {
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  // Gate the dashboard behind completed onboarding (Layer 1 profiling).
+  const onboardingProfile = await prisma.profile.upsert({
+    where: { userId: session.user.id },
+    create: { userId: session.user.id },
+    update: {},
+  });
+
+  if (!onboardingProfile.onboardingDone) {
+    redirect("/onboarding");
   }
 
   const [profileData, metricsData] = await Promise.all([
