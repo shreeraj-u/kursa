@@ -1,8 +1,17 @@
+import { JobApplicationStage, JobApplicationStatus, LearningGoalStatus } from "@kursa/db";
+
 // Pure computation layer for dashboard metrics.
 // No DB access — takes pre-loaded data and returns structured metrics.
 // Kept separate from dashboard.service.ts so the logic is testable without Prisma.
 
-const STAGES = ["shortlisted", "applied", "phone_screen", "technical", "on_site", "offer"] as const;
+const STAGES = [
+  JobApplicationStage.shortlisted,
+  JobApplicationStage.applied,
+  JobApplicationStage.phone_screen,
+  JobApplicationStage.technical,
+  JobApplicationStage.on_site,
+  JobApplicationStage.offer,
+] as const;
 
 export interface DashboardData {
   user: { createdAt: Date };
@@ -14,13 +23,13 @@ export interface DashboardData {
     aspirations: unknown | null;
     skills: Array<{ name: string; createdAt: Date; lastUsedDate: Date | null; confidenceRating: number | null }>;
     workHistories: Array<{ companyName: string; updatedAt: Date | null; createdAt: Date }>;
-    learningGoals: Array<{ skillName: string; status: string; deadline: Date | null; createdAt: Date }>;
+    learningGoals: Array<{ skillName: string; status: LearningGoalStatus; deadline: Date | null; createdAt: Date }>;
     jobApplications: Array<{
       id: string;
       company: string;
       roleTitle: string;
-      stage: string;
-      status: string;
+      stage: JobApplicationStage;
+      status: JobApplicationStatus;
       appliedAt: Date | null;
       nextAction: string | null;
       nextActionAt: Date | null;
@@ -87,7 +96,7 @@ export function computeDashboardMetrics(data: DashboardData) {
   if (profile.aspirations) completeness += 10;
 
   const goalProgress = {
-    completed: profile.learningGoals.filter((g) => g.status === "COMPLETED").length,
+    completed: profile.learningGoals.filter((g) => g.status === LearningGoalStatus.COMPLETED).length,
     total: profile.learningGoals.length,
   };
 
@@ -181,7 +190,7 @@ export function computeDashboardMetrics(data: DashboardData) {
   const recentActivity = events.sort((a, b) => b.ts - a.ts).slice(0, 6);
 
   // --- 3. In Flight ---
-  const CLOSED_STATUSES = ["closed", "passed"];
+  const CLOSED_STATUSES: JobApplicationStatus[] = [JobApplicationStatus.closed, JobApplicationStatus.passed];
   const activeCount = profile.jobApplications.filter((a) => !CLOSED_STATUSES.includes(a.status)).length;
   const closedCount = profile.jobApplications.filter((a) => CLOSED_STATUSES.includes(a.status)).length;
 
@@ -191,7 +200,7 @@ export function computeDashboardMetrics(data: DashboardData) {
     roleTitle: app.roleTitle,
     stage: app.stage,
     stageLabel:
-      app.status === "closed" || app.status === "passed" ? "not aligned" : app.stage.replace(/_/g, " "),
+      app.status === JobApplicationStatus.closed || app.status === JobApplicationStatus.passed ? "not aligned" : app.stage.replace(/_/g, " "),
     stageIdx: getStageIndex(app.stage),
     formattedDate: formatDate(app),
   }));

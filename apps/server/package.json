@@ -13,12 +13,14 @@
         "@kursa/auth": "workspace:*",
         "@kursa/db": "workspace:*",
         "@kursa/env": "workspace:*",
+        "@kursa/types": "workspace:*",
         "better-auth": "catalog:",
         "cors": "^2.8.5",
         "dotenv": "catalog:",
         "express": "^5.1.0",
         "express-rate-limit": "^8.5.2",
         "helmet": "^8.2.0",
+        "openai": "^6.39.1",
         "zod": "catalog:"
     },
     "devDependencies": {

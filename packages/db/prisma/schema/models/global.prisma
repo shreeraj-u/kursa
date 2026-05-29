@@ -7,3 +7,77 @@ enum AchievementType {
   VOLUNTEER
   OTHER
 }
+
+enum WorkEnvironment {
+  remote
+  hybrid
+  onsite
+}
+
+enum ExperienceLevel {
+  entry
+  mid
+  senior
+  lead
+}
+
+enum CompanySize {
+  startup
+  scale_up
+  enterprise
+}
+
+enum SkillCategory {
+  technical
+  soft
+  tool
+}
+
+enum SkillProficiency {
+  beginner
+  intermediate
+  advanced
+  expert
+}
+
+enum EducationType {
+  degree
+  certification
+  course
+}
+
+enum LanguageProficiency {
+  Native
+  Fluent
+  Conversational
+  Basic
+}
+
+enum LearningGoalStatus {
+  PLANNED
+  LEARNING
+  COMPLETED
+}
+
+enum JobApplicationStage {
+  shortlisted
+  applied
+  phone_screen
+  technical
+  on_site
+  offer
+  closed
+}
+
+enum JobApplicationStatus {
+  active
+  passed
+  closed
+}
+
+enum CareerTrajectory {
+  linear
+  accelerating
+  stagnating
+  pivoting
+}

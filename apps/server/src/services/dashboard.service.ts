@@ -1,6 +1,6 @@
 import prisma from "@kursa/db";
 
-import { type DashboardData, computeDashboardMetrics } from "./dashboard.compute.js";
+import { type DashboardData, computeDashboardMetrics } from "../compute/dashboard.compute.js";
 
 export async function getDashboardMetrics(userId: string) {
   const user = await prisma.user.findUnique({

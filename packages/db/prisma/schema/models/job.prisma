@@ -1,43 +1,43 @@
 model Job {
-  id              String   @id @default(uuid())
+  id              String           @id @default(uuid())
   title           String
   company         String
   location        String?
-  workEnvironment String?  // "remote", "hybrid", "onsite"
-  description     String?  @db.Text
+  workEnvironment WorkEnvironment? // "remote", "hybrid", "onsite"
+  description     String?          @db.Text
   url             String?
-  
+
   // Market & Context Data
   industry        String?
-  experienceLevel String?  // e.g., "entry", "mid", "senior", "lead"
-  companySize     String?  // e.g., "startup", "scale_up", "enterprise"
-  source          String?  // e.g., "LinkedIn", "Indeed", "Company Site"
-  sourceId        String?  // ID on the source platform
+  experienceLevel ExperienceLevel? // e.g., "entry", "mid", "senior", "lead"
+  companySize     CompanySize? // e.g., "startup", "scale_up", "enterprise"
+  source          String? // e.g., "LinkedIn", "Indeed", "Company Site"
+  sourceId        String? // ID on the source platform
 
   // Compensation
-  salaryMin       Int?
-  salaryMax       Int?
-  currency        String?
-  equity          String?  // e.g., "0.1% - 0.5%"
-  benefits        String[]
+  salaryMin Int?
+  salaryMax Int?
+  currency  String?
+  equity    String? // e.g., "0.1% - 0.5%"
+  benefits  String[]
 
   // Extracted Data for AI/Matching
-  skills          String[] 
-  requirements    String[]
+  skills           String[]
+  requirements     String[]
   responsibilities String[]
-  metadata        Json?    // Any additional market data
-  rawPosting      Json?    // The full scraped data if available
+  metadata         Json? // Any additional market data
+  rawPosting       Json? // The full scraped data if available
 
   // Status & Timestamps
-  postedAt        DateTime?
-  closingDate     DateTime?
-  isActive        Boolean  @default(true)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  postedAt    DateTime?
+  closingDate DateTime?
+  isActive    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relation to track who applied to this job
-  applications    JobApplication[]
+  applications JobApplication[]
 
   @@index([title, company])
   @@index([source, sourceId])

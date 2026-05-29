@@ -11,7 +11,7 @@ import type { UserProfile, Observation, PaginatedResponse, DashboardMetrics } fr
 interface DashboardProps {
     profile: UserProfile | null;
     user: { name: string; email: string; createdAt: string };
-    initialObservations: PaginatedResponse<Observation>;
+    initialObservations: PaginatedResponse<Observation> | null;
     metrics: DashboardMetrics | null;
 }
 

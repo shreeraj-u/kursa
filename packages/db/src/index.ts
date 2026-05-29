@@ -2,6 +2,7 @@ import { env } from "@kursa/env/server";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
 import { PrismaClient, Prisma } from "../prisma/generated/client";
+export * from "../prisma/generated/client";
 
 export { Prisma, PrismaClient };
 
