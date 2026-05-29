@@ -8,6 +8,7 @@
         "start": "next start"
     },
     "dependencies": {
+        "@kursa/db": "workspace:*",
         "@kursa/env": "workspace:*",
         "@kursa/types": "workspace:*",
         "@kursa/ui": "workspace:*",
@@ -17,12 +18,14 @@
         "better-auth": "catalog:",
         "dotenv": "catalog:",
         "lucide-react": "catalog:",
+        "mammoth": "^1.12.0",
         "motion": "^12.40.0",
         "next": "^16.2.0",
         "next-themes": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
         "sonner": "catalog:",
+        "unpdf": "^1.6.2",
         "zod": "catalog:"
     },
     "devDependencies": {
