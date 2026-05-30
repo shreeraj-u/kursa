@@ -229,13 +229,24 @@ async function usedToday(profileId: string): Promise<number> {
 }
 
 async function pruneOldVersions(profileId: string): Promise<void> {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   const keep = await prisma.resume.findMany({
     where: { profileId },
     orderBy: { version: "desc" },
     take: MAX_STORED_VERSIONS,
     select: { id: true },
   });
+
+  // Only prune versions from previous days so today's rows remain available for
+  // quota counting via usedToday(). Older history is still capped once it falls
+  // outside the latest MAX_STORED_VERSIONS.
   await prisma.resume.deleteMany({
-    where: { profileId, id: { notIn: keep.map((r) => r.id) } },
+    where: {
+      profileId,
+      createdAt: { lt: startOfToday },
+      id: { notIn: keep.map((r) => r.id) },
+    },
   });
 }
