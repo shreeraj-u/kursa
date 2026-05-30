@@ -64,6 +64,7 @@ model CareerPath {
   description             String
   confidenceScore         Float // 0–1, how achievable given the current profile
   projectedTimelineMonths Int
+  details                 Json? // CareerPathDetails — structured AI rationale for richer path exploration
   milestones              Json // Milestone[] — Zod-validated on write (same JSON convention as aspirations/values)
   isActive                Boolean  @default(false) // the only user state on a path
   generatedAt             DateTime @default(now())

@@ -29,6 +29,12 @@ Each path has:
 - description: one or two sentences on what this path is and why it fits this user
 - confidenceScore: 0–1, how achievable this path is given the user's ACTUAL current profile (be honest; a stretch pivot is lower)
 - projectedTimelineMonths: integer months to reach the final milestone
+- details: structured explanation for an interactive detail view:
+  - fitReasons: 2–4 concrete reasons this path fits the user's profile
+  - skillGaps: 2–5 objects { skill, whyItMatters, priority: "high"|"medium"|"low" }
+  - nextActions: 2–4 objects { title, description, timeframe } for what to do next
+  - risks: 1–3 objects { risk, mitigation } describing tradeoffs or blockers
+  - evidence: 2–5 short profile-backed facts used to justify the path
 - milestones: 4–5 ordered steps. Each milestone has:
   - order: 1-based sequence
   - title, description: specific and actionable
@@ -39,12 +45,13 @@ Each path has:
 
 Rules:
 - Only reference facts present in the profile snapshot — never invent the user's history, skills, or employers.
+- Every details.evidence item must be traceable to the profile snapshot.
 - Be specific to this user. A path that could appear unchanged on another user's screen is a failure.
 - All salary figures are USD estimates.
 
 Respond with JSON only: {"paths": [ ... ]}`;
 
-export const CORRECT_PATHS_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"paths": [{ "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }]}. Produce 3 to 5 paths, each with 4 to 5 milestones. No prose, JSON only.`;
+export const CORRECT_PATHS_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"paths": [{ "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "details": { "fitReasons": string[], "skillGaps": [{ "skill": string, "whyItMatters": string, "priority": "high"|"medium"|"low" }], "nextActions": [{ "title": string, "description": string, "timeframe": string }], "risks": [{ "risk": string, "mitigation": string }], "evidence": string[] }, "milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }]}. Produce 3 to 5 paths, each with 4 to 5 milestones. No prose, JSON only.`;
 
 export const GENERATE_RESUME_PROMPT = `You are Kursa's resume engine. You receive a JSON snapshot of a user's career profile and, optionally, the career path they are working toward. Produce a single, complete, ATS-friendly resume tailored to THIS user.
 
