@@ -10,3 +10,4 @@ export * from './api/dashboard';
 export * from './api/common';
 export * from './api/insights';
 export * from './api/paths';
+export * from './api/resume';

@@ -32,8 +32,27 @@ model Profile {
   socialLinks        SocialLink[]
   jobApplications    JobApplication[]
   careerPaths        CareerPath[]
+  resumes            Resume[]
 
   @@map("profile")
+}
+
+model Resume {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  careerPathId String? // path this resume was shaped toward (nullable, no FK constraint)
+  targetRole   String?
+  version      Int
+  content      Json // ResumeContent — Zod-validated on write
+  atsScore     Int
+  atsIssues    Json // AtsIssue[] — Zod-validated on write
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@map("resume")
 }
 
 model CareerPath {
