@@ -7,6 +7,7 @@ export const MAX_SKILLS = 20;
 export const MAX_EDUCATION = 5;
 export const MAX_CERTIFICATIONS = 5;
 export const MAX_PROJECTS = 4;
+export const MAX_ACHIEVEMENTS = 12;
 
 export const sectionKeySchema = z.enum([
   "summary",
@@ -15,6 +16,17 @@ export const sectionKeySchema = z.enum([
   "education",
   "certifications",
   "projects",
+  "others",
+]);
+
+export const achievementTypeSchema = z.enum([
+  "HACKATHON",
+  "AWARD",
+  "PUBLICATION",
+  "SPEAKING",
+  "OPEN_SOURCE",
+  "VOLUNTEER",
+  "OTHER",
 ]);
 
 export const experienceSchema = z.object({
@@ -55,8 +67,28 @@ export const resumeContentSchema = z.object({
     .max(MAX_CERTIFICATIONS)
     .default([]),
   projects: z
-    .array(z.object({ title: z.string().min(1), description: z.string().default("") }))
+    .array(
+      z.object({
+        title: z.string().min(1),
+        description: z.string().default(""),
+        period: z.string().nullish().transform((v) => v ?? undefined),
+        url: z.string().nullish().transform((v) => v ?? undefined),
+        bullets: z.array(z.string().min(1)).max(3).optional(),
+      }),
+    )
     .max(MAX_PROJECTS)
+    .optional(),
+  achievements: z
+    .array(
+      z.object({
+        type: achievementTypeSchema,
+        title: z.string().min(1),
+        issuer: z.string().nullish().transform((v) => v ?? undefined),
+        url: z.string().nullish().transform((v) => v ?? undefined),
+        year: z.string().nullish().transform((v) => v ?? undefined),
+      }),
+    )
+    .max(MAX_ACHIEVEMENTS)
     .optional(),
   sectionOrder: z.array(sectionKeySchema).optional(),
 });

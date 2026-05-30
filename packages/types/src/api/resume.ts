@@ -25,6 +25,28 @@ export interface ResumeCertification {
 export interface ResumeProject {
   title: string;
   description: string;
+  period?: string;
+  url?: string;
+  bullets?: string[];
+}
+
+export type AchievementType =
+  | "HACKATHON"
+  | "AWARD"
+  | "PUBLICATION"
+  | "SPEAKING"
+  | "OPEN_SOURCE"
+  | "VOLUNTEER"
+  | "OTHER";
+
+// A résumé-side achievement, rendered compactly in the "Others" section
+// grouped by type. Sourced from the Profile's Achievement entity.
+export interface ResumeAchievement {
+  type: AchievementType;
+  title: string;
+  issuer?: string;
+  url?: string;
+  year?: string;
 }
 
 export type ResumeSectionKey =
@@ -33,7 +55,8 @@ export type ResumeSectionKey =
   | "skills"
   | "education"
   | "certifications"
-  | "projects";
+  | "projects"
+  | "others";
 
 export interface ResumeContent {
   fullName: string;
@@ -44,6 +67,7 @@ export interface ResumeContent {
   education: ResumeEducation[];
   certifications: ResumeCertification[];
   projects?: ResumeProject[];
+  achievements?: ResumeAchievement[];
   sectionOrder?: ResumeSectionKey[];
 }
 
@@ -91,7 +115,8 @@ export interface ResumeProfileSnapshot {
   }>;
   educations: Array<{ credentialName: string; issuer: string; year: string | null }>;
   certifications: Array<{ credentialName: string; issuer: string; year: string | null }>;
-  projects: Array<{ title: string; description: string }>;
+  projects: Array<{ title: string; description: string; period: string | null; url: string | null; outcomes: unknown }>;
+  achievements: Array<{ type: AchievementType; title: string; issuer: string | null; url: string | null; year: string | null }>;
   languages: Array<{ name: string; proficiency: string }>;
 }
 

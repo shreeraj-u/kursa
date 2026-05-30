@@ -13,6 +13,7 @@ const IN_SKILLS = 40;
 const IN_ROLES = 12;
 const IN_EDU = 10;
 const IN_PROJECTS = 10;
+const IN_ACHIEVEMENTS = 15;
 const IN_LANGS = 8;
 
 const inFlight = new Set<string>();
@@ -43,13 +44,24 @@ const PROFILE_INCLUDE = {
   skills: { select: { name: true, confidenceRating: true }, take: IN_SKILLS },
   workHistories: {
     select: { companyName: true, roleTitle: true, startDate: true, endDate: true, isCurrent: true, outcomes: true },
+    orderBy: [{ isCurrent: "desc" }, { startDate: "desc" }],
     take: IN_ROLES,
   },
   educations: {
     select: { type: true, credentialName: true, issuer: true, completionDate: true },
+    orderBy: { completionDate: "desc" },
     take: IN_EDU,
   },
-  projects: { select: { title: true, description: true }, take: IN_PROJECTS },
+  projects: {
+    select: { title: true, description: true, url: true, startDate: true, endDate: true, outcomes: true },
+    orderBy: [{ endDate: "desc" }, { startDate: "desc" }],
+    take: IN_PROJECTS,
+  },
+  achievements: {
+    select: { type: true, title: true, issuer: true, url: true, dateAchieved: true },
+    orderBy: { dateAchieved: "desc" },
+    take: IN_ACHIEVEMENTS,
+  },
   languages: { select: { name: true, proficiency: true }, take: IN_LANGS },
   socialLinks: { select: { url: true } },
   careerPaths: {
@@ -57,7 +69,7 @@ const PROFILE_INCLUDE = {
     select: { id: true, title: true, milestones: true },
     take: 1,
   },
-} as const;
+} satisfies Prisma.ProfileInclude;
 
 // --- concurrency guard helper ---
 async function acquireLock<T>(userId: string, action: () => Promise<T>): Promise<T> {

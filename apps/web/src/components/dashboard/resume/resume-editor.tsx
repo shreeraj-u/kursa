@@ -2,6 +2,8 @@
 
 import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import type {
+  AchievementType,
+  ResumeAchievement,
   ResumeCertification,
   ResumeContent,
   ResumeEducation,
@@ -10,7 +12,11 @@ import type {
   ResumeSectionKey,
 } from "@kursa/types";
 
-import { normalizeResumeSectionOrder, RESUME_SECTION_LABELS } from "@/lib/dashboard/resume/section-order";
+import {
+  ACHIEVEMENT_TYPE_LABELS,
+  normalizeResumeSectionOrder,
+  RESUME_SECTION_LABELS,
+} from "@/lib/dashboard/resume/section-order";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
@@ -25,7 +31,10 @@ const MAX_SKILLS = 20;
 const MAX_EDUCATION = 5;
 const MAX_CERTIFICATIONS = 5;
 const MAX_PROJECTS = 4;
+const MAX_ACHIEVEMENTS = 12;
 const PAGE_FIT_WARNING_THRESHOLD = 112;
+
+const ACHIEVEMENT_TYPES = Object.keys(ACHIEVEMENT_TYPE_LABELS) as AchievementType[];
 
 const inputCls =
   "w-full bg-bg border border-line rounded-sm px-2 py-1 text-xs text-ink focus:outline-none focus:border-line-2";
@@ -42,9 +51,10 @@ const emptyExperience: ResumeExperience = {
   period: "",
   bullets: [""],
 };
-const emptyProject: ResumeProject = { title: "", description: "" };
+const emptyProject: ResumeProject = { title: "", description: "", period: "", url: "", bullets: [] };
 const emptyEducation: ResumeEducation = { credential: "", issuer: "", year: "" };
 const emptyCertification: ResumeCertification = { name: "", issuer: "", year: "" };
+const emptyAchievement: ResumeAchievement = { type: "HACKATHON", title: "", issuer: "", url: "", year: "" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -142,10 +152,22 @@ function estimatePageWeight(content: ResumeContent): number {
   );
   const roleWeight = content.experience.length * 7;
   const projectWeight = projects.reduce(
-    (total, project) => total + 5 + Math.ceil((project.title.length + project.description.length) / 120),
+    (total, project) =>
+      total +
+      5 +
+      Math.ceil(
+        (project.title.length +
+          project.description.length +
+          (project.period?.length ?? 0) +
+          (project.url?.length ?? 0) +
+          (project.bullets ?? []).join(" ").length) /
+          120,
+      ),
     0,
   );
   const credentialWeight = (content.education.length + content.certifications.length) * 3;
+  const achievementCount = content.achievements?.length ?? 0;
+  const achievementWeight = achievementCount > 0 ? 3 + Math.ceil(achievementCount / 3) : 0;
   const skillsWeight = Math.ceil(content.skills.length / 4);
   const contactWeight = Math.ceil(
     [content.contact.email, content.contact.location, ...content.contact.links]
@@ -153,11 +175,12 @@ function estimatePageWeight(content: ResumeContent): number {
       .join(" ").length / 120,
   );
 
-  return summaryWeight + bulletWeight + roleWeight + projectWeight + credentialWeight + skillsWeight + contactWeight;
+  return summaryWeight + bulletWeight + roleWeight + projectWeight + credentialWeight + achievementWeight + skillsWeight + contactWeight;
 }
 
 export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
   const projects = value.projects ?? [];
+  const achievements = value.achievements ?? [];
   const sectionOrder = normalizeResumeSectionOrder(value);
   const likelyOverOnePage = estimatePageWeight(value) > PAGE_FIT_WARNING_THRESHOLD;
 
@@ -184,6 +207,10 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
     patch({ certifications: value.certifications.map((c, idx) => (idx === i ? next : c)) });
   }
 
+  function setAchievement(i: number, next: ResumeAchievement) {
+    patch({ achievements: achievements.map((a, idx) => (idx === i ? next : a)) });
+  }
+
   function sectionHasContent(section: ResumeSectionKey): boolean {
     switch (section) {
       case "summary":
@@ -198,6 +225,8 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
         return value.certifications.length > 0;
       case "projects":
         return projects.length > 0;
+      case "others":
+        return achievements.length > 0;
     }
   }
 
@@ -389,12 +418,20 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
                 label="project"
                 onMove={(nextIndex) => patch({ projects: moveItem(projects, i, nextIndex) })}
               />
-              <Input
-                className={inputCls}
-                placeholder="Project title"
-                value={project.title}
-                onChange={(e) => setProject(i, { ...project, title: e.target.value })}
-              />
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <Input
+                  className={inputCls}
+                  placeholder="Project title"
+                  value={project.title}
+                  onChange={(e) => setProject(i, { ...project, title: e.target.value })}
+                />
+                <Input
+                  className={inputCls}
+                  placeholder="Period, e.g. 2024 – Present"
+                  value={project.period ?? ""}
+                  onChange={(e) => setProject(i, { ...project, period: e.target.value })}
+                />
+              </div>
               <Button
                 type="button"
                 variant="ghost"
@@ -406,11 +443,107 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
                 <X size={13} />
               </Button>
             </div>
+            <Input
+              className={inputCls}
+              placeholder="Project URL"
+              value={project.url ?? ""}
+              onChange={(e) => setProject(i, { ...project, url: e.target.value })}
+            />
             <textarea
               className={`${inputCls} min-h-12 resize-y`}
               placeholder="Short description"
               value={project.description}
               onChange={(e) => setProject(i, { ...project, description: e.target.value })}
+            />
+            <textarea
+              className={`${inputCls} min-h-16 resize-y`}
+              placeholder="Project bullets (one per line)"
+              value={(project.bullets ?? []).join("\n")}
+              onChange={(e) =>
+                setProject(i, {
+                  ...project,
+                  bullets: e.target.value
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                    .slice(0, 3),
+                })
+              }
+            />
+          </div>
+        ))}
+      </div>
+    ),
+    others: (
+      <div className="flex flex-col gap-3">
+        <SectionHeader
+          label="Others"
+          count={achievements.length}
+          max={MAX_ACHIEVEMENTS}
+          addLabel="add achievement"
+          onAdd={() => patch({ achievements: [...achievements, { ...emptyAchievement }] })}
+        />
+        {achievements.map((achievement, i) => (
+          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+            <div className="flex items-start gap-2">
+              <ReorderControls
+                index={i}
+                count={achievements.length}
+                label="achievement"
+                onMove={(nextIndex) => patch({ achievements: moveItem(achievements, i, nextIndex) })}
+              />
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <select
+                  className={inputCls}
+                  value={achievement.type}
+                  onChange={(e) =>
+                    setAchievement(i, { ...achievement, type: e.target.value as AchievementType })
+                  }
+                  aria-label="Achievement type"
+                >
+                  {ACHIEVEMENT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {ACHIEVEMENT_TYPE_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  className={inputCls}
+                  placeholder="Title"
+                  value={achievement.title}
+                  onChange={(e) => setAchievement(i, { ...achievement, title: e.target.value })}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => patch({ achievements: achievements.filter((_, idx) => idx !== i) })}
+                className={`${removeBtnCls} mt-1`}
+                aria-label="Remove achievement"
+              >
+                <X size={13} />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                className={inputCls}
+                placeholder="Issuer (optional)"
+                value={achievement.issuer ?? ""}
+                onChange={(e) => setAchievement(i, { ...achievement, issuer: e.target.value || undefined })}
+              />
+              <Input
+                className={inputCls}
+                placeholder="Year (optional)"
+                value={achievement.year ?? ""}
+                onChange={(e) => setAchievement(i, { ...achievement, year: e.target.value || undefined })}
+              />
+            </div>
+            <Input
+              className={inputCls}
+              placeholder="URL (optional)"
+              value={achievement.url ?? ""}
+              onChange={(e) => setAchievement(i, { ...achievement, url: e.target.value || undefined })}
             />
           </div>
         ))}

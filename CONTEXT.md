@@ -46,10 +46,15 @@ path set comes back with nothing active, and the user re-selects their Active Pa
 ### Résumé
 A generated document that starts as a live output of the system's knowledge of the
 user. AI generation is derived from the Profile and shaped toward the user's
-Active Path / target role. A user may then make résumé-only manual edits —
-including adding or removing experiences, bullets, projects, education, or
-certifications — to tailor the selected version without changing the Profile
-source of truth. Résumés are **append-only versioned** at generation time (see
+Active Path / target role. Its section order is **seniority-aware**: the engine
+chooses the order from the Profile (new grads lead with education and projects and
+omit the summary; experienced users lead with summary and experience). The Profile's
+**Achievements** surface here as the **Others** section — a compact block grouping
+achievements by type (Hackathons, Awards, …); the section is titled "Others" but is
+sourced from the [[Achievement]] entity, and the two names must stay linked. A user
+may then make résumé-only manual edits — including adding or removing experiences,
+bullets, projects, achievements, education, or certifications — to tailor the
+selected version without changing the Profile source of truth. Résumés are **append-only versioned** at generation time (see
 Resume version); each is stored with an ATS score and is downloadable as a real,
 text-based (ATS-readable) PDF. Generation is bounded by a Generation quota.
 

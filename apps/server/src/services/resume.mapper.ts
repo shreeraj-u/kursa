@@ -12,7 +12,8 @@ export type ProfileWithRelations = Prisma.ProfileGetPayload<{
     skills: { select: { name: true; confidenceRating: true } };
     workHistories: { select: { companyName: true; roleTitle: true; startDate: true; endDate: true; isCurrent: true; outcomes: true } };
     educations: { select: { type: true; credentialName: true; issuer: true; completionDate: true } };
-    projects: { select: { title: true; description: true } };
+    projects: { select: { title: true; description: true; url: true; startDate: true; endDate: true; outcomes: true } };
+    achievements: { select: { type: true; title: true; issuer: true; url: true; dateAchieved: true } };
     languages: { select: { name: true; proficiency: true } };
     socialLinks: { select: { url: true } };
   };
@@ -55,6 +56,16 @@ export function toSnapshot(
     projects: profile.projects.map((p) => ({
       title: p.title,
       description: p.description ?? "",
+      period: formatOptionalPeriod(p.startDate, p.endDate),
+      url: p.url,
+      outcomes: normalizeOutcomeText(p.outcomes),
+    })),
+    achievements: profile.achievements.map((a) => ({
+      type: a.type,
+      title: a.title,
+      issuer: a.issuer,
+      url: a.url,
+      year: a.dateAchieved ? String(new Date(a.dateAchieved).getFullYear()) : null,
     })),
     languages: profile.languages.map((l) => ({
       name: l.name,
@@ -80,8 +91,22 @@ export function toTarget(
 
 export function formatPeriod(start: Date, end: Date | null, isCurrent: boolean): string {
   const s = new Date(start).getFullYear();
-  const e = isCurrent ? "present" : end ? new Date(end).getFullYear() : "";
+  const e = isCurrent ? "Present" : end ? new Date(end).getFullYear() : "";
   return e ? `${s} – ${e}` : `${s}`;
+}
+
+function formatOptionalPeriod(start: Date | null, end: Date | null): string | null {
+  if (!start && !end) return null;
+  const s = start ? String(new Date(start).getFullYear()) : "";
+  const e = end ? String(new Date(end).getFullYear()) : "Present";
+  return s ? `${s} – ${e}` : e;
+}
+
+function normalizeOutcomeText(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && "text" in value && typeof value.text === "string") return value.text;
+  return JSON.stringify(value);
 }
 
 export function toResume(row: {

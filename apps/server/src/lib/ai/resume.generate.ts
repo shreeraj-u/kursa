@@ -7,7 +7,9 @@ import type {
 
 import { openai } from "../openai.js";
 import {
+  MAX_ACHIEVEMENTS,
   MAX_BULLETS,
+  MAX_PROJECTS,
   MAX_ROLES,
   MAX_SKILLS,
   atsResponseSchema,
@@ -61,7 +63,7 @@ async function attemptResume(
     messages,
     response_format: { type: "json_object" },
     temperature: 0.4,
-    max_tokens: 2500, // output bound
+    max_tokens: 4000, // output bound — headroom so full project/experience depth isn't truncated
   });
 
   const raw = response.choices[0]?.message?.content ?? "{}";
@@ -84,6 +86,12 @@ async function attemptResume(
       .slice(0, MAX_ROLES)
       .map((e) => ({ ...e, bullets: e.bullets.slice(0, MAX_BULLETS) })),
     skills: data.skills.slice(0, MAX_SKILLS),
+    projects: data.projects
+      ?.filter((p) => p.description.trim().length > 0 || (p.bullets?.length ?? 0) > 0)
+      .slice(0, MAX_PROJECTS)
+      .map((p) => ({ ...p, bullets: p.bullets?.slice(0, 3) })),
+    achievements: data.achievements?.slice(0, MAX_ACHIEVEMENTS),
+    sectionOrder: data.sectionOrder ?? ["summary", "skills", "experience", "projects", "others", "education", "certifications"],
   };
 }
 
