@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CareerPath } from "@kursa/types";
 
@@ -16,17 +16,27 @@ interface CareerPathPageProps {
   paths: CareerPath[];
 }
 
+function setOnlyActivePath(paths: CareerPath[], activePathId: string) {
+  return paths.map((path) => ({
+    ...path,
+    isActive: path.id === activePathId,
+  }));
+}
+
+function reconcileActivatedPaths(paths: CareerPath[], requestedPathId: string) {
+  return paths.some((path) => path.id === requestedPathId)
+    ? setOnlyActivePath(paths, requestedPathId)
+    : paths;
+}
+
 export default function CareerPathPage({ paths }: CareerPathPageProps) {
   const router = useRouter();
   const [localPaths, setLocalPaths] = useState(paths);
   const [generating, setGenerating] = useState(false);
-  const [activatingId, setActivatingId] = useState<string | null>(null);
+  const [pendingActivePathId, setPendingActivePathId] = useState<string | null>(null);
+  const [optimisticActivePathId, setOptimisticActivePathId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justRegenerated, setJustRegenerated] = useState(false);
-
-  useEffect(() => {
-    setLocalPaths(paths);
-  }, [paths]);
 
   const activePath = localPaths.find((p) => p.isActive);
   const [selectedPathId, setSelectedPathId] = useState<string | null>(
@@ -37,8 +47,55 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
   const selectedPath =
     localPaths.find((p) => p.id === selectedPathId) ?? localPaths[0] ?? null;
 
+  const pendingActivePathIdRef = useRef(pendingActivePathId);
+  const optimisticActivePathIdRef = useRef(optimisticActivePathId);
+  const selectedPathIdRef = useRef(selectedPathId);
+  pendingActivePathIdRef.current = pendingActivePathId;
+  optimisticActivePathIdRef.current = optimisticActivePathId;
+  selectedPathIdRef.current = selectedPathId;
+
   useEffect(() => {
-    if (!selectedPathId && localPaths[0]) setSelectedPathId(localPaths[0].id);
+    setLocalPaths((currentPaths) => {
+      const protectedPathId =
+        pendingActivePathIdRef.current ?? optimisticActivePathIdRef.current;
+      if (!protectedPathId) return paths;
+
+      const protectedPathExists = paths.some((path) => path.id === protectedPathId);
+      const selectedPathId = selectedPathIdRef.current;
+      const selectedPathExists = selectedPathId
+        ? paths.some((path) => path.id === selectedPathId)
+        : true;
+      const currentActivePathId = currentPaths.find((path) => path.isActive)?.id;
+      const currentActivePathExists = currentActivePathId
+        ? paths.some((path) => path.id === currentActivePathId)
+        : true;
+
+      if (!protectedPathExists || !selectedPathExists || !currentActivePathExists) {
+        return paths;
+      }
+
+      return reconcileActivatedPaths(paths, protectedPathId);
+    });
+  }, [paths]);
+
+  useEffect(() => {
+    if (!optimisticActivePathId) return;
+
+    const optimisticPath = paths.find((path) => path.id === optimisticActivePathId);
+    if (!optimisticPath || optimisticPath.isActive) {
+      setOptimisticActivePathId(null);
+    }
+  }, [paths, optimisticActivePathId]);
+
+  useEffect(() => {
+    if (localPaths.length === 0) {
+      if (selectedPathId) setSelectedPathId(null);
+      return;
+    }
+
+    if (!selectedPathId || !localPaths.some((path) => path.id === selectedPathId)) {
+      setSelectedPathId(localPaths[0].id);
+    }
   }, [localPaths, selectedPathId]);
 
   useEffect(() => {
@@ -47,6 +104,8 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
 
   async function generate() {
     setGenerating(true);
+    setPendingActivePathId(null);
+    setOptimisticActivePathId(null);
     setError(null);
     try {
       const result = await api.paths.generate();
@@ -67,18 +126,30 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
   }
 
   async function activatePath(id: string) {
-    setActivatingId(id);
+    if (pendingActivePathId) return;
+
+    const previousPaths = localPaths;
+    setPendingActivePathId(id);
+    setOptimisticActivePathId(id);
     setError(null);
+    setLocalPaths(setOnlyActivePath(localPaths, id));
+    setSelectedPathId(id);
+
     try {
       const result = await api.paths.activate(id);
-      setLocalPaths(result.paths);
+      setLocalPaths(reconcileActivatedPaths(result.paths, id));
+      if (!result.paths.some((path) => path.id === id)) {
+        setOptimisticActivePathId(null);
+      }
       setSelectedPathId(id);
       setJustRegenerated(false);
       router.refresh();
     } catch (e) {
+      setLocalPaths(previousPaths);
+      setOptimisticActivePathId(null);
       setError(e instanceof Error ? e.message : "Failed to activate path");
     } finally {
-      setActivatingId(null);
+      setPendingActivePathId(null);
     }
   }
 
@@ -98,7 +169,7 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
             </div>
             <Button
               onClick={generate}
-              disabled={generating}
+              disabled={generating || pendingActivePathId !== null}
               variant="outline"
               size="sm"
               className="mono text-ink border-line rounded-sm bg-surface hover:bg-bg-sub-2"
@@ -120,7 +191,7 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
           <div className="mono text-xs text-mute">{selectedPath.title}</div>
           <Button
             onClick={generate}
-            disabled={generating}
+            disabled={generating || pendingActivePathId !== null}
             variant="outline"
             size="sm"
             className="mono text-mute border-line rounded-sm bg-bg hover:bg-bg-sub-2"
@@ -145,7 +216,7 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
             <PathDetailsPanel
               path={selectedPath}
               isActive={activePath?.id === selectedPath.id}
-              activating={activatingId === selectedPath.id}
+              activating={pendingActivePathId !== null}
               onActivate={() => activatePath(selectedPath.id)}
             />
             <PathRoadmap

@@ -7,7 +7,9 @@ import * as mapper from "./resume.mapper.js";
 
 // --- constants & guardrails ---
 export const RESUME_DAILY_LIMIT = 10;
-const MAX_STORED_VERSIONS = 20;
+// Only the 3 most recent versions are kept and accessible; older ones are pruned
+// on generation and never returned to the client.
+const MAX_STORED_VERSIONS = 3;
 
 const IN_SKILLS = 40;
 const IN_ROLES = 12;
@@ -94,6 +96,7 @@ export async function listResumes(userId: string): Promise<{ resumes: Resume[]; 
   const rows = await prisma.resume.findMany({
     where: { profileId: profile.id },
     orderBy: { version: "desc" },
+    take: MAX_STORED_VERSIONS,
   });
 
   return {
