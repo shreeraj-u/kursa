@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { EXTRACT_RESUME_DATA_PROMPT, Models } from "./ai/prompts.js";
 import { openai } from "./openai.js";
+import { extractSkillsFromTaxonomy } from "./resume-taxonomy.js";
 
 const parsedSkillSchema = z.object({
   name: z.string().min(1),
@@ -14,6 +15,8 @@ const parsedWorkHistorySchema = z.object({
   roleTitle: z.string().min(1),
   outcomes: z.string().default(""),
   isCurrent: z.boolean().default(false),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
 });
 
 const parsedEducationSchema = z.object({
@@ -53,20 +56,46 @@ export type ParsedEducation = z.infer<typeof parsedEducationSchema>;
 export type ParsedLanguage = z.infer<typeof parsedLanguageSchema>;
 export type ParsedSocialLink = z.infer<typeof parsedSocialLinkSchema>;
 export type ParsedBasics = z.infer<typeof parsedBasicsSchema>;
-export type ResumeParseResult = z.infer<typeof llmResponseSchema> & { rawText: string };
+
+export type ResumeParseResult = z.infer<typeof llmResponseSchema> & {
+  rawText: string;
+  extractionMethod: "llm" | "taxonomy" | "hybrid";
+  warnings: string[];
+};
 
 const MAX_RESUME_CHARS = 15_000;
 
+function mergeSkills(
+  llmSkills: ParsedSkill[],
+  taxonomySkills: ReturnType<typeof extractSkillsFromTaxonomy>,
+): ParsedSkill[] {
+  const seen = new Map<string, ParsedSkill>();
+  for (const s of [...llmSkills, ...taxonomySkills]) {
+    const key = s.name.toLowerCase();
+    const existing = seen.get(key);
+    if (!existing || s.confidenceRating > existing.confidenceRating) {
+      seen.set(key, s);
+    }
+  }
+  return [...seen.values()].slice(0, 30);
+}
+
 export async function parseResumeText(rawText: string): Promise<ResumeParseResult> {
-  const empty: ResumeParseResult = {
+  const base = {
     rawText,
-    skills: [],
-    workHistory: [],
-    education: [],
-    languages: [],
-    socialLinks: [],
+    skills: [] as ParsedSkill[],
+    workHistory: [] as ParsedWorkHistory[],
+    education: [] as ParsedEducation[],
+    languages: [] as ParsedLanguage[],
+    socialLinks: [] as ParsedSocialLink[],
     basics: { bio: null, location: null },
+    warnings: [] as string[],
+    extractionMethod: "taxonomy" as const,
   };
+
+  const taxonomySkills = extractSkillsFromTaxonomy(rawText);
+  let llmData: z.infer<typeof llmResponseSchema> | null = null;
+  let llmError: string | null = null;
 
   try {
     const response = await openai.chat.completions.create({
@@ -82,15 +111,41 @@ export async function parseResumeText(rawText: string): Promise<ResumeParseResul
 
     const content = response.choices[0]?.message?.content ?? "{}";
     const parsed = llmResponseSchema.safeParse(JSON.parse(content));
-
-    if (!parsed.success) {
-      console.error("[resume-parser] LLM response failed validation:", parsed.error.flatten());
-      return empty;
+    if (parsed.success) {
+      llmData = parsed.data;
+    } else {
+      llmError = "LLM response failed validation";
+      console.error("[resume-parser] LLM validation failed:", parsed.error.flatten());
     }
-
-    return { ...parsed.data, rawText };
   } catch (error) {
+    llmError = error instanceof Error ? error.message : "LLM extraction failed";
     console.error("[resume-parser] Extraction failed:", error);
-    return empty;
   }
+
+  if (llmData) {
+    const skills = mergeSkills(llmData.skills, taxonomySkills);
+    const method =
+      taxonomySkills.length > 0 && llmData.skills.length > 0 ? "hybrid" : "llm";
+    return {
+      ...llmData,
+      skills,
+      rawText,
+      extractionMethod: method,
+      warnings: llmError ? [llmError] : [],
+    };
+  }
+
+  if (taxonomySkills.length > 0) {
+    return {
+      ...base,
+      skills: taxonomySkills,
+      extractionMethod: "taxonomy",
+      warnings: [llmError ?? "Used keyword fallback — AI extraction unavailable"],
+    };
+  }
+
+  return {
+    ...base,
+    warnings: [llmError ?? "Could not extract data from resume"],
+  };
 }

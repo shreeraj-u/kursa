@@ -12,9 +12,10 @@ import PathRoadmap from "./components/path-roadmap";
 
 interface CareerPathPageProps {
   paths: CareerPath[];
+  materialChangeDetected?: boolean;
 }
 
-export default function CareerPathPage({ paths }: CareerPathPageProps) {
+export default function CareerPathPage({ paths, materialChangeDetected }: CareerPathPageProps) {
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +92,14 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
             {generating ? "regenerating…" : "regenerate paths"}
           </button>
         </div>
+        {materialChangeDetected && !justRegenerated && (
+          <div
+            className="rounded-lg px-3 py-2 mono text-2xs"
+            style={{ border: "1px solid var(--line)", background: "var(--bg-sub)", color: "var(--mute)" }}
+          >
+            Your profile has shifted since these paths were generated — consider regenerating.
+          </div>
+        )}
         {justRegenerated && (
           <div className="mono text-2xs text-mute-2">
             paths regenerated — pick the one you want to focus on

@@ -1,0 +1,112 @@
+enum CareerEventType {
+  checkin_weekly
+  checkin_monthly
+  win
+  note
+  feedback
+  decision
+  learning
+  aria_observation
+  profile_import
+  onboarding_complete
+  application_update
+  system
+}
+
+enum CareerEventSource {
+  user
+  aria
+  system
+}
+
+enum SkillSource {
+  self_reported
+  resume
+  inferred_checkin
+  inferred_journal
+}
+
+model CareerEvent {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type       CareerEventType
+  source     CareerEventSource
+  body       String?
+  structured Json
+  sentiment  Float?
+
+  linkedSkillIds      String[] @default([])
+  linkedPathId        String?
+  linkedWorkHistoryId String?
+
+  occurredAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@index([userId, occurredAt])
+  @@index([profileId, type])
+  @@map("career_event")
+}
+
+model UserMemory {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       String
+  fact           String
+  confidence     Float
+  sourceEntryIds String[]  @default([])
+  validFrom      DateTime  @default(now())
+  validUntil     DateTime?
+  supersededBy   String?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId, category])
+  @@map("user_memory")
+}
+
+model PersistedObservation {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId      String
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  text           String
+  type           String
+  signalsHash    String
+  sourceEntryIds String[] @default([])
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+
+  @@index([profileId, createdAt])
+  @@map("persisted_observation")
+}
+
+model Conversation {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decisionType String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@map("conversation")
+}
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("chat_message")
+}

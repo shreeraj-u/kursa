@@ -28,6 +28,9 @@ export type FormState = {
   basics: BasicsInputDraft;
   skills: SkillInput[];
   workHistory: WorkHistoryInput[];
+  education: Array<{ type: "degree" | "certification" | "course"; credentialName: string; issuer: string; completionDate: string | null }>;
+  languages: Array<{ name: string; proficiency: "Native" | "Fluent" | "Conversational" | "Basic" }>;
+  socialLinks: Array<{ platform: "github" | "linkedin" | "twitter" | "website" | "portfolio"; url: string }>;
   values: ValuesInputDraft;
   aspirations: AspirationsInput;
   imports: ImportsInput;

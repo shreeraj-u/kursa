@@ -15,12 +15,33 @@ export const skillSchema = z.object({
   name: z.string().trim().min(1),
   category: skillCategorySchema,
   confidenceRating: z.number().int().min(1).max(5),
+  source: z.enum(["self_reported", "resume"]).optional(),
 });
 
 export const workHistorySchema = z.object({
   companyName: z.string().trim().min(1),
   roleTitle: z.string().trim().min(1),
   outcomes: z.string().trim().min(1),
+  isCurrent: z.boolean().optional().default(false),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+});
+
+export const educationSchema = z.object({
+  type: z.enum(["degree", "certification", "course"]),
+  credentialName: z.string().trim().min(1),
+  issuer: z.string().trim().min(1),
+  completionDate: z.string().nullable().optional(),
+});
+
+export const languageSchema = z.object({
+  name: z.string().trim().min(1),
+  proficiency: z.enum(["Native", "Fluent", "Conversational", "Basic"]),
+});
+
+export const socialLinkSchema = z.object({
+  platform: z.enum(["github", "linkedin", "twitter", "website", "portfolio"]),
+  url: z.string().trim().min(1),
 });
 
 export const valuesSchema = z.object({
@@ -49,6 +70,9 @@ export const completeOnboardingSchema = z.object({
   basics: basicsSchema,
   skills: z.array(skillSchema).min(1, "Add at least one skill"),
   workHistory: z.array(workHistorySchema).min(1, "Add at least one role"),
+  education: z.array(educationSchema).default([]),
+  languages: z.array(languageSchema).default([]),
+  socialLinks: z.array(socialLinkSchema).default([]),
   values: valuesSchema,
   aspirations: aspirationsSchema,
   imports: importsSchema.default({ resumeFileName: "", resumeRawText: "", linkedinProfileUrl: "" }),

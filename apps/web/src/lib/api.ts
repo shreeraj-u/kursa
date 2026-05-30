@@ -25,12 +25,14 @@ export type ResumeUploadResult = {
   resumeFileName: string;
   rawText: string;
   importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
-  importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; isCurrent: boolean }>;
+  importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; isCurrent: boolean; startDate?: string | null; endDate?: string | null }>;
   importedEducation: Array<{ type: "degree" | "certification" | "course"; credentialName: string; issuer: string; completionDate: string | null }>;
   importedLanguages: Array<{ name: string; proficiency: "Native" | "Fluent" | "Conversational" | "Basic" }>;
   importedSocialLinks: Array<{ platform: "github" | "linkedin" | "twitter" | "website" | "portfolio"; url: string }>;
   importedBasics: { bio: string | null; location: string | null };
   skillsFound: number;
+  extractionMethod?: "llm" | "taxonomy" | "hybrid";
+  warnings?: string[];
 };
 
 export const api = {
@@ -77,7 +79,6 @@ export const api = {
       }),
 
     uploadResume: async (formData: FormData): Promise<ResumeUploadResult> => {
-      // No Content-Type header — let the browser set the multipart boundary
       const res = await fetch(`${BASE}/api/v1/onboarding/resume`, {
         method: "POST",
         credentials: "include",
@@ -90,5 +91,79 @@ export const api = {
       const json = (await res.json()) as { data: ResumeUploadResult };
       return json.data;
     },
+  },
+
+  journal: {
+    timeline: (params?: { page?: number; filter?: "all" | "win" }) =>
+      request<{
+        data: Array<{
+          id: string;
+          type: string;
+          source: string;
+          body: string | null;
+          tag: string;
+          agent: boolean;
+          occurredAt: string;
+        }>;
+        pagination: { total: number; page: number; limit: number; totalPages: number };
+      }>(`/api/v1/journal?page=${params?.page ?? 1}&filter=${params?.filter ?? "all"}`),
+
+    createWin: (body: { title: string; body: string; skillNames?: string[] }) =>
+      request<{ event: unknown }>("/api/v1/journal/win", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    createNote: (body: { body: string }) =>
+      request<{ event: unknown }>("/api/v1/journal/note", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    context: () =>
+      request<{
+        statusLabel: string;
+        company: string | null;
+        roleTitle: string | null;
+        tenureDays: number | null;
+      }>("/api/v1/journal/context"),
+
+    trend: () =>
+      request<{ data: Array<{ weekLabel: string; value: number }> }>("/api/v1/journal/trend"),
+
+    relevance: () =>
+      request<{
+        pathAlignmentScore: number | null;
+        staleSkills: string[];
+        winsThisQuarter: number;
+        engagementTrend: Array<{ weekLabel: string; value: number }>;
+      }>("/api/v1/journal/relevance"),
+
+    reviewPrep: (from?: string, to?: string) => {
+      const q = new URLSearchParams();
+      if (from) q.set("from", from);
+      if (to) q.set("to", to);
+      return request<{
+        from: string;
+        to: string;
+        sections: Array<{ theme: string; bullets: string[] }>;
+      }>(`/api/v1/journal/review-prep?${q.toString()}`);
+    },
+  },
+
+  checkins: {
+    next: () =>
+      request<{
+        due: boolean;
+        type: "checkin_weekly" | "checkin_monthly" | null;
+        questions: Array<{ id: string; label: string; kind: "text" | "scale" }>;
+        lastCompletedAt: string | null;
+      }>("/api/v1/checkins/next"),
+
+    submit: (body: unknown) =>
+      request<{ event: unknown }>("/api/v1/checkins", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
   },
 };

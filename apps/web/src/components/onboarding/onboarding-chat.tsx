@@ -59,6 +59,9 @@ function emptyForm(): FormState {
     basics: { targetRole: "", location: "", yearsOfExperience: "", bio: "" },
     skills: [],
     workHistory: [],
+    education: [],
+    languages: [],
+    socialLinks: [],
     values: { workEnvironment: "", riskAppetite: "", salaryExpectation: "", workingStyle: "", constraints: "" },
     aspirations: { targetRoles: "", targetIndustries: "", horizon3y: "", horizon5y: "", definitionOfSuccess: "" },
     imports: { resumeFileName: "", resumeRawText: "", linkedinProfileUrl: "" },
@@ -152,7 +155,7 @@ export default function OnboardingChat() {
 
         // Pre-populate skills
         const detected = result.importedSkills.map(({ name, category, confidenceRating }) => ({
-          name, category, confidenceRating,
+          name, category, confidenceRating, source: "resume" as const,
         }));
         mergeImportedSkills(detected);
         setLastDetectedSkills(detected);
@@ -167,7 +170,20 @@ export default function OnboardingChat() {
           );
           return {
             ...prev,
-            workHistory: [...prev.workHistory, ...fresh],
+            workHistory: [
+              ...prev.workHistory,
+              ...fresh.map((w) => ({
+                companyName: w.companyName,
+                roleTitle: w.roleTitle,
+                outcomes: w.outcomes,
+                isCurrent: w.isCurrent,
+                startDate: (w as { startDate?: string | null }).startDate ?? null,
+                endDate: (w as { endDate?: string | null }).endDate ?? null,
+              })),
+            ],
+            education: result.importedEducation,
+            languages: result.importedLanguages,
+            socialLinks: result.importedSocialLinks,
             imports: {
               ...prev.imports,
               resumeFileName: result.resumeFileName,
@@ -175,6 +191,10 @@ export default function OnboardingChat() {
             },
           };
         });
+
+        if (result.warnings?.length) {
+          toast.message(result.warnings[0]);
+        }
 
         const parts: string[] = [];
         if (detected.length > 0) parts.push(`${detected.length} skill${detected.length === 1 ? "" : "s"}`);
@@ -206,8 +226,23 @@ export default function OnboardingChat() {
             yearsOfExperience: Number.isFinite(yearsParsed) ? yearsParsed : 0,
             bio: form.basics.bio.trim(),
           },
-          skills: form.skills.map((s) => ({ name: s.name.trim(), category: s.category, confidenceRating: s.confidenceRating })),
-          workHistory: form.workHistory.map((w) => ({ companyName: w.companyName.trim(), roleTitle: w.roleTitle.trim(), outcomes: w.outcomes.trim() })),
+          skills: form.skills.map((s) => ({
+            name: s.name.trim(),
+            category: s.category,
+            confidenceRating: s.confidenceRating,
+            source: (s as SkillInput & { source?: "resume" }).source === "resume" ? "resume" : "self_reported",
+          })),
+          workHistory: form.workHistory.map((w) => ({
+            companyName: w.companyName.trim(),
+            roleTitle: w.roleTitle.trim(),
+            outcomes: w.outcomes.trim(),
+            isCurrent: (w as { isCurrent?: boolean }).isCurrent ?? false,
+            startDate: (w as { startDate?: string | null }).startDate ?? null,
+            endDate: (w as { endDate?: string | null }).endDate ?? null,
+          })),
+          education: form.education,
+          languages: form.languages,
+          socialLinks: form.socialLinks,
           values: {
             workEnvironment: form.values.workEnvironment,
             riskAppetite: form.values.riskAppetite,

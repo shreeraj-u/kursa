@@ -6,16 +6,17 @@ import CareerPulse from "@/components/dashboard/career-pulse";
 import AriaNoticed from "@/components/dashboard/aria-noticed";
 import InFlight from "@/components/dashboard/in-flight";
 import RecentActivity from "@/components/dashboard/recent-activity";
-import type { UserProfile, Observation, PaginatedResponse, DashboardMetrics } from "@/types/profile";
+import type { UserProfile, ObservationsResponse, DashboardMetrics } from "@/types/profile";
 
 interface DashboardProps {
     profile: UserProfile | null;
     user: { name: string; email: string; createdAt: string };
-    initialObservations: PaginatedResponse<Observation> | null;
+    initialObservations: ObservationsResponse | null;
+    observationsError?: string | null;
     metrics: DashboardMetrics | null;
 }
 
-export default function Dashboard({ profile, user, initialObservations, metrics }: DashboardProps) {
+export default function Dashboard({ profile, user, initialObservations, observationsError, metrics }: DashboardProps) {
     const attentionCount = metrics?.greeting.attentionCount ?? 0;
 
     return (
@@ -45,7 +46,10 @@ export default function Dashboard({ profile, user, initialObservations, metrics 
 
                     {/* Aria noticed card */}
                     <div className="rounded-lg p-4 border border-line bg-surface">
-                        <AriaNoticed initialObservations={initialObservations} />
+                        <AriaNoticed
+                            initialObservations={initialObservations}
+                            initialError={observationsError}
+                        />
                     </div>
                 </div>
 

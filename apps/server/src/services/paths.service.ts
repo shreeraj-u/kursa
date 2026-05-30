@@ -1,6 +1,7 @@
 import prisma, { Prisma } from "@kursa/db";
 import type { CareerPath, Milestone } from "@kursa/types";
 
+import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import {
   generateCareerPaths,
   type GeneratedPath,
@@ -66,14 +67,26 @@ export async function getPaths(userId: string): Promise<CareerPath[] | null> {
  * On AI failure after retry, persists rule-based fallback paths instead.
  */
 export async function generatePaths(userId: string): Promise<CareerPath[] | null> {
+  const context = await assembleAdvisorContext(userId, "paths");
+  if (!context) return null;
+
   const profile = await loadProfile(userId);
   if (!profile) return null;
 
   const snapshot = toSnapshot(profile);
+  const enrichedSnapshot = {
+    ...snapshot,
+    advisorSignals: {
+      winsThisQuarter: context.signals.winsThisQuarter,
+      sentimentTrend12w: context.signals.sentimentTrend12w,
+      intentionActionGap: context.signals.intentionActionGap,
+      memoryFacts: context.memories.map((m) => m.fact),
+    },
+  };
 
   let generated: GeneratedPath[];
   try {
-    generated = await generateCareerPaths(snapshot);
+    generated = await generateCareerPaths(enrichedSnapshot as PathProfileSnapshot);
   } catch {
     generated = buildFallbackPaths(snapshot);
   }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { rateLimit } from "express-rate-limit";
+import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import multer from "multer";
 
 import * as onboardingController from "../../controllers/onboarding.controller.js";
@@ -15,7 +15,7 @@ const upload = multer({
 const resumeUploadLimit = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
   max: 5,
-  keyGenerator: (req) => req.user?.id ?? req.ip ?? "anonymous",
+  keyGenerator: (req) => req.user?.id ?? ipKeyGenerator(req.ip ?? "127.0.0.1"),
   standardHeaders: true,
   legacyHeaders: false,
   message: {

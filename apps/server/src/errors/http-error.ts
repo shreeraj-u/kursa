@@ -21,4 +21,6 @@ export const Errors = {
     new HttpError(404, "NOT_FOUND", `${resource} not found`),
   internal: (message = "Internal server error") =>
     new HttpError(500, "INTERNAL_ERROR", message),
+  observationsUnavailable: (message: string, details?: unknown) =>
+    new HttpError(503, "OBSERVATIONS_UNAVAILABLE", message, details),
 };

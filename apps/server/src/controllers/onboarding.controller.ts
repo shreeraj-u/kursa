@@ -59,5 +59,7 @@ export async function uploadResume(req: Request, res: Response): Promise<void> {
     importedSocialLinks: parsed.socialLinks,
     importedBasics: parsed.basics,
     skillsFound: parsed.skills.length,
+    extractionMethod: parsed.extractionMethod,
+    warnings: parsed.warnings,
   });
 }
