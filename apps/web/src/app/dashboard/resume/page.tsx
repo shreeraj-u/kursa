@@ -1,11 +1,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import type { CareerPath } from "@kursa/types";
+import type { ResumeListResponse } from "@kursa/types";
 
 import { authClient } from "@/lib/auth-client";
 import { serverFetch } from "@/lib/server-fetch";
 
-import CareerPathPage from "@/components/dashboard/career-path/career-path";
+import ResumeStudio from "@/components/dashboard/resume/resume-studio";
 
 export default async function Page() {
   const session = await authClient.getSession({
@@ -28,10 +28,14 @@ export default async function Page() {
     redirect("/onboarding");
   }
 
-  const pathsData = await serverFetch<{ paths: CareerPath[] }>(
-    "/api/v1/profile/me/paths",
-  ).catch(() => null);
-  const paths = pathsData?.paths ?? [];
+  const data = await serverFetch<ResumeListResponse>("/api/v1/profile/me/resumes").catch(
+    () => null,
+  );
 
-  return <CareerPathPage paths={paths} />;
+  return (
+    <ResumeStudio
+      initialResumes={data?.resumes ?? []}
+      quota={data?.quota ?? { used: 0, limit: 10 }}
+    />
+  );
 }

@@ -34,7 +34,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
       toast.error("Already added that role at that company");
       return;
     }
-    props.onChange([...props.items, { companyName: company, roleTitle: role, outcomes: outcomeText }]);
+    props.onChange([...props.items, { companyName: company, roleTitle: role, outcomes: outcomeText, startDate: null, endDate: null, isCurrent: false }]);
     setCompanyName("");
     setRoleTitle("");
     setOutcomes("");
@@ -44,27 +44,26 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2">
         {props.items.length === 0 ? (
-          <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>No experience added yet.</p>
+          <p className="text-xs text-mute">No experience added yet.</p>
         ) : (
           props.items.map((item, i) => (
             <div
               key={i}
-              className="rounded-lg p-3"
-              style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
+              className="rounded-lg p-3 border border-line bg-surface"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p style={{ fontSize: "var(--text-sm)", color: "var(--ink)", fontWeight: 600 }}>{item.roleTitle}</p>
-                  <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>{item.companyName}</p>
+                  <p className="text-sm text-ink font-semibold">{item.roleTitle}</p>
+                  <p className="text-xs text-mute">{item.companyName}</p>
                 </div>
                 <button
                   type="button"
                   aria-label="Remove role"
                   onClick={() => props.onChange(props.items.filter((_, j) => j !== i))}
-                  style={{ color: "var(--mute)" }}
+                  className="text-mute hover:text-ink transition-colors"
                 >×</button>
               </div>
-              <p className="mt-2" style={{ fontSize: "var(--text-xs)", color: "var(--ink)" }}>{item.outcomes}</p>
+              <p className="mt-2 text-xs text-ink">{item.outcomes}</p>
             </div>
           ))
         )}
@@ -75,8 +74,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
         <Input placeholder="Role title" value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} />
       </div>
       <textarea
-        className="min-h-[72px] w-full rounded-md border bg-[var(--surface)] p-3"
-        style={{ borderColor: "var(--line)", fontSize: "var(--text-sm)", color: "var(--ink)" }}
+        className="min-h-[72px] w-full rounded-md border border-line bg-surface p-3 text-ink text-sm"
         placeholder="Outcomes, scope, impact..."
         value={outcomes}
         onChange={(e) => setOutcomes(e.target.value)}

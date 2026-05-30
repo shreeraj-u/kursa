@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import type { CareerPath } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
+import { Button } from "@kursa/ui/components/button";
 import { api } from "@/lib/api";
 
-import PathSelector from "./components/path-selector";
-import PathRoadmap from "./components/path-roadmap";
+import PathSelector from "./path-selector";
+import PathRoadmap from "./path-roadmap";
 
 interface CareerPathPageProps {
   paths: CareerPath[];
@@ -63,13 +64,15 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
               Generate realistic paths forward based on your profile — each with
               milestones, estimated salary, and a timeline.
             </div>
-            <button
+            <Button
               onClick={generate}
               disabled={generating}
-              className="mono text-xs text-ink border border-line rounded-sm px-3 py-1.5 bg-surface hover:bg-bg-sub-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="outline"
+              size="sm"
+              className="mono text-ink border-line rounded-sm bg-surface hover:bg-bg-sub-2"
             >
               {generating ? "generating…" : "generate my career paths"}
-            </button>
+            </Button>
             {error && <div className="mono text-2xs text-warn">{error}</div>}
           </div>
         </div>
@@ -83,13 +86,15 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
       <div className="px-8 pt-6 pb-8 flex flex-col gap-5 flex-1">
         <div className="flex items-center justify-between">
           <div className="mono text-xs text-mute">{selectedPath.title}</div>
-          <button
+          <Button
             onClick={generate}
             disabled={generating}
-            className="mono text-xs text-mute cursor-pointer border border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="outline"
+            size="sm"
+            className="mono text-mute border-line rounded-sm bg-bg hover:bg-bg-sub-2"
           >
             {generating ? "regenerating…" : "regenerate paths"}
-          </button>
+          </Button>
         </div>
         {justRegenerated && (
           <div className="mono text-2xs text-mute-2">

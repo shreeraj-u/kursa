@@ -12,8 +12,7 @@ export function TextareaAnswer(props: TextareaAnswerProps) {
   return (
     <div className="flex flex-col gap-3">
       <textarea
-        className="min-h-[88px] w-full rounded-md border bg-[var(--surface)] p-3 text-[var(--ink)]"
-        style={{ borderColor: "var(--line)", fontSize: "var(--text-sm)" }}
+        className="min-h-[88px] w-full rounded-md border border-line bg-surface p-3 text-ink text-sm"
         placeholder={props.placeholder}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}

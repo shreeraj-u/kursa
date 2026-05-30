@@ -13,26 +13,18 @@ export function MessageBubble({ message }: { message: Message }) {
     >
       <div className={`flex max-w-[85%] gap-2 ${isBot ? "" : "flex-row-reverse"}`}>
         <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full mt-0.5"
-          style={{
-            border: isBot ? "1px solid var(--accent)" : "1px solid var(--line)",
-            background: isBot ? "var(--accent-soft, var(--bg-sub))" : "var(--bg-sub)",
-          }}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full mt-0.5 border text-xs mono text-ink ${
+            isBot ? "border-accent bg-[var(--accent-soft)]" : "border-line bg-bg-sub"
+          }`}
         >
-          <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--ink)" }}>
-            {isBot ? "K" : "y"}
-          </span>
+          {isBot ? "K" : "y"}
         </div>
         <div
-          className="rounded-2xl px-4 py-2.5"
-          style={{
-            background: isBot ? "var(--bg-sub)" : "var(--ink)",
-            color: isBot ? "var(--ink)" : "var(--bg)",
-            border: isBot ? "1px solid var(--line)" : "1px solid var(--ink)",
-            fontSize: "var(--text-sm)",
-            whiteSpace: "pre-wrap",
-            lineHeight: 1.5,
-          }}
+          className={`rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed border ${
+            isBot
+              ? "bg-bg-sub text-ink border-line"
+              : "bg-ink text-bg border-ink"
+          }`}
         >
           {message.text}
         </div>

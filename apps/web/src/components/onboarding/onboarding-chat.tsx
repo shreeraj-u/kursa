@@ -15,6 +15,11 @@ import { SkillsAnswer } from "./answers/skills-answer";
 import { TextAnswer } from "./answers/text-answer";
 import { TextareaAnswer } from "./answers/textarea-answer";
 import { WorkHistoryAnswer } from "./answers/work-history-answer";
+import { EducationAnswer } from "./answers/education-answer";
+import { ProjectAnswer } from "./answers/project-answer";
+import { AchievementAnswer } from "./answers/achievement-answer";
+import { LanguagesAnswer } from "./answers/languages-answer";
+import { SocialLinksAnswer } from "./answers/social-links-answer";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import type { FormState, Message, Step, StepId } from "./types";
@@ -28,6 +33,11 @@ const STEPS: Step[] = [
   { id: "imports", prompts: ["Before we list your skills and experience, want to import them?", "Drop in a resume and I'll pull your skills and work history automatically. Totally optional."] },
   { id: "skills", prompts: ["Here are your skills.", "Add, edit, or remove any — these are the ones a recruiter or hiring manager should see."] },
   { id: "workHistory", prompts: ["Now your work experience.", "Review what's here and add anything missing — company, role, and a brief summary of what you did."] },
+  { id: "education", prompts: ["Let's check your education and credentials next."] },
+  { id: "projects", prompts: ["Any key projects you'd like to feature on your profile?"] },
+  { id: "achievements", prompts: ["Awesome. Do you have any notable achievements, speaking events, or awards?"] },
+  { id: "languages", prompts: ["Which languages do you speak, and at what proficiency?"] },
+  { id: "socialLinks", prompts: ["Finally, drop your professional social links (GitHub, LinkedIn, website) below."] },
   { id: "workEnvironment", prompts: ["What kind of work environment do you thrive in?"] },
   { id: "riskAppetite", prompts: ["And your risk appetite for your next move?"] },
   { id: "salaryExpectation", prompts: ["What's your salary expectation? A rough range is fine."] },
@@ -59,6 +69,11 @@ function emptyForm(): FormState {
     basics: { targetRole: "", location: "", yearsOfExperience: "", bio: "" },
     skills: [],
     workHistory: [],
+    projects: [],
+    achievements: [],
+    education: [],
+    languages: [],
+    socialLinks: [],
     values: { workEnvironment: "", riskAppetite: "", salaryExpectation: "", workingStyle: "", constraints: "" },
     aspirations: { targetRoles: "", targetIndustries: "", horizon3y: "", horizon5y: "", definitionOfSuccess: "" },
     imports: { resumeFileName: "", resumeRawText: "", linkedinProfileUrl: "" },
@@ -159,15 +174,56 @@ export default function OnboardingChat() {
 
         // Pre-populate work history (skip entries already added) and record the upload
         setForm((prev) => {
-          const existing = new Set(
+          const existingWork = new Set(
             prev.workHistory.map((w) => `${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`),
           );
-          const fresh = result.importedWorkHistory.filter(
-            (w) => !existing.has(`${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`),
+          const freshWork = result.importedWorkHistory.filter(
+            (w) => !existingWork.has(`${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`),
           );
+
+          const existingEdu = new Set(
+            prev.education.map((e) => `${e.credentialName.toLowerCase()}__${e.issuer.toLowerCase()}`),
+          );
+          const freshEdu = result.importedEducation.filter(
+            (e) => !existingEdu.has(`${e.credentialName.toLowerCase()}__${e.issuer.toLowerCase()}`),
+          );
+
+          const existingProject = new Set(
+            prev.projects.map((p) => p.title.toLowerCase()),
+          );
+          const freshProject = result.importedProjects.filter(
+            (p) => !existingProject.has(p.title.toLowerCase()),
+          );
+
+          const existingAchievement = new Set(
+            prev.achievements.map((a) => a.title.toLowerCase()),
+          );
+          const freshAchievement = result.importedAchievements.filter(
+            (a) => !existingAchievement.has(a.title.toLowerCase()),
+          );
+
+          const existingLanguage = new Set(
+            prev.languages.map((l) => l.name.toLowerCase()),
+          );
+          const freshLanguage = result.importedLanguages.filter(
+            (l) => !existingLanguage.has(l.name.toLowerCase()),
+          );
+
+          const existingLink = new Set(
+            prev.socialLinks.map((l) => `${l.platform.toLowerCase()}__${l.url.toLowerCase()}`),
+          );
+          const freshLink = result.importedSocialLinks.filter(
+            (l) => !existingLink.has(`${l.platform.toLowerCase()}__${l.url.toLowerCase()}`),
+          );
+
           return {
             ...prev,
-            workHistory: [...prev.workHistory, ...fresh],
+            workHistory: [...prev.workHistory, ...freshWork],
+            education: [...prev.education, ...freshEdu],
+            projects: [...prev.projects, ...freshProject],
+            achievements: [...prev.achievements, ...freshAchievement],
+            languages: [...prev.languages, ...freshLanguage],
+            socialLinks: [...prev.socialLinks, ...freshLink],
             imports: {
               ...prev.imports,
               resumeFileName: result.resumeFileName,
@@ -207,7 +263,19 @@ export default function OnboardingChat() {
             bio: form.basics.bio.trim(),
           },
           skills: form.skills.map((s) => ({ name: s.name.trim(), category: s.category, confidenceRating: s.confidenceRating })),
-          workHistory: form.workHistory.map((w) => ({ companyName: w.companyName.trim(), roleTitle: w.roleTitle.trim(), outcomes: w.outcomes.trim() })),
+          workHistory: form.workHistory.map((w) => ({
+            companyName: w.companyName.trim(),
+            roleTitle: w.roleTitle.trim(),
+            outcomes: w.outcomes.trim(),
+            startDate: w.startDate,
+            endDate: w.endDate,
+            isCurrent: w.isCurrent,
+          })),
+          education: form.education,
+          languages: form.languages,
+          socialLinks: form.socialLinks,
+          projects: form.projects,
+          achievements: form.achievements,
           values: {
             workEnvironment: form.values.workEnvironment,
             riskAppetite: form.values.riskAppetite,
@@ -239,8 +307,7 @@ export default function OnboardingChat() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded-md px-4 py-2"
-              style={{ background: "var(--ink)", color: "var(--bg)", fontSize: "var(--text-sm)" }}
+              className="rounded-md px-4 py-2 bg-ink text-bg text-sm"
               onClick={() => { recordAnswer("Let's do it."); advance(); }}
             >
               Let's do it
@@ -364,6 +431,36 @@ export default function OnboardingChat() {
       case "review":
         return <ReviewAnswer form={form} isSaving={isSaving} onBack={goBack} onSubmit={handleSave} />;
 
+      case "education":
+        return <EducationAnswer items={form.education}
+          onChange={(education) => setForm((p) => ({ ...p, education }))}
+          onSubmit={() => { recordAnswer(`${form.education.length} credential${form.education.length === 1 ? "" : "s"} added`); advance(); }}
+          onBack={goBack} />;
+
+      case "projects":
+        return <ProjectAnswer items={form.projects}
+          onChange={(projects) => setForm((p) => ({ ...p, projects }))}
+          onSubmit={() => { recordAnswer(`${form.projects.length} project${form.projects.length === 1 ? "" : "s"} added`); advance(); }}
+          onBack={goBack} />;
+
+      case "achievements":
+        return <AchievementAnswer items={form.achievements}
+          onChange={(achievements) => setForm((p) => ({ ...p, achievements }))}
+          onSubmit={() => { recordAnswer(`${form.achievements.length} achievement${form.achievements.length === 1 ? "" : "s"} added`); advance(); }}
+          onBack={goBack} />;
+
+      case "languages":
+        return <LanguagesAnswer items={form.languages}
+          onChange={(languages) => setForm((p) => ({ ...p, languages }))}
+          onSubmit={() => { recordAnswer(`${form.languages.length} language${form.languages.length === 1 ? "" : "s"} added`); advance(); }}
+          onBack={goBack} />;
+
+      case "socialLinks":
+        return <SocialLinksAnswer items={form.socialLinks}
+          onChange={(socialLinks) => setForm((p) => ({ ...p, socialLinks }))}
+          onSubmit={() => { recordAnswer(`${form.socialLinks.length} link${form.socialLinks.length === 1 ? "" : "s"} added`); advance(); }}
+          onBack={goBack} />;
+
       default: {
         const _exhaustive: never = stepId;
         return _exhaustive;
@@ -373,33 +470,32 @@ export default function OnboardingChat() {
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="rounded-2xl" style={{ border: "1px solid var(--line)", background: "var(--surface)" }}>
-        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--line)" }}>
+      <div className="rounded-2xl border border-line bg-surface">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full" style={{ background: "var(--accent, #2f8a4a)" }} />
-            <span className="mono" style={{ fontSize: "var(--text-xs)" }}>kursa onboarding</span>
+            <div className="h-2 w-2 rounded-full bg-accent" />
+            <span className="mono text-xs">kursa onboarding</span>
           </div>
-          <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
+          <div className="mono text-xs text-mute">
             {String(stepIndex + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
           </div>
         </div>
 
-        <div className="h-1 w-full" style={{ background: "var(--bg-sub)" }}>
+        <div className="h-1 w-full bg-bg-sub">
           <motion.div
-            className="h-full"
-            style={{ background: "var(--accent, #2f8a4a)" }}
+            className="h-full bg-accent"
             initial={false}
             animate={{ width: `${progress}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
           />
         </div>
 
-        <div ref={transcriptRef} className="space-y-3 overflow-y-auto px-5 py-4" style={{ height: 360 }}>
+        <div ref={transcriptRef} className="space-y-3 overflow-y-auto px-5 py-4 h-[360px]">
           {messages.map((m) => <MessageBubble key={m.id} message={m} />)}
           <AnimatePresence>{isTyping ? <TypingIndicator /> : null}</AnimatePresence>
         </div>
 
-        <div className="px-5 py-4" style={{ borderTop: "1px solid var(--line)", background: "var(--bg-sub)" }}>
+        <div className="px-5 py-4 border-t border-line bg-bg-sub">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep.id}

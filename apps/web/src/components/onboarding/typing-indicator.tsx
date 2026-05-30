@@ -8,21 +8,14 @@ export function TypingIndicator() {
       exit={{ opacity: 0 }}
       className="flex items-center gap-2"
     >
-      <div
-        className="flex h-7 w-7 items-center justify-center rounded-full"
-        style={{ border: "1px solid var(--accent)", background: "var(--bg-sub)" }}
-      >
-        <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--ink)" }}>K</span>
+      <div className="flex h-7 w-7 items-center justify-center rounded-full border border-accent bg-bg-sub text-xs text-ink mono">
+        K
       </div>
-      <div
-        className="flex gap-1 rounded-2xl px-3 py-2"
-        style={{ background: "var(--bg-sub)", border: "1px solid var(--line)" }}
-      >
+      <div className="flex gap-1 rounded-2xl px-3 py-2 bg-bg-sub border border-line">
         {[0, 1, 2].map((dot) => (
           <motion.span
             key={dot}
-            className="inline-block h-1.5 w-1.5 rounded-full"
-            style={{ background: "var(--ink)" }}
+            className="inline-block h-1.5 w-1.5 rounded-full bg-ink"
             animate={{ opacity: [0.25, 1, 0.25] }}
             transition={{ duration: 1.1, repeat: Infinity, delay: dot * 0.15 }}
           />

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@kursa/ui/components/button";
 import { SectionHeader } from "./settings-ui";
 
 const PLANS = [
@@ -149,13 +150,15 @@ export default function PlanSection() {
               </div>
 
               {!isCurrent && (
-                <button
+                <Button
                   disabled
+                  variant="outline"
+                  size="sm"
                   className="h-8 px-4 rounded-lg font-medium text-mute-2 bg-bg-sub border border-line cursor-not-allowed"
                   style={{ fontSize: "var(--text-sm)" }}
                 >
                   Upgrade to {plan.label} — coming soon
-                </button>
+                </Button>
               )}
             </div>
           );

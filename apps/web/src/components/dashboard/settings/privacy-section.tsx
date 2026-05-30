@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@kursa/ui/components/button";
 import { SectionHeader } from "./settings-ui";
 
 const DATA_CATEGORIES = [
@@ -84,13 +85,15 @@ export default function PrivacySection() {
           Download a complete copy of everything Kursa has stored about you as JSON.
         </p>
         <div className="flex items-center gap-3">
-          <button
+          <Button
             disabled
+            variant="outline"
+            size="sm"
             className="h-8 px-3 rounded-lg font-medium text-mute-2 bg-bg-sub border border-line cursor-not-allowed"
             style={{ fontSize: "var(--text-sm)" }}
           >
             Export data
-          </button>
+          </Button>
           <span className="mono text-mute" style={{ fontSize: "var(--text-sm)" }}>
             coming soon
           </span>

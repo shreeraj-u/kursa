@@ -1,8 +1,13 @@
 import type {
+  AchievementInput,
   AspirationsInput,
+  EducationInput,
   ImportsInput,
+  LanguageInput,
+  ProjectInput,
   RiskAppetite,
   SkillInput,
+  SocialLinkInput,
   ValuesInput,
   WorkEnvironment,
   WorkHistoryInput,
@@ -28,6 +33,11 @@ export type FormState = {
   basics: BasicsInputDraft;
   skills: SkillInput[];
   workHistory: WorkHistoryInput[];
+  projects: ProjectInput[];
+  achievements: AchievementInput[];
+  education: EducationInput[];
+  languages: LanguageInput[];
+  socialLinks: SocialLinkInput[];
   values: ValuesInputDraft;
   aspirations: AspirationsInput;
   imports: ImportsInput;
@@ -42,6 +52,11 @@ export type StepId =
   | "imports"
   | "skills"
   | "workHistory"
+  | "projects"
+  | "achievements"
+  | "education"
+  | "languages"
+  | "socialLinks"
   | "workEnvironment"
   | "riskAppetite"
   | "salaryExpectation"
