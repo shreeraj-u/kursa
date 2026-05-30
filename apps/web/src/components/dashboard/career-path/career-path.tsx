@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CareerPath } from "@kursa/types";
 
@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 
 import PathSelector from "./path-selector";
 import PathRoadmap from "./path-roadmap";
+import PathDetailsPanel from "./path-details-panel";
 
 interface CareerPathPageProps {
   paths: CareerPath[];
@@ -17,23 +18,40 @@ interface CareerPathPageProps {
 
 export default function CareerPathPage({ paths }: CareerPathPageProps) {
   const router = useRouter();
+  const [localPaths, setLocalPaths] = useState(paths);
   const [generating, setGenerating] = useState(false);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justRegenerated, setJustRegenerated] = useState(false);
 
-  const activePath = paths.find((p) => p.isActive);
+  useEffect(() => {
+    setLocalPaths(paths);
+  }, [paths]);
+
+  const activePath = localPaths.find((p) => p.isActive);
   const [selectedPathId, setSelectedPathId] = useState<string | null>(
-    activePath?.id ?? paths[0]?.id ?? null,
+    activePath?.id ?? localPaths[0]?.id ?? null,
   );
+  const [selectedMilestoneOrder, setSelectedMilestoneOrder] = useState<number | null>(null);
 
   const selectedPath =
-    paths.find((p) => p.id === selectedPathId) ?? paths[0] ?? null;
+    localPaths.find((p) => p.id === selectedPathId) ?? localPaths[0] ?? null;
+
+  useEffect(() => {
+    if (!selectedPathId && localPaths[0]) setSelectedPathId(localPaths[0].id);
+  }, [localPaths, selectedPathId]);
+
+  useEffect(() => {
+    setSelectedMilestoneOrder(selectedPath?.milestones[0]?.order ?? null);
+  }, [selectedPath?.id]);
 
   async function generate() {
     setGenerating(true);
     setError(null);
     try {
-      await api.paths.generate();
+      const result = await api.paths.generate();
+      setLocalPaths(result.paths);
+      setSelectedPathId(result.paths[0]?.id ?? null);
       setJustRegenerated(true);
       router.refresh();
     } catch (e) {
@@ -43,15 +61,29 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
     }
   }
 
-  function selectPath(id: string) {
+  function previewPath(id: string) {
     setSelectedPathId(id);
-    // Persist the selection as the user's active focus. Fire-and-forget:
-    // activation only affects ordering/initial selection on the next load.
-    api.paths.activate(id).catch(() => {});
+    setError(null);
+  }
+
+  async function activatePath(id: string) {
+    setActivatingId(id);
+    setError(null);
+    try {
+      const result = await api.paths.activate(id);
+      setLocalPaths(result.paths);
+      setSelectedPathId(id);
+      setJustRegenerated(false);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to activate path");
+    } finally {
+      setActivatingId(null);
+    }
   }
 
   // Empty state — first visit before any paths are generated.
-  if (paths.length === 0 || !selectedPath) {
+  if (localPaths.length === 0 || !selectedPath) {
     return (
       <div className="flex flex-col min-h-full">
         <PageHeader pageTitle="Career path" />
@@ -98,17 +130,30 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
         </div>
         {justRegenerated && (
           <div className="mono text-2xs text-mute-2">
-            paths regenerated — pick the one you want to focus on
+            paths regenerated — preview the options, then set one active when ready
           </div>
         )}
         {error && <div className="mono text-2xs text-warn">{error}</div>}
         <div className="grid grid-cols-[280px_1fr] gap-5 max-lg:flex max-lg:flex-col">
           <PathSelector
-            paths={paths}
+            paths={localPaths}
             selectedId={selectedPath.id}
-            onSelect={selectPath}
+            activeId={activePath?.id ?? null}
+            onPreview={previewPath}
           />
-          <PathRoadmap path={selectedPath} />
+          <div className="flex flex-col gap-4">
+            <PathDetailsPanel
+              path={selectedPath}
+              isActive={activePath?.id === selectedPath.id}
+              activating={activatingId === selectedPath.id}
+              onActivate={() => activatePath(selectedPath.id)}
+            />
+            <PathRoadmap
+              path={selectedPath}
+              selectedMilestoneOrder={selectedMilestoneOrder}
+              onSelectMilestone={setSelectedMilestoneOrder}
+            />
+          </div>
         </div>
       </div>
     </div>

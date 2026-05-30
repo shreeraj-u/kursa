@@ -5,6 +5,33 @@
 
 export type MilestoneStatus = "not_started" | "in_progress" | "completed";
 
+export type PathDetailPriority = "high" | "medium" | "low";
+
+export interface CareerPathSkillGap {
+  skill: string;
+  whyItMatters: string;
+  priority: PathDetailPriority;
+}
+
+export interface CareerPathNextAction {
+  title: string;
+  description: string;
+  timeframe: string;
+}
+
+export interface CareerPathRisk {
+  risk: string;
+  mitigation: string;
+}
+
+export interface CareerPathDetails {
+  fitReasons: string[];
+  skillGaps: CareerPathSkillGap[];
+  nextActions: CareerPathNextAction[];
+  risks: CareerPathRisk[];
+  evidence: string[];
+}
+
 export interface Milestone {
   order: number;
   title: string;
@@ -22,6 +49,7 @@ export interface CareerPath {
   description: string;
   confidenceScore: number; // 0–1, how achievable given the current profile
   projectedTimelineMonths: number;
+  details?: CareerPathDetails | null;
   milestones: Milestone[];
   isActive?: boolean;
 }

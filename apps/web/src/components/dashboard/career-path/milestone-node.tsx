@@ -4,6 +4,8 @@ import type { Milestone } from "@kursa/types";
 interface MilestoneNodeProps {
   milestone: Milestone;
   isLast: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
 }
 
 function estimatedDate(monthsFromNow: number): string {
@@ -30,9 +32,16 @@ function StatusCircle({ status }: { status: Milestone["status"] }) {
   return <div className="w-4 h-4 rounded-full border-2 border-line-2 shrink-0" />;
 }
 
-export default function MilestoneNode({ milestone, isLast }: MilestoneNodeProps) {
+export default function MilestoneNode({ milestone, isLast, isSelected, onSelect }: MilestoneNodeProps) {
   return (
-    <div className="flex gap-4 items-start">
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={isSelected}
+      className={`flex w-full gap-4 items-start rounded-md text-left transition-colors ${
+        isSelected ? "bg-[var(--accent-soft)]" : "hover:bg-bg-sub-2"
+      }`}
+    >
       <div className="flex flex-col items-center w-5 shrink-0">
         <StatusCircle status={milestone.status} />
         {!isLast && <div className="w-px flex-1 min-h-8 bg-line-2 mt-0.5" />}
@@ -62,6 +71,6 @@ export default function MilestoneNode({ milestone, isLast }: MilestoneNodeProps)
           ))}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
