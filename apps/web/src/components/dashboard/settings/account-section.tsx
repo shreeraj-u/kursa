@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -149,6 +150,7 @@ function DeleteAccountSection() {
 }
 
 export default function AccountSection({ user }: { user: { name: string; email: string } }) {
+  const router = useRouter();
   return (
     <div>
       <SectionHeader
@@ -187,6 +189,39 @@ export default function AccountSection({ user }: { user: { name: string; email: 
             Update your password to keep your account secure.
           </p>
           <PasswordForm />
+        </div>
+
+        {/* Sign out */}
+        <div className="rounded-xl p-6 bg-surface border border-line flex justify-between items-center">
+          <div>
+            <h3
+              className="font-semibold text-ink mb-1"
+              style={{ fontSize: "var(--text-lg)" }}
+            >
+              Sign out
+            </h3>
+            <p className="text-mute mt-1" style={{ fontSize: "var(--text-base)" }}>
+              Log out of your current session on this device.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    router.push("/");
+                  },
+                },
+              });
+            }}
+            style={{ fontSize: "var(--text-xs)", fontFamily: "var(--font-mono)", letterSpacing: "var(--tracking-mono)" }}
+            className="flex items-center gap-2 border-line hover:bg-bg-sub text-mute hover:text-ink transition-colors cursor-pointer"
+          >
+            <LogOut size={13} />
+            LOGOUT
+          </Button>
         </div>
 
         {/* Danger zone */}

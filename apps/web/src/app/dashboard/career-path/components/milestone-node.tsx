@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import type { Milestone } from "../mock-data";
+import type { Milestone } from "@kursa/types";
 
 interface MilestoneNodeProps {
   milestone: Milestone;
@@ -44,10 +44,12 @@ export default function MilestoneNode({ milestone, isLast }: MilestoneNodeProps)
           <span className="mono text-2xs text-mute">
             {estimatedDate(milestone.estimatedMonthsFromNow)}
           </span>
-          <span className="mono text-2xs text-mute-2">
-            ${(milestone.salaryBand.min / 1000).toFixed(0)}k –{" "}
-            ${(milestone.salaryBand.max / 1000).toFixed(0)}k
-          </span>
+          {milestone.salaryBand.max > 0 && (
+            <span className="mono text-2xs text-mute-2">
+              est. ${(milestone.salaryBand.min / 1000).toFixed(0)}k –{" "}
+              ${(milestone.salaryBand.max / 1000).toFixed(0)}k
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-1">
           {milestone.requiredSkills.map((skill) => (

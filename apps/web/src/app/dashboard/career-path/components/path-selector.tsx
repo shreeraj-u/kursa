@@ -1,6 +1,6 @@
 "use client";
 
-import type { CareerPath } from "../mock-data";
+import type { CareerPath } from "@kursa/types";
 
 interface PathSelectorProps {
   paths: CareerPath[];
@@ -27,7 +27,7 @@ export default function PathSelector({ paths, selectedId, onSelect }: PathSelect
   return (
     <div className="flex flex-col gap-3">
       <div className="mono text-2xs text-mute-2 uppercase tracking-mono">
-        3 paths generated
+        {paths.length} {paths.length === 1 ? "path" : "paths"} generated
       </div>
       {paths.map((path) => {
         const isSelected = selectedId === path.id;

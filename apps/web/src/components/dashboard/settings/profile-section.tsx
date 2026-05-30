@@ -5,6 +5,8 @@ import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import { toast } from "sonner";
 import z from "zod";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
@@ -24,6 +26,7 @@ const schema = z.object({
 });
 
 export default function ProfileSection({ profile, user }: Props) {
+  const router = useRouter();
   const initials = user.name
     .split(" ")
     .map((p) => p[0])
@@ -61,21 +64,41 @@ export default function ProfileSection({ profile, user }: Props) {
       />
 
       {/* Avatar */}
-      <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-surface border border-line">
-        <div
-          className="mono flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-bg-sub-2 border border-line-2 text-ink-2 font-semibold"
-          style={{ fontSize: "var(--text-md)" }}
+      <div className="flex items-center justify-between gap-4 mb-6 p-4 rounded-xl bg-surface border border-line">
+        <div className="flex items-center gap-4">
+          <div
+            className="mono flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-bg-sub-2 border border-line-2 text-ink-2 font-semibold"
+            style={{ fontSize: "var(--text-md)" }}
+          >
+            {initials}
+          </div>
+          <div>
+            <p className="text-ink font-medium" style={{ fontSize: "var(--text-base)" }}>
+              {user.name}
+            </p>
+            <p className="mono text-mute" style={{ fontSize: "var(--text-sm)" }}>
+              {user.email}
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            authClient.signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  router.push("/");
+                },
+              },
+            });
+          }}
+          style={{ fontSize: "var(--text-xs)", fontFamily: "var(--font-mono)", letterSpacing: "var(--tracking-mono)" }}
+          className="flex items-center gap-2 border-line hover:bg-bg-sub text-mute hover:text-ink transition-colors cursor-pointer"
         >
-          {initials}
-        </div>
-        <div>
-          <p className="text-ink font-medium" style={{ fontSize: "var(--text-base)" }}>
-            {user.name}
-          </p>
-          <p className="mono text-mute" style={{ fontSize: "var(--text-sm)" }}>
-            {user.email}
-          </p>
-        </div>
+          <LogOut size={13} />
+          LOGOUT
+        </Button>
       </div>
 
       {/* Form */}

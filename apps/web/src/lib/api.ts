@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { UserSocialLink } from "@kursa/types";
+import type { CareerPath, UserSocialLink } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -56,6 +56,18 @@ export const api = {
     request<{ deleted: boolean }>(`/api/v1/profile/me/social-links/${id}`, {
       method: "DELETE",
     }),
+
+  paths: {
+    generate: () =>
+      request<{ paths: CareerPath[] }>("/api/v1/profile/me/paths/generate", {
+        method: "POST",
+      }),
+
+    activate: (id: string) =>
+      request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
+        method: "PUT",
+      }),
+  },
 
   onboarding: {
     complete: (payload: unknown) =>

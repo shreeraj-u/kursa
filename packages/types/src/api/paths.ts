@@ -1,0 +1,31 @@
+// Career Path Intelligence (Phase 2) — shapes crossing the server/web boundary.
+// A CareerPath is disposable AI output: regeneration replaces the user's set.
+// The only user state on a path is `isActive`. Milestone `status` is AI-inferred
+// at generation time, not user-edited (manual tracking is a later phase).
+
+export type MilestoneStatus = "not_started" | "in_progress" | "completed";
+
+export interface Milestone {
+  order: number;
+  title: string;
+  description: string;
+  estimatedMonthsFromNow: number;
+  // AI-estimated, USD-only for Phase 2. Real benchmarked data lands in Phase 3.
+  salaryBand: { min: number; max: number; currency: "USD" };
+  requiredSkills: string[];
+  status: MilestoneStatus;
+}
+
+export interface CareerPath {
+  id: string;
+  title: string;
+  description: string;
+  confidenceScore: number; // 0–1, how achievable given the current profile
+  projectedTimelineMonths: number;
+  milestones: Milestone[];
+  isActive?: boolean;
+}
+
+export interface CareerPathsResponse {
+  paths: CareerPath[];
+}

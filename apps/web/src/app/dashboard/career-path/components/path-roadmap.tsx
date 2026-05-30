@@ -1,4 +1,4 @@
-import type { CareerPath } from "../mock-data";
+import type { CareerPath } from "@kursa/types";
 import MilestoneNode from "./milestone-node";
 
 interface PathRoadmapProps {

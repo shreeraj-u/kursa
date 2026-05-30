@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import * as dashboardController from "../../controllers/dashboard.controller.js";
+import * as pathsController from "../../controllers/paths.controller.js";
 import * as profileController from "../../controllers/profile.controller.js";
 import { requireAuth } from "../../middleware/require-auth.js";
 
@@ -15,6 +16,9 @@ meRouter.get("/", profileController.getMe);
 meRouter.put("/", profileController.updateMe);
 meRouter.get("/observations", profileController.getObservations);
 meRouter.get("/dashboard", dashboardController.getDashboardMetrics);
+meRouter.get("/paths", pathsController.getPaths);
+meRouter.post("/paths/generate", pathsController.generatePaths);
+meRouter.put("/paths/:id/activate", pathsController.activatePath);
 meRouter.post("/social-links", profileController.createSocialLink);
 meRouter.put("/social-links/:id", profileController.updateSocialLink);
 meRouter.delete("/social-links/:id", profileController.deleteSocialLink);
