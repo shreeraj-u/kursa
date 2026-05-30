@@ -89,8 +89,6 @@ export const aspirationsSchema = z.object({
 });
 
 export const importsSchema = z.object({
-  resumeFileName: z.string().default(""),
-  resumeRawText: z.string().default(""),
   linkedinProfileUrl: z.string().default(""),
 });
 
@@ -106,8 +104,6 @@ export const onboardingPayloadSchema = z.object({
   values: valuesSchema,
   aspirations: aspirationsSchema,
   imports: importsSchema.default({
-    resumeFileName: "",
-    resumeRawText: "",
     linkedinProfileUrl: "",
   }),
 });

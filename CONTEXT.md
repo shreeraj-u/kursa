@@ -94,5 +94,7 @@ single employer. Feeds the résumé's projects section.
 ### Résumé import
 The onboarding flow that turns an uploaded résumé into structured Profile data:
 the system **extracts** entities, the user **reviews/edits** them in the chat,
-and they **persist** to the Profile on completion. Extraction never invents data
-not present in the résumé.
+and they **persist** to the Profile on completion. The uploaded source file and
+raw extracted text are ephemeral import inputs, not durable user artifacts; after
+parsing, only reviewed structured Profile data persists. Extraction never invents
+data not present in the résumé.

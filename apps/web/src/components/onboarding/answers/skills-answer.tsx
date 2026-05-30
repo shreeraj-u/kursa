@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
-import type { SkillCategory, SkillInput } from "@/app/onboarding/schema";
+import type { SkillCategory, SkillInput } from "@kursa/types";
 
 const SKILL_CATEGORIES: { value: SkillCategory; label: string }[] = [
   { value: "technical", label: "Technical" },

@@ -1,9 +1,7 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { CareerPath, Resume, ResumeContent, UserSocialLink } from "@kursa/types";
-
-import type { AchievementInput, ProjectInput } from "@/app/onboarding/schema";
+import type { CareerPath, Resume, ResumeContent, UserSocialLink, AchievementInput, ProjectInput } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -24,8 +22,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export type ResumeUploadResult = {
-  resumeFileName: string;
-  rawText: string;
   importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
   importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; startDate: string | null; endDate: string | null; isCurrent: boolean }>;
   importedProjects: ProjectInput[];

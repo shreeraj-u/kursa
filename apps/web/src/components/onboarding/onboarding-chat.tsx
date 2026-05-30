@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { api } from "@/lib/api";
 
-import type { RiskAppetite, SkillInput, WorkEnvironment } from "@/app/onboarding/schema";
+import type { RiskAppetite, SkillInput, WorkEnvironment } from "@kursa/types";
 import { ChoiceAnswer } from "./answers/choice-answer";
 import { ImportsAnswer } from "./answers/imports-answer";
 import { ReviewAnswer } from "./answers/review-answer";
@@ -76,7 +76,7 @@ function emptyForm(): FormState {
     socialLinks: [],
     values: { workEnvironment: "", riskAppetite: "", salaryExpectation: "", workingStyle: "", constraints: "" },
     aspirations: { targetRoles: "", targetIndustries: "", horizon3y: "", horizon5y: "", definitionOfSuccess: "" },
-    imports: { resumeFileName: "", resumeRawText: "", linkedinProfileUrl: "" },
+    imports: { linkedinProfileUrl: "" },
   };
 }
 
@@ -224,11 +224,7 @@ export default function OnboardingChat() {
             achievements: [...prev.achievements, ...freshAchievement],
             languages: [...prev.languages, ...freshLanguage],
             socialLinks: [...prev.socialLinks, ...freshLink],
-            imports: {
-              ...prev.imports,
-              resumeFileName: result.resumeFileName,
-              resumeRawText: result.rawText,
-            },
+            imports: prev.imports,
           };
         });
 
@@ -469,7 +465,7 @@ export default function OnboardingChat() {
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full max-w-6xl h-full">
       <div className="rounded-2xl border border-line bg-surface">
         <div className="flex items-center justify-between px-5 py-3 border-b border-line">
           <div className="flex items-center gap-2">

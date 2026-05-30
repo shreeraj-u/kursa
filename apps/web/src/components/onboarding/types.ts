@@ -11,7 +11,7 @@ import type {
   ValuesInput,
   WorkEnvironment,
   WorkHistoryInput,
-} from "@/app/onboarding/schema";
+} from "@kursa/types";
 
 export type Message =
   | { id: string; role: "bot"; text: string }

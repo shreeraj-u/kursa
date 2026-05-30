@@ -1,6 +1,3 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { Request, Response } from "express";
 import { z } from "zod";
 
@@ -39,15 +36,7 @@ export async function uploadResume(req: Request, res: Response): Promise<void> {
   const { text } = await extractResumeText(file.buffer, file.originalname);
   const parsed = await parseResumeText(text);
 
-  const uploadDir = path.join(process.cwd(), "uploads", "resumes");
-  await mkdir(uploadDir, { recursive: true });
-  const safeName = file.originalname.replaceAll(/\s+/g, "_");
-  const persistedName = `${req.user!.id}-${Date.now()}-${safeName}`;
-  await writeFile(path.join(uploadDir, persistedName), file.buffer);
-
   ok(res, {
-    resumeFileName: persistedName,
-    rawText: parsed.rawText.slice(0, 20_000),
     importedSkills: parsed.skills.map(({ name, category, confidenceRating }) => ({
       name,
       category,

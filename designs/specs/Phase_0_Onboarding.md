@@ -12,6 +12,7 @@ Phase 0 sets the foundation for the Kursa platform by implementing **Layer 1: De
 > [!WARNING]
 > 1. **Resume Upload:** The PRD mentions parsing resumes via Claude to extract work history. Should we include the Resume PDF upload & parsing in Phase 0 onboarding, or start with manual entry and add the AI parser later?
 > 2. **State Management:** You are using `@tanstack/react-form`. For a multi-step form, do you prefer a single massive form state or separate form submissions per step that incrementally save to the database? Incremental saving is usually safer for onboarding flows.
+> 3. **LLM Data Cleanup:** The updated PRD mandates using Claude for LLM data cleanup and standardization after onboarding questions are answered. Should this clean-up step occur synchronously on the final onboarding step submission, or run asynchronously in the background once the initial profile has been created?
 
 ## Proposed Changes
 

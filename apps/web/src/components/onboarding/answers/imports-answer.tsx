@@ -4,7 +4,7 @@ import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import { Label } from "@kursa/ui/components/label";
 
-import type { ImportsInput, SkillInput } from "@/app/onboarding/schema";
+import type { ImportsInput, SkillInput } from "@kursa/types";
 
 type ImportsAnswerProps = {
   imports: ImportsInput;
@@ -33,8 +33,8 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
         />
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-mute">
-            {props.imports.resumeFileName
-              ? "Resume saved — re-upload to refresh detected skills."
+            {props.detectedSkills.length > 0
+              ? "Resume analyzed — re-upload to refresh detected skills."
               : "I'll read your PDF/DOCX and detect your skills automatically."}
           </p>
           <Button type="button" variant="outline" disabled={props.isUploading} onClick={props.onUploadResume}>
@@ -101,7 +101,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
         <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={props.onSkip}>Skip</Button>
-          <Button type="button" onClick={props.onContinue}>Continue</Button>
+          <Button type="button" disabled={props.isUploading} onClick={props.onContinue}>Continue</Button>
         </div>
       </div>
     </div>

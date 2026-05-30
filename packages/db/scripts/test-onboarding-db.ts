@@ -36,8 +36,6 @@ type TestPayload = {
     definitionOfSuccess: string;
   };
   imports: {
-    resumeFileName: string;
-    resumeRawText: string;
     linkedinProfileUrl: string;
   };
 };
@@ -181,8 +179,6 @@ const validPayload: TestPayload = {
     definitionOfSuccess: "Building durable systems",
   },
   imports: {
-    resumeFileName: "",
-    resumeRawText: "",
     linkedinProfileUrl: "",
   },
 };

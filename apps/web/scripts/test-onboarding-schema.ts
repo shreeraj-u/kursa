@@ -49,8 +49,6 @@ const validPayload = {
     definitionOfSuccess: "Ship things people use daily.",
   },
   imports: {
-    resumeFileName: "",
-    resumeRawText: "",
     linkedinProfileUrl: "",
   },
 };
@@ -126,7 +124,7 @@ const tests: TestCase[] = [
       const result = onboardingPayloadSchema.safeParse(partial);
       assert(result.success, "expected success without imports");
       if (result.success) {
-        assert(result.data.imports.resumeFileName === "", "imports should default");
+        assert(result.data.imports.linkedinProfileUrl === "", "imports should default");
       }
     },
   },
