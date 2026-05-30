@@ -54,6 +54,8 @@ export async function uploadResume(req: Request, res: Response): Promise<void> {
       confidenceRating,
     })),
     importedWorkHistory: parsed.workHistory,
+    importedProjects: parsed.projects,
+    importedAchievements: parsed.achievements,
     importedEducation: parsed.education,
     importedLanguages: parsed.languages,
     importedSocialLinks: parsed.socialLinks,
