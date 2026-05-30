@@ -12,6 +12,7 @@
         "@kursa/types": "workspace:*",
         "@kursa/ui": "workspace:*",
         "@radix-ui/react-icons": "^1.3.2",
+        "@react-pdf/renderer": "^4.5.1",
         "@tanstack/react-form": "^1.28.0",
         "babel-plugin-react-compiler": "^1.0.0",
         "better-auth": "catalog:",

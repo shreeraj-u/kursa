@@ -5,7 +5,7 @@ import type { CareerPath } from "@kursa/types";
 import { authClient } from "@/lib/auth-client";
 import { serverFetch } from "@/lib/server-fetch";
 
-import CareerPathPage from "./career-path";
+import CareerPathPage from "@/components/dashboard/career-path/career-path";
 
 export default async function Page() {
   const session = await authClient.getSession({

@@ -19,6 +19,10 @@ export const Errors = {
     new HttpError(403, "FORBIDDEN", message),
   notFound: (resource: string) =>
     new HttpError(404, "NOT_FOUND", `${resource} not found`),
+  tooManyRequests: (message = "Too many requests", details?: unknown) =>
+    new HttpError(429, "TOO_MANY_REQUESTS", message, details),
+  conflict: (message = "Conflict") =>
+    new HttpError(409, "CONFLICT", message),
   internal: (message = "Internal server error") =>
     new HttpError(500, "INTERNAL_ERROR", message),
 };

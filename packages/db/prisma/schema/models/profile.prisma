@@ -31,9 +31,30 @@ model Profile {
   constraints        Constraint[]
   socialLinks        SocialLink[]
   jobApplications    JobApplication[]
-  careerPaths        CareerPath[]
+  careerPaths            CareerPath[]
+  resumes                Resume[]
+  careerEvents           CareerEvent[]
+  persistedObservations  PersistedObservation[]
 
   @@map("profile")
+}
+
+model Resume {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  careerPathId String? // path this resume was shaped toward (nullable, no FK constraint)
+  targetRole   String?
+  version      Int
+  content      Json // ResumeContent — Zod-validated on write
+  atsScore     Int
+  atsIssues    Json // AtsIssue[] — Zod-validated on write
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+  @@map("resume")
 }
 
 model CareerPath {
@@ -45,6 +66,7 @@ model CareerPath {
   description             String
   confidenceScore         Float // 0–1, how achievable given the current profile
   projectedTimelineMonths Int
+  details                 Json? // CareerPathDetails — structured AI rationale for richer path exploration
   milestones              Json // Milestone[] — Zod-validated on write (same JSON convention as aspirations/values)
   isActive                Boolean  @default(false) // the only user state on a path
   generatedAt             DateTime @default(now())
@@ -66,6 +88,7 @@ model Skill {
   proficiencyLevel SkillProficiency? // "beginner", "intermediate", "advanced", "expert"
   confidenceRating Int? // 1-5
   lastUsedDate     DateTime?
+  source           SkillSource?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { CareerPath, UserSocialLink } from "@kursa/types";
+import type { CareerPath, Resume, ResumeContent, UserSocialLink, AchievementInput, ProjectInput } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -22,10 +22,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export type ResumeUploadResult = {
-  resumeFileName: string;
-  rawText: string;
   importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
-  importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; isCurrent: boolean }>;
+  importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; startDate: string | null; endDate: string | null; isCurrent: boolean }>;
+  importedProjects: ProjectInput[];
+  importedAchievements: AchievementInput[];
   importedEducation: Array<{ type: "degree" | "certification" | "course"; credentialName: string; issuer: string; completionDate: string | null }>;
   importedLanguages: Array<{ name: string; proficiency: "Native" | "Fluent" | "Conversational" | "Basic" }>;
   importedSocialLinks: Array<{ platform: "github" | "linkedin" | "twitter" | "website" | "portfolio"; url: string }>;
@@ -66,6 +66,24 @@ export const api = {
     activate: (id: string) =>
       request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
         method: "PUT",
+      }),
+  },
+
+  resume: {
+    generate: () =>
+      request<{ resume: Resume }>("/api/v1/profile/me/resumes/generate", {
+        method: "POST",
+      }),
+
+    update: (id: string, content: ResumeContent) =>
+      request<{ resume: Resume }>(`/api/v1/profile/me/resumes/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ content }),
+      }),
+
+    analyze: (id: string) =>
+      request<{ resume: Resume }>(`/api/v1/profile/me/resumes/${id}/analyze`, {
+        method: "POST",
       }),
   },
 

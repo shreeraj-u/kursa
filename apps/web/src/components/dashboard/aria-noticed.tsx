@@ -25,7 +25,7 @@ export default function AriaNoticed({ initialObservations }: AriaNoticedProps) {
     const fetchPage = async (page: number) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=${page}&limit=4`, {
+            const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=${page}&limit=10`, {
                 credentials: "include"
             });
             if (res.ok) {

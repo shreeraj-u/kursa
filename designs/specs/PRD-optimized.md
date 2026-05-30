@@ -40,6 +40,7 @@ The key differentiator is **persistent memory**: the platform gets smarter the l
 8. As a user, I want to define my career aspirations (3-year and 5-year goals, target roles, success definition) so that path generation reflects my intentions, not averages.
 9. As a user, I want to add education, certifications, projects, and achievements so that the system has a complete professional picture.
 10. As a user, I want to see a single observation on my first visit so that I leave session one feeling the platform already knows something useful about me.
+10a. As a user, I want my onboarding answers to be cleaned up, normalized, and structured by an LLM before saving so that my profile data is clean, consistent, and structured without manual correction.
 
 ### Dashboard & Observations
 11. As a returning user, I want to see a dashboard with my key metrics (growth, visibility, progression) so that I can track momentum at a glance.
@@ -139,11 +140,10 @@ Output: `Observation[]` where each observation has `{ text, type, confidence, so
 
 This module should be callable from both the API (on-demand) and a background job (weekly refresh). The rule-based fallback should remain as the cold-start path until the AI version is validated.
 
-#### Module 2 — Resume Parser
+#### Module 2 — Resume Parser & Onboarding Data Cleanup
 
-Given raw resume text (extracted from PDF/DOCX), return structured `WorkHistory[]`, `Skill[]`, and `Education[]` matching the existing schema. Claude is the extraction engine. Output must be validated against Zod schemas before persisting — malformed AI output should not corrupt the profile.
-
-This module is isolated: text in, typed structured data out. No DB writes — the caller decides what to persist.
+- **Resume Parser:** Given raw resume text (extracted from PDF/DOCX), return structured `WorkHistory[]`, `Skill[]`, and `Education[]` matching the existing schema. Claude is the extraction engine. Output must be validated against Zod schemas before persisting — malformed AI output should not corrupt the profile. This module is isolated: text in, typed structured data out. No DB writes — the caller decides what to persist.
+- **Onboarding Data Cleanup:** Process raw text responses and selections from the onboarding questionnaire using Claude to clean up, normalize, and format the data before it is saved to the database. This includes standardizing job titles and company names, deduplicating and normalizing skills, translating raw text descriptions into structured outcomes/responsibilities, and normalizing preferences/values to system enums.
 
 #### Module 3 — Career Path Generator
 
@@ -299,6 +299,12 @@ All new routes follow the existing `/api/v1` prefix with Better Auth session mid
 - **Layer 5 (Personal Brand Management).** Explicitly deferred per PRD v1.0 — LinkedIn scoring and portfolio positioning are post-MVP.
 - **Interview simulation.** High-value post-MVP addition; not in the MVP build sequence.
 - **Peer benchmarking.** Post-MVP.
+
+---
+
+## Future Improvement Opportunities
+
+- **Deterministic Resume Parsing:** The current resume parsing module relies entirely on an LLM to extract structured experience and skills. In the future, we should explore deterministic/hybrid parsing methods (e.g., regex/heuristic parsers or rule-based tokenizers) to remove the absolute dependency on AI for the parsing phase, which will reduce API costs, improve processing speed/latency, and eliminate LLM extraction errors or hallucinations.
 
 ---
 

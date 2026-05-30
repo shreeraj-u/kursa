@@ -36,9 +36,32 @@ function dedupeWorkHistory(items: CompleteOnboardingInput["workHistory"]) {
       companyName: item.companyName.trim(),
       roleTitle: item.roleTitle.trim(),
       outcomes: item.outcomes.trim(),
+      startDate: item.startDate,
+      endDate: item.endDate,
+      isCurrent: item.isCurrent,
     });
   }
   return out;
+}
+
+function dedupeSocialLinks(items: CompleteOnboardingInput["socialLinks"]) {
+  const seen = new Set<string>();
+  const out: typeof items = [];
+  for (const item of items) {
+    const key = `${item.platform.trim().toLowerCase()}__${item.url.trim().toLowerCase()}`;
+    if (!item.url.trim() || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ platform: item.platform.trim(), url: item.url.trim() });
+  }
+  return out;
+}
+
+function yearToDate(s: string | null): Date | null {
+  if (!s) return null;
+  const trimmed = s.trim();
+  if (!trimmed) return null;
+  const parsed = new Date(/^\d{4}$/.test(trimmed) ? `${trimmed}-01-01` : trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export async function completeOnboarding(userId: string, input: CompleteOnboardingInput): Promise<void> {
@@ -100,10 +123,80 @@ export async function completeOnboarding(userId: string, input: CompleteOnboardi
           profileId: profile.id,
           companyName: item.companyName,
           roleTitle: item.roleTitle,
-          startDate: now,
-          endDate: null,
-          isCurrent: false,
+          startDate: yearToDate(item.startDate) ?? now,
+          endDate: yearToDate(item.endDate),
+          isCurrent: item.isCurrent,
           outcomes: { text: item.outcomes } as never,
+        },
+      });
+    }
+
+    const education = input.education ?? [];
+    await tx.education.deleteMany({ where: { profileId: profile.id } });
+    for (const item of education) {
+      await tx.education.create({
+        data: {
+          profileId: profile.id,
+          type: item.type,
+          credentialName: item.credentialName,
+          issuer: item.issuer,
+          completionDate: yearToDate(item.completionDate),
+        },
+      });
+    }
+
+    const languages = input.languages ?? [];
+    await tx.language.deleteMany({ where: { profileId: profile.id } });
+    for (const item of languages) {
+      await tx.language.create({
+        data: {
+          profileId: profile.id,
+          name: item.name,
+          proficiency: item.proficiency,
+        },
+      });
+    }
+
+    const socialLinks = dedupeSocialLinks(input.socialLinks ?? []);
+    await tx.socialLink.deleteMany({ where: { profileId: profile.id } });
+    for (const item of socialLinks) {
+      await tx.socialLink.create({
+        data: {
+          profileId: profile.id,
+          platform: item.platform,
+          url: item.url,
+        },
+      });
+    }
+
+    const projects = input.projects ?? [];
+    await tx.project.deleteMany({ where: { profileId: profile.id } });
+    for (const item of projects) {
+      await tx.project.create({
+        data: {
+          profileId: profile.id,
+          title: item.title,
+          description: item.description,
+          url: item.url,
+          startDate: yearToDate(item.startDate),
+          endDate: yearToDate(item.endDate),
+          outcomes: { text: item.outcomes } as never,
+        },
+      });
+    }
+
+    const achievements = input.achievements ?? [];
+    await tx.achievement.deleteMany({ where: { profileId: profile.id } });
+    for (const item of achievements) {
+      await tx.achievement.create({
+        data: {
+          profileId: profile.id,
+          type: item.type,
+          title: item.title,
+          issuer: item.issuer,
+          description: item.description,
+          url: item.url,
+          dateAchieved: yearToDate(item.dateAchieved),
         },
       });
     }

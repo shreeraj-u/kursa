@@ -8,7 +8,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
-  profile       Profile?
+  profile                 Profile?
+  careerEvents            CareerEvent[]
+  userMemories            UserMemory[]
+  persistedObservations   PersistedObservation[]
+  conversations           Conversation[]
 
   @@unique([email])
   @@map("user")

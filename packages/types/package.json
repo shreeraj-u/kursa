@@ -11,5 +11,8 @@
     "devDependencies": {
         "@kursa/config": "workspace:*",
         "typescript": "catalog:"
+    },
+    "dependencies": {
+        "zod": "catalog:"
     }
 }

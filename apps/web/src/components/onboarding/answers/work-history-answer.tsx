@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
-import type { WorkHistoryInput } from "@/app/onboarding/schema";
+import type { WorkHistoryInput } from "@kursa/types";
 
 type WorkHistoryAnswerProps = {
   items: WorkHistoryInput[];
@@ -34,7 +34,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
       toast.error("Already added that role at that company");
       return;
     }
-    props.onChange([...props.items, { companyName: company, roleTitle: role, outcomes: outcomeText }]);
+    props.onChange([...props.items, { companyName: company, roleTitle: role, outcomes: outcomeText, startDate: null, endDate: null, isCurrent: false }]);
     setCompanyName("");
     setRoleTitle("");
     setOutcomes("");

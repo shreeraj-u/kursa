@@ -23,10 +23,9 @@ export function ReviewAnswer(props: ReviewAnswerProps) {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="grid gap-2 rounded-lg p-3"
-        style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
+        className="grid gap-2 rounded-lg p-3 border border-line bg-surface"
       >
-        <div style={{ fontSize: "var(--text-sm)", color: "var(--ink)" }}>
+        <div className="text-sm text-ink">
           <p>
             <strong>Target role:</strong> {props.form.basics.targetRole || "—"} ·{" "}
             <strong>Location:</strong> {props.form.basics.location || "—"} ·{" "}
@@ -40,6 +39,15 @@ export function ReviewAnswer(props: ReviewAnswerProps) {
             )
           </p>
           <p><strong>Experience entries:</strong> {summary.workCount}</p>
+          <p>
+            <strong>Projects:</strong> {props.form.projects.length} ·{" "}
+            <strong>Achievements:</strong> {props.form.achievements.length}
+          </p>
+          <p>
+            <strong>Education:</strong> {props.form.education.length} ·{" "}
+            <strong>Languages:</strong> {props.form.languages.length} ·{" "}
+            <strong>Links:</strong> {props.form.socialLinks.length}
+          </p>
           <p>
             <strong>Environment:</strong> {props.form.values.workEnvironment || "—"} ·{" "}
             <strong>Risk:</strong> {props.form.values.riskAppetite || "—"}

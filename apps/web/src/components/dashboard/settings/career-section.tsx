@@ -10,7 +10,7 @@ import z from "zod";
 import { api } from "@/lib/api";
 import type { UserProfile } from "@/types/profile";
 import { SectionHeader, FormField } from "./settings-ui";
-import { normalizeCareerDefaults, serializeCareerSubmission } from "./career-section.utils";
+import { normalizeCareerDefaults, serializeCareerSubmission } from "@/lib/dashboard/settings/career-section.utils";
 import { SectionDivider, ToggleGroup, Textarea } from "./settings-controls";
 
 const WORK_ENV_OPTIONS = [
