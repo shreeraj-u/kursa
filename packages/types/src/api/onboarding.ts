@@ -15,91 +15,185 @@ export const achievementTypeSchema = z.enum([
   "OTHER",
 ]);
 
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_YEAR = 1900;
+const MAX_FUTURE_YEAR = CURRENT_YEAR + 10;
+
+const boundedText = (max: number, message?: string) =>
+  z.string().trim().min(1, message).max(max, `Keep this under ${max} characters`);
+
+const optionalText = (max: number) =>
+  z.string().trim().max(max, `Keep this under ${max} characters`).nullable().default(null);
+
+const yearStringSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}$/, "Use a four-digit year")
+  .refine((value) => {
+    const year = Number(value);
+    return year >= MIN_YEAR && year <= MAX_FUTURE_YEAR;
+  }, `Use a year between ${MIN_YEAR} and ${MAX_FUTURE_YEAR}`);
+
+const optionalYearSchema = yearStringSchema.nullable().default(null);
+
+const optionalUrlSchema = z
+  .string()
+  .trim()
+  .url("Use a valid URL including https://")
+  .max(500, "Keep URLs under 500 characters")
+  .nullable()
+  .default(null);
+
+const optionalUrlStringSchema = z
+  .string()
+  .trim()
+  .max(500, "Keep URLs under 500 characters")
+  .refine((value) => value === "" || z.string().url().safeParse(value).success, "Use a valid URL including https://")
+  .default("");
+
 export const basicsSchema = z.object({
-  targetRole: z.string().trim().min(1, "Tell me the role you're aiming for"),
-  location: z.string().trim().min(1, "Where are you based?"),
+  targetRole: boundedText(120, "Tell me the role you're aiming for"),
+  location: boundedText(120, "Where are you based?"),
   yearsOfExperience: z.number().int().min(0).max(80),
-  bio: z.string().trim().min(1, "Share a short bio"),
+  bio: boundedText(1_000, "Share a short bio"),
 });
 
 export const skillSchema = z.object({
-  name: z.string().trim().min(1),
+  name: boundedText(80),
   category: skillCategorySchema,
   confidenceRating: z.number().int().min(1).max(5),
 });
 
 export const workHistorySchema = z.object({
-  companyName: z.string().trim().min(1, "Company is required"),
-  roleTitle: z.string().trim().min(1, "Role is required"),
-  outcomes: z.string().trim().min(1, "Share what you did or accomplished"),
-  startDate: z.string().nullable().default(null),
-  endDate: z.string().nullable().default(null),
+  companyName: boundedText(120, "Company is required"),
+  roleTitle: boundedText(120, "Role is required"),
+  outcomes: boundedText(1_500, "Share what you did or accomplished"),
+  startDate: yearStringSchema,
+  endDate: optionalYearSchema,
   isCurrent: z.boolean().default(false),
 });
 
 export const educationSchema = z.object({
   type: educationTypeSchema,
-  credentialName: z.string().trim().min(1),
-  issuer: z.string().trim().min(1),
-  completionDate: z.string().nullable().default(null),
+  credentialName: boundedText(160),
+  issuer: boundedText(160),
+  completionDate: optionalYearSchema,
 });
 
 export const languageSchema = z.object({
-  name: z.string().trim().min(1),
+  name: boundedText(80),
   proficiency: languageProficiencySchema,
 });
 
 export const socialLinkSchema = z.object({
-  platform: z.string().trim().min(1),
-  url: z.string().trim().min(1),
+  platform: boundedText(40),
+  url: z.string().trim().url("Use a valid URL including https://").max(500, "Keep URLs under 500 characters"),
 });
 
 export const projectSchema = z.object({
-  title: z.string().trim().min(1),
-  description: z.string().nullable().default(null),
-  url: z.string().nullable().default(null),
-  outcomes: z.string().default(""),
-  startDate: z.string().nullable().default(null),
-  endDate: z.string().nullable().default(null),
+  title: boundedText(160),
+  description: optionalText(1_000),
+  url: optionalUrlSchema,
+  outcomes: z.string().trim().max(1_500, "Keep this under 1500 characters").default(""),
+  startDate: optionalYearSchema,
+  endDate: optionalYearSchema,
 });
 
 export const achievementSchema = z.object({
   type: achievementTypeSchema,
-  title: z.string().trim().min(1),
-  issuer: z.string().nullable().default(null),
-  description: z.string().nullable().default(null),
-  url: z.string().nullable().default(null),
-  dateAchieved: z.string().nullable().default(null),
+  title: boundedText(160),
+  issuer: optionalText(160),
+  description: optionalText(1_000),
+  url: optionalUrlSchema,
+  dateAchieved: optionalYearSchema,
 });
 
 export const valuesSchema = z.object({
   workEnvironment: workEnvironmentSchema,
   riskAppetite: riskAppetiteSchema,
-  salaryExpectation: z.string().trim().min(1, "Share a target compensation"),
-  workingStyle: z.string().trim().min(1, "Describe your working style"),
-  constraints: z.string().trim().default("None"),
+  salaryExpectation: boundedText(160, "Share a target compensation"),
+  workingStyle: boundedText(1_000, "Describe your working style"),
+  constraints: z.string().trim().max(1_000, "Keep this under 1000 characters").default("None"),
 });
 
 export const aspirationsSchema = z.object({
-  targetRoles: z.string().trim().min(1),
-  targetIndustries: z.string().trim().min(1),
-  horizon3y: z.string().trim().min(1),
-  horizon5y: z.string().trim().min(1),
-  definitionOfSuccess: z.string().trim().min(1),
+  targetRoles: boundedText(500),
+  targetIndustries: boundedText(500),
+  horizon3y: boundedText(1_000),
+  horizon5y: boundedText(1_000),
+  definitionOfSuccess: boundedText(1_000),
 });
 
 export const importsSchema = z.object({
-  linkedinProfileUrl: z.string().default(""),
+  linkedinProfileUrl: optionalUrlStringSchema,
+});
+
+
+const dateRangeSchema = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.superRefine((value, ctx) => {
+    const datedValue = value as { startDate?: string | null; endDate?: string | null };
+    const startDate = datedValue.startDate;
+    const endDate = datedValue.endDate;
+    if (startDate && endDate && Number(endDate) < Number(startDate)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End year cannot be before start year",
+      });
+    }
+  });
+
+export const onboardingReviewStatusSchema = z.enum(["ready", "needs_user_review", "blocked"]);
+export const onboardingReviewSeveritySchema = z.enum(["critical", "warning", "suggestion"]);
+export const onboardingReviewCategorySchema = z.enum([
+  "validation",
+  "safety",
+  "consistency",
+  "completeness",
+  "quality",
+]);
+
+export const onboardingReviewProposedPathSchema = z
+  .string()
+  .regex(/^(basics\.(targetRole|location|bio)|values\.(salaryExpectation|workingStyle|constraints)|aspirations\.(targetRoles|targetIndustries|horizon3y|horizon5y|definitionOfSuccess)|skills\.\d+\.name|workHistory\.\d+\.(companyName|roleTitle|outcomes|startDate|endDate)|education\.\d+\.(credentialName|issuer|completionDate)|projects\.\d+\.(title|description|url|outcomes|startDate|endDate)|achievements\.\d+\.(title|issuer|description|url|dateAchieved)|languages\.\d+\.name|socialLinks\.\d+\.url|imports\.linkedinProfileUrl)$/);
+
+export const onboardingReviewIssueSchema = z
+  .object({
+    id: z.string().trim().min(1).max(120),
+    severity: onboardingReviewSeveritySchema,
+    category: onboardingReviewCategorySchema,
+    path: z.string().trim().min(1).max(160),
+    message: z.string().trim().min(1).max(500),
+    proposedValue: z.unknown().optional(),
+  })
+  .superRefine((issue, ctx) => {
+    if (issue.proposedValue !== undefined) {
+      const path = onboardingReviewProposedPathSchema.safeParse(issue.path);
+      if (!path.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["path"],
+          message: "proposedValue is only allowed for approved onboarding field paths",
+        });
+      }
+    }
+  });
+
+export const onboardingReviewResponseSchema = z.object({
+  status: onboardingReviewStatusSchema,
+  criticalIssues: z.array(onboardingReviewIssueSchema).default([]),
+  warnings: z.array(onboardingReviewIssueSchema).default([]),
+  suggestions: z.array(onboardingReviewIssueSchema).default([]),
 });
 
 export const onboardingPayloadSchema = z.object({
   basics: basicsSchema,
   skills: z.array(skillSchema).min(1, "Add at least one skill"),
-  workHistory: z.array(workHistorySchema).min(1, "Add at least one role"),
+  workHistory: z.array(dateRangeSchema(workHistorySchema)).min(1, "Add at least one role"),
   education: z.array(educationSchema).default([]),
   languages: z.array(languageSchema).default([]),
   socialLinks: z.array(socialLinkSchema).default([]),
-  projects: z.array(projectSchema).default([]),
+  projects: z.array(dateRangeSchema(projectSchema)).default([]),
   achievements: z.array(achievementSchema).default([]),
   values: valuesSchema,
   aspirations: aspirationsSchema,
@@ -123,3 +217,5 @@ export type ValuesInput = z.infer<typeof valuesSchema>;
 export type AspirationsInput = z.infer<typeof aspirationsSchema>;
 export type ImportsInput = z.infer<typeof importsSchema>;
 export type OnboardingPayload = z.infer<typeof onboardingPayloadSchema>;
+export type OnboardingReviewIssue = z.infer<typeof onboardingReviewIssueSchema>;
+export type OnboardingReviewResponse = z.infer<typeof onboardingReviewResponseSchema>;

@@ -1,7 +1,25 @@
 import prisma, { Prisma } from "@kursa/db";
 
-import type { ProfileUpdateInput, SocialLinkCreateInput, SocialLinkUpdateInput } from "@kursa/types";
+import type {
+  ProfileUpdateInput,
+  SocialLinkCreateInput,
+  SocialLinkUpdateInput,
+  SkillCreateInput,
+  SkillUpdateInput,
+  LearningGoalCreateInput,
+  LearningGoalUpdateInput,
+} from "@kursa/types";
 import { Errors } from "../errors/http-error.js";
+
+function isUniqueViolation(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+}
+
+async function getProfileId(userId: string): Promise<string> {
+  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) throw Errors.notFound("Profile");
+  return profile.id;
+}
 
 const PROFILE_INCLUDE = {
   skills: true,
@@ -74,4 +92,82 @@ export async function deleteSocialLink(userId: string, linkId: string) {
   const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId: profile.id } });
   if (!link) throw Errors.notFound("Social link");
   return prisma.socialLink.delete({ where: { id: linkId } });
+}
+
+// ── Skill inventory CRUD (per-skill, ownership-scoped) ──────────────────────────
+
+export async function createSkill(userId: string, data: SkillCreateInput) {
+  const profileId = await getProfileId(userId);
+  try {
+    return await prisma.skill.create({
+      data: {
+        profileId,
+        name: data.name,
+        category: data.category,
+        confidenceRating: data.confidenceRating,
+        proficiencyLevel: data.proficiencyLevel ?? null,
+        source: "self_reported",
+      },
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) throw Errors.conflict(`Skill "${data.name}" already exists`);
+    throw err;
+  }
+}
+
+export async function updateSkill(userId: string, skillId: string, data: SkillUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.skill.findFirst({ where: { id: skillId, profileId } });
+  if (!existing) throw Errors.notFound("Skill");
+  try {
+    return await prisma.skill.update({ where: { id: skillId }, data });
+  } catch (err) {
+    if (isUniqueViolation(err)) throw Errors.conflict(`Skill "${data.name}" already exists`);
+    throw err;
+  }
+}
+
+export async function deleteSkill(userId: string, skillId: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.skill.findFirst({ where: { id: skillId, profileId } });
+  if (!existing) throw Errors.notFound("Skill");
+  return prisma.skill.delete({ where: { id: skillId } });
+}
+
+// ── Learning goal CRUD (the "being built" set) ──────────────────────────────────
+
+export async function createLearningGoal(userId: string, data: LearningGoalCreateInput) {
+  const profileId = await getProfileId(userId);
+  return prisma.learningGoal.create({
+    data: {
+      profileId,
+      skillName: data.skillName,
+      targetProficiency: data.targetProficiency ?? null,
+      deadline: data.deadline ? new Date(data.deadline) : null,
+      status: data.status ?? "PLANNED",
+    },
+  });
+}
+
+export async function updateLearningGoal(
+  userId: string,
+  goalId: string,
+  data: LearningGoalUpdateInput,
+) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.learningGoal.findFirst({ where: { id: goalId, profileId } });
+  if (!existing) throw Errors.notFound("Learning goal");
+  const { deadline, ...rest } = data;
+  const updateData: Prisma.LearningGoalUpdateInput = { ...rest };
+  if (deadline !== undefined) {
+    updateData.deadline = deadline ? new Date(deadline) : null;
+  }
+  return prisma.learningGoal.update({ where: { id: goalId }, data: updateData });
+}
+
+export async function deleteLearningGoal(userId: string, goalId: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.learningGoal.findFirst({ where: { id: goalId, profileId } });
+  if (!existing) throw Errors.notFound("Learning goal");
+  return prisma.learningGoal.delete({ where: { id: goalId } });
 }

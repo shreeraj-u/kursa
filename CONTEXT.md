@@ -13,6 +13,33 @@ constraints, learning goals, social links, aspirations, and job applications.
 "The profile is the product" — every feature's quality depends on it. One Profile
 per User.
 
+### Skill
+A single skill or ability in a user's [[Profile]], with a name and a category
+(`technical` / `soft` / `tool`). A skill's strength is captured on **two distinct
+dimensions**: **confidence** (`confidenceRating`, 1–5 — how self-assured the user
+feels) and **proficiency** (`proficiencyLevel` — `beginner` / `intermediate` /
+`advanced` / `expert`, the actual mastery level). These are independent: a user can
+be highly confident yet objectively intermediate, or expert but rusty. A Skill also
+tracks **recency** (`lastUsedDate`) and a **source** (self-reported, résumé, or
+inferred). Skill names are unique per Profile (case-insensitive). Skills are
+created in bulk at onboarding but maintained one at a time afterwards (see
+[[Skill inventory]]).
+
+### Skill inventory
+The user-facing surface (the Skills page) for viewing and maintaining the [[Skill]]s
+in a Profile: add a skill, rate its confidence and proficiency, recategorise, and
+remove it — each as an individual change, not a bulk rewrite. Skills are grouped by
+category; recency (`lastUsedDate`) is shown read-only where present (no manual
+editing — it is populated by later phases). The same surface also manages the user's
+**learning goals** (the "being built" set). Distinct from **skill-gap analysis**,
+which compares the inventory against the [[Active Path]] and is a separate surface
+owned elsewhere.
+
+### Dormant skill
+A [[Skill]] not used recently — `lastUsedDate` older than ~6 months, especially when
+confidence is high (≥4). Surfaced as faded in the [[Skill inventory]] and as a
+dashboard observation, prompting the user to refresh or re-apply it.
+
 ### Career Path
 An AI-generated projection of a realistic professional trajectory for a user,
 derived from their Profile. A user has several at once (typically 3). Each Career
@@ -103,3 +130,13 @@ and they **persist** to the Profile on completion. The uploaded source file and
 raw extracted text are ephemeral import inputs, not durable user artifacts; after
 parsing, only reviewed structured Profile data persists. Extraction never invents
 data not present in the résumé.
+
+
+### Profile Intake Review
+An ephemeral AI/deterministic review that runs after onboarding data entry and
+before final Profile persistence. It checks the structured draft for validation
+errors, unsafe prompt-like content, thin entries, and obvious consistency issues,
+then returns critical issues, warnings, and suggestions for the user to accept or
+ignore. It is **suggest-only**: proposed values are grounded in user-provided draft
+fields, no review output is durable, and only user-accepted final Profile data is
+persisted. It is distinct from the durable Profile source of truth.

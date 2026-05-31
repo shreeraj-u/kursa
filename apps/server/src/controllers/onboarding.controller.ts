@@ -5,6 +5,7 @@ import { Errors } from "../errors/http-error.js";
 import { extractResumeText } from "../lib/extract-text.js";
 import { parseResumeText } from "../lib/resume-parser.js";
 import { ok } from "../lib/respond.js";
+import { reviewOnboardingDraft } from "../lib/onboarding-review.js";
 import * as onboardingService from "../services/onboarding.service.js";
 import { completeOnboardingSchema } from "../validators/onboarding.validator.js";
 
@@ -13,6 +14,11 @@ const MAX_RESUME_BYTES = 8 * 1024 * 1024;
 export async function getStatus(req: Request, res: Response): Promise<void> {
   const status = await onboardingService.getOnboardingStatus(req.user!.id);
   ok(res, status);
+}
+
+export async function review(req: Request, res: Response): Promise<void> {
+  const reviewResult = await reviewOnboardingDraft(req.body);
+  ok(res, reviewResult);
 }
 
 export async function complete(req: Request, res: Response): Promise<void> {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { api } from "@/lib/api";
 
-import type { RiskAppetite, SkillInput, WorkEnvironment } from "@kursa/types";
+import type { OnboardingPayload, OnboardingReviewResponse, RiskAppetite, SkillInput, WorkEnvironment } from "@kursa/types";
 import { ChoiceAnswer } from "./answers/choice-answer";
 import { ImportsAnswer } from "./answers/imports-answer";
 import { ReviewAnswer } from "./answers/review-answer";
@@ -64,6 +64,64 @@ const RISK_APPETITES: { value: RiskAppetite; label: string }[] = [
   { value: "high_growth", label: "High growth" },
 ];
 
+
+function buildPayload(form: FormState): OnboardingPayload {
+  const yearsParsed = Number(form.basics.yearsOfExperience);
+  return {
+    basics: {
+      targetRole: form.basics.targetRole.trim(),
+      location: form.basics.location.trim(),
+      yearsOfExperience: Number.isFinite(yearsParsed) ? yearsParsed : 0,
+      bio: form.basics.bio.trim(),
+    },
+    skills: form.skills.map((s) => ({ name: s.name.trim(), category: s.category, confidenceRating: s.confidenceRating })),
+    workHistory: form.workHistory.map((w) => ({
+      companyName: w.companyName.trim(),
+      roleTitle: w.roleTitle.trim(),
+      outcomes: w.outcomes.trim(),
+      startDate: w.startDate,
+      endDate: w.endDate,
+      isCurrent: w.isCurrent,
+    })),
+    education: form.education,
+    languages: form.languages,
+    socialLinks: form.socialLinks,
+    projects: form.projects,
+    achievements: form.achievements,
+    values: {
+      workEnvironment: form.values.workEnvironment as WorkEnvironment,
+      riskAppetite: form.values.riskAppetite as RiskAppetite,
+      salaryExpectation: form.values.salaryExpectation.trim(),
+      workingStyle: form.values.workingStyle.trim(),
+      constraints: form.values.constraints.trim() || "None",
+    },
+    aspirations: {
+      targetRoles: form.aspirations.targetRoles.trim(),
+      targetIndustries: form.aspirations.targetIndustries.trim(),
+      horizon3y: form.aspirations.horizon3y.trim(),
+      horizon5y: form.aspirations.horizon5y.trim(),
+      definitionOfSuccess: form.aspirations.definitionOfSuccess.trim(),
+    },
+    imports: form.imports,
+  };
+}
+
+function applyReviewSuggestion(form: FormState, path: string, value: unknown): FormState {
+  const segments = path.split(".");
+  if (segments.length < 2) return form;
+  const next = structuredClone(form) as FormState;
+  let target: unknown = next;
+  for (let i = 0; i < segments.length - 1; i += 1) {
+    const segment = segments[i];
+    if (target === null || typeof target !== "object" || segment === undefined) return form;
+    target = (target as Record<string, unknown>)[segment];
+  }
+  const leaf = segments.at(-1);
+  if (!leaf || target === null || typeof target !== "object") return form;
+  (target as Record<string, unknown>)[leaf] = value;
+  return next;
+}
+
 function emptyForm(): FormState {
   return {
     basics: { targetRole: "", location: "", yearsOfExperience: "", bio: "" },
@@ -87,6 +145,8 @@ export default function OnboardingChat() {
   const [isTyping, setIsTyping] = useState(true);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [isSaving, startSaving] = useTransition();
+  const [isReviewing, startReviewing] = useTransition();
+  const [review, setReview] = useState<OnboardingReviewResponse | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isUploading, startUploading] = useTransition();
   const [lastDetectedSkills, setLastDetectedSkills] = useState<SkillInput[]>([]);
@@ -177,9 +237,9 @@ export default function OnboardingChat() {
           const existingWork = new Set(
             prev.workHistory.map((w) => `${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`),
           );
-          const freshWork = result.importedWorkHistory.filter(
-            (w) => !existingWork.has(`${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`),
-          );
+          const freshWork = result.importedWorkHistory
+            .filter((w) => !existingWork.has(`${w.companyName.toLowerCase()}__${w.roleTitle.toLowerCase()}`))
+            .map((w) => ({ ...w, startDate: w.startDate ?? "" }));
 
           const existingEdu = new Set(
             prev.education.map((e) => `${e.credentialName.toLowerCase()}__${e.issuer.toLowerCase()}`),
@@ -247,47 +307,39 @@ export default function OnboardingChat() {
     });
   };
 
+  const handleRunReview = () => {
+    startReviewing(async () => {
+      try {
+        const result = await api.onboarding.review(buildPayload(form));
+        setReview(result);
+        recordAnswer("Review my profile draft.");
+        advance();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not review onboarding draft");
+      }
+    });
+  };
+
+  const acceptSuggestion = (path: string, value: unknown) => {
+    setForm((prev) => applyReviewSuggestion(prev, path, value));
+    setReview((prev) => prev
+      ? { ...prev, suggestions: prev.suggestions.filter((issue) => !(issue.path === path && issue.proposedValue === value)) }
+      : prev);
+    toast.success("Suggestion applied");
+  };
+
   const handleSave = () => {
+    if (review?.criticalIssues.length) {
+      toast.error("Resolve critical issues before saving.");
+      return;
+    }
     startSaving(async () => {
       try {
-        const yearsParsed = Number(form.basics.yearsOfExperience);
-        await api.onboarding.complete({
-          basics: {
-            targetRole: form.basics.targetRole.trim(),
-            location: form.basics.location.trim(),
-            yearsOfExperience: Number.isFinite(yearsParsed) ? yearsParsed : 0,
-            bio: form.basics.bio.trim(),
-          },
-          skills: form.skills.map((s) => ({ name: s.name.trim(), category: s.category, confidenceRating: s.confidenceRating })),
-          workHistory: form.workHistory.map((w) => ({
-            companyName: w.companyName.trim(),
-            roleTitle: w.roleTitle.trim(),
-            outcomes: w.outcomes.trim(),
-            startDate: w.startDate,
-            endDate: w.endDate,
-            isCurrent: w.isCurrent,
-          })),
-          education: form.education,
-          languages: form.languages,
-          socialLinks: form.socialLinks,
-          projects: form.projects,
-          achievements: form.achievements,
-          values: {
-            workEnvironment: form.values.workEnvironment,
-            riskAppetite: form.values.riskAppetite,
-            salaryExpectation: form.values.salaryExpectation.trim(),
-            workingStyle: form.values.workingStyle.trim(),
-            constraints: form.values.constraints.trim() || "None",
-          },
-          aspirations: {
-            targetRoles: form.aspirations.targetRoles.trim(),
-            targetIndustries: form.aspirations.targetIndustries.trim(),
-            horizon3y: form.aspirations.horizon3y.trim(),
-            horizon5y: form.aspirations.horizon5y.trim(),
-            definitionOfSuccess: form.aspirations.definitionOfSuccess.trim(),
-          },
-          imports: form.imports,
-        });
+        await api.onboarding.complete(buildPayload(form));
+        setForm(emptyForm());
+        setReview(null);
+        setResumeFile(null);
+        setLastDetectedSkills([]);
         toast.success("Onboarding saved");
         router.push("/dashboard");
       } catch (error) {
@@ -407,7 +459,7 @@ export default function OnboardingChat() {
       case "definitionOfSuccess":
         return <TextareaAnswer placeholder="Building things people use daily, with people I respect..." value={form.aspirations.definitionOfSuccess}
           onChange={(v) => setForm((p) => ({ ...p, aspirations: { ...p.aspirations, definitionOfSuccess: v } }))}
-          onSubmit={() => { const v = form.aspirations.definitionOfSuccess.trim(); if (!v) { toast.error("Define success in your own words"); return; } handleTextStep(v); }}
+          onSubmit={() => { const v = form.aspirations.definitionOfSuccess.trim(); if (!v) { toast.error("Define success in your own words"); return; } recordAnswer(v); handleRunReview(); }}
           onBack={goBack} />;
 
       case "imports":
@@ -425,7 +477,7 @@ export default function OnboardingChat() {
         />;
 
       case "review":
-        return <ReviewAnswer form={form} isSaving={isSaving} onBack={goBack} onSubmit={handleSave} />;
+        return <ReviewAnswer form={form} review={review} isSaving={isSaving} isReviewing={isReviewing} onBack={goBack} onSubmit={handleSave} onAcceptSuggestion={acceptSuggestion} />;
 
       case "education":
         return <EducationAnswer items={form.education}

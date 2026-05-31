@@ -1,7 +1,21 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { CareerPath, Resume, ResumeContent, UserSocialLink, AchievementInput, ProjectInput } from "@kursa/types";
+import type {
+  CareerPath,
+  Resume,
+  ResumeContent,
+  UserSocialLink,
+  AchievementInput,
+  ProjectInput,
+  OnboardingReviewResponse,
+  UserSkill,
+  UserLearningGoal,
+  SkillCreateInput,
+  SkillUpdateInput,
+  LearningGoalCreateInput,
+  LearningGoalUpdateInput,
+} from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -57,6 +71,42 @@ export const api = {
       method: "DELETE",
     }),
 
+  // Skill inventory
+  createSkill: (body: SkillCreateInput) =>
+    request<{ skill: UserSkill }>("/api/v1/profile/me/skills", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateSkill: (id: string, body: SkillUpdateInput) =>
+    request<{ skill: UserSkill }>(`/api/v1/profile/me/skills/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteSkill: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/skills/${id}`, {
+      method: "DELETE",
+    }),
+
+  // Learning goals
+  createLearningGoal: (body: LearningGoalCreateInput) =>
+    request<{ learningGoal: UserLearningGoal }>("/api/v1/profile/me/learning-goals", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateLearningGoal: (id: string, body: LearningGoalUpdateInput) =>
+    request<{ learningGoal: UserLearningGoal }>(`/api/v1/profile/me/learning-goals/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteLearningGoal: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/learning-goals/${id}`, {
+      method: "DELETE",
+    }),
+
   paths: {
     generate: () =>
       request<{ paths: CareerPath[] }>("/api/v1/profile/me/paths/generate", {
@@ -88,6 +138,12 @@ export const api = {
   },
 
   onboarding: {
+    review: (payload: unknown) =>
+      request<OnboardingReviewResponse>("/api/v1/onboarding/review", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+
     complete: (payload: unknown) =>
       request<{ ok: true }>("/api/v1/onboarding/complete", {
         method: "POST",

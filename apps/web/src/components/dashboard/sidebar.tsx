@@ -223,30 +223,12 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                 </div>
             </div>
 
-            {/* ── Quick find ──────────────────────────────────── */}
-            <div className="mt-auto mx-3 mb-3">
-                <div
-                    className="flex items-center gap-2 rounded-md px-2.5 py-1.5"
-                    style={{
-                        border: "1px solid var(--line)",
-                        background: "var(--bg)",
-                        cursor: "text",
-                    }}
-                >
-                    <span
-                        className="mono flex-1"
-                        style={{ fontSize: "var(--text-xs)", color: "var(--mute-3)" }}
-                    >
-                        Quick find...
-                    </span>
-                    <kbd className="kbd" style={{ fontSize: 9 }}>⌘K</kbd>
-                </div>
-            </div>
+
 
             {/* ── User footer ─────────────────────────────────── */}
             <Link
                 href="/dashboard/settings"
-                className="flex items-center justify-between gap-2 px-3 py-3"
+                className="flex items-center justify-between gap-2 px-3 py-3 mt-auto"
                 style={{ borderTop: "1px solid var(--line)" }}
             >
                 <div className="flex items-center gap-2">

@@ -12,3 +12,4 @@ export * from './api/insights';
 export * from './api/paths';
 export * from './api/resume';
 export * from './api/onboarding';
+export * from './api/skills';
