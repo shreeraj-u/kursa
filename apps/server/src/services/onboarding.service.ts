@@ -89,8 +89,6 @@ export async function completeOnboarding(userId: string, input: CompleteOnboardi
     imports: input.imports,
   };
 
-  const now = new Date();
-
   await prisma.$transaction(async (tx) => {
     await tx.profile.update({
       where: { id: profile.id },
@@ -123,7 +121,7 @@ export async function completeOnboarding(userId: string, input: CompleteOnboardi
           profileId: profile.id,
           companyName: item.companyName,
           roleTitle: item.roleTitle,
-          startDate: yearToDate(item.startDate) ?? now,
+          startDate: yearToDate(item.startDate) ?? (() => { throw new Error("Work history start year is required."); })(),
           endDate: yearToDate(item.endDate),
           isCurrent: item.isCurrent,
           outcomes: { text: item.outcomes } as never,

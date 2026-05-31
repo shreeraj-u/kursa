@@ -103,3 +103,13 @@ and they **persist** to the Profile on completion. The uploaded source file and
 raw extracted text are ephemeral import inputs, not durable user artifacts; after
 parsing, only reviewed structured Profile data persists. Extraction never invents
 data not present in the résumé.
+
+
+### Profile Intake Review
+An ephemeral AI/deterministic review that runs after onboarding data entry and
+before final Profile persistence. It checks the structured draft for validation
+errors, unsafe prompt-like content, thin entries, and obvious consistency issues,
+then returns critical issues, warnings, and suggestions for the user to accept or
+ignore. It is **suggest-only**: proposed values are grounded in user-provided draft
+fields, no review output is durable, and only user-accepted final Profile data is
+persisted. It is distinct from the durable Profile source of truth.

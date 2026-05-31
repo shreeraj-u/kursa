@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { CareerPath, Resume, ResumeContent, UserSocialLink, AchievementInput, ProjectInput } from "@kursa/types";
+import type { CareerPath, Resume, ResumeContent, UserSocialLink, AchievementInput, OnboardingReviewResponse, ProjectInput } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -88,6 +88,12 @@ export const api = {
   },
 
   onboarding: {
+    review: (payload: unknown) =>
+      request<OnboardingReviewResponse>("/api/v1/onboarding/review", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+
     complete: (payload: unknown) =>
       request<{ ok: true }>("/api/v1/onboarding/complete", {
         method: "POST",

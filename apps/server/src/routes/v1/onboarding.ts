@@ -27,6 +27,7 @@ const resumeUploadLimit = rateLimit({
 router.use(requireAuth);
 
 router.get("/status", onboardingController.getStatus);
+router.post("/review", onboardingController.review);
 router.post("/complete", onboardingController.complete);
 router.post("/resume", resumeUploadLimit, upload.single("resume"), onboardingController.uploadResume);
 
