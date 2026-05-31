@@ -2,6 +2,20 @@ export interface Observation {
   text: string;
   timeAgo: string;
   type: "opportunity" | "warning" | "info";
+  /** Present when served from the LLM pipeline (never fallback templates). */
+  source?: "llm";
+}
+
+export interface ObservationsResponse {
+  data: Observation[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  generationSource: "llm";
+  materialChangeDetected?: boolean;
 }
 
 export interface ActivityEvent {

@@ -3,8 +3,11 @@ import { env } from "@kursa/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
+import { getAllowedOrigins } from "./allowed-origins.js";
+
 export function createAuth() {
   const prisma = createPrismaClient();
+  const allowedOrigins = getAllowedOrigins(env.CORS_ORIGIN);
   const socialProviders = {
     github: {
       clientId: env.OAUTH_GITHUB_CLIENT_ID,
@@ -25,7 +28,7 @@ export function createAuth() {
       provider: "postgresql",
     }),
 
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: allowedOrigins,
     emailAndPassword: {
       enabled: true,
     },

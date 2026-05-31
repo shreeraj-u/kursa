@@ -1,6 +1,7 @@
 import prisma from "@kursa/db";
 
 import type { CompleteOnboardingInput } from "../validators/onboarding.validator.js";
+import { ingestEvent } from "./events.service.js";
 
 export async function getOnboardingStatus(userId: string) {
   const profile = await prisma.profile.findUnique({
@@ -33,6 +34,7 @@ function dedupeWorkHistory(items: CompleteOnboardingInput["workHistory"]) {
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
+      ...item,
       companyName: item.companyName.trim(),
       roleTitle: item.roleTitle.trim(),
       outcomes: item.outcomes.trim(),
@@ -110,6 +112,8 @@ export async function completeOnboarding(userId: string, input: CompleteOnboardi
         name: skill.name,
         category: skill.category,
         confidenceRating: skill.confidenceRating,
+        source:
+          skill.source === "resume" ? "resume" : "self_reported",
       })),
       skipDuplicates: true,
     });
@@ -198,5 +202,32 @@ export async function completeOnboarding(userId: string, input: CompleteOnboardi
         },
       });
     }
+  });
+
+  if (input.imports.resumeFileName || input.imports.resumeRawText) {
+    await ingestEvent(userId, {
+      type: "profile_import",
+      source: "system",
+      body: `Resume imported: ${input.imports.resumeFileName || "upload"}`,
+      structured: {
+        resumeFileName: input.imports.resumeFileName,
+        skillCount: dedupedSkills.length,
+        workHistoryCount: dedupedWorkHistory.length,
+      },
+      skipDelta: true,
+      skipDistill: true,
+    });
+  }
+
+  await ingestEvent(userId, {
+    type: "onboarding_complete",
+    source: "system",
+    body: "Onboarding completed",
+    structured: {
+      skillCount: dedupedSkills.length,
+      workHistoryCount: dedupedWorkHistory.length,
+    },
+    skipDelta: true,
+    skipDistill: true,
   });
 }

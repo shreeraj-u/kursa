@@ -24,11 +24,9 @@ export default async function DashboardLayout({
 
     // Best-effort profile fetch — badges degrade gracefully if unavailable
     let profile: UserProfile | null = null;
-    try {
-        const profileData = await serverFetch<{ profile: UserProfile | null }>("/api/v1/profile/me");
-        profile = profileData?.profile ?? null;
-    } catch {
-        // non-fatal: sidebar renders without badges
+    const profileResult = await serverFetch<{ profile: UserProfile | null }>("/api/v1/profile/me");
+    if (profileResult.ok) {
+        profile = profileResult.data.profile;
     }
 
     const now = Date.now();

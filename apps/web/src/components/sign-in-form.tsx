@@ -168,7 +168,20 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
         variant="outline"
         className="w-full"
         onClick={async () => {
-          await authClient.signIn.social({ provider: "github", callbackURL: `${window.location.origin}/dashboard` });
+          try {
+            await authClient.signIn.social({
+              provider: "github",
+              callbackURL: `${window.location.origin}/dashboard`,
+            });
+          } catch (error) {
+            const message =
+              error instanceof Error && error.message === "Failed to fetch"
+                ? "Cannot reach the auth server. Start it with pnpm dev:server (http://localhost:3000)."
+                : error instanceof Error
+                  ? error.message
+                  : "GitHub sign-in failed";
+            toast.error(message);
+          }
         }}
       >
         <GitHubLogoIcon className="mr-2 h-4 w-4" />

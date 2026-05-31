@@ -1,0 +1,43 @@
+---
+description: Frontend must not use Prisma — all DB access goes through the backend API
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# No Prisma in the frontend
+
+The Next.js app (`apps/web`) must **never** import `@kursa/db`, instantiate `PrismaClient`, or run database queries directly.
+
+## Architecture
+
+```
+apps/web  →  HTTP (serverFetch / fetch)  →  apps/server  →  @kursa/db / Prisma
+```
+
+- **Frontend**: UI, client state, auth session checks, calling backend REST routes.
+- **Backend** (`apps/server`): validation, business logic, transactions, Prisma.
+
+## Do
+
+- Add or extend Express routes under `apps/server/src/routes/`.
+- Call them from the web app via `serverFetch` (RSC/server actions) or client `fetch` to `NEXT_PUBLIC_SERVER_URL`.
+- Keep shared types in `packages/types` when both sides need them.
+
+## Don't
+
+- `import prisma from "@kursa/db"` in `apps/web`.
+- Use Next.js server actions as a shortcut for DB writes when the backend should own that domain logic.
+- Add `@kursa/db` as a dependency of `apps/web`.
+
+## Examples
+
+```typescript
+// ❌ BAD — Prisma in a page or server action
+import prisma from "@kursa/db";
+const profile = await prisma.profile.findUnique({ where: { userId } });
+
+// ✅ GOOD — backend owns persistence
+const profile = await serverFetch<{ profile: UserProfile | null }>("/api/v1/profile/me");
+```
+
+When adding features (onboarding, dashboard gating, career paths, etc.), implement the API on the server first, then wire the web app to it.

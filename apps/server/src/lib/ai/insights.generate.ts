@@ -1,4 +1,4 @@
-import type { ProfileSignals } from "@kursa/types";
+import type { AdvisorContext } from "@kursa/types";
 
 import { openai } from "../openai.js";
 import { GENERATE_OBSERVATIONS_PROMPT, Models } from "./prompts.js";
@@ -7,14 +7,26 @@ export type Observation = {
   text: string;
   timeAgo: string;
   type: "opportunity" | "warning" | "info";
+  source?: "llm" | "rules";
 };
 
-export async function generateObservations(signals: ProfileSignals): Promise<Observation[]> {
+export async function generateObservations(context: AdvisorContext): Promise<Observation[]> {
+  const payload = {
+    signals: context.signals,
+    memories: context.memories.map((m) => m.fact),
+    recentActivity: context.recentEvents.slice(0, 10).map((e) => ({
+      type: e.type,
+      body: e.body,
+      occurredAt: e.occurredAt,
+    })),
+    activePathTitle: context.activePath?.title ?? null,
+  };
+
   const response = await openai.chat.completions.create({
     model: Models.fast,
     messages: [
       { role: "system", content: GENERATE_OBSERVATIONS_PROMPT },
-      { role: "user", content: JSON.stringify(signals) },
+      { role: "user", content: JSON.stringify(payload) },
     ],
     response_format: { type: "json_object" },
     temperature: 0.4,
@@ -42,7 +54,7 @@ export async function generateObservations(signals: ProfileSignals): Promise<Obs
     )
     .map((o) => ({
       text: o.text,
-      timeAgo: "noticed · today",
+      timeAgo: context.signals.recentMemoryFacts.length > 0 ? "noticed · pattern" : "noticed · today",
       type: o.type as Observation["type"],
     }));
 }

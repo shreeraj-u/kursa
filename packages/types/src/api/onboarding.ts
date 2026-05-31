@@ -62,6 +62,7 @@ export const skillSchema = z.object({
   name: boundedText(80),
   category: skillCategorySchema,
   confidenceRating: z.number().int().min(1).max(5),
+  source: z.enum(["self_reported", "resume"]).optional(),
 });
 
 export const workHistorySchema = z.object({
@@ -126,6 +127,8 @@ export const aspirationsSchema = z.object({
 
 export const importsSchema = z.object({
   linkedinProfileUrl: optionalUrlStringSchema,
+  resumeFileName: z.string().default(""),
+  resumeRawText: z.string().default(""),
 });
 
 
@@ -199,6 +202,8 @@ export const onboardingPayloadSchema = z.object({
   aspirations: aspirationsSchema,
   imports: importsSchema.default({
     linkedinProfileUrl: "",
+    resumeFileName: "",
+    resumeRawText: "",
   }),
 });
 

@@ -160,7 +160,7 @@ function emptyForm(): FormState {
     socialLinks: [],
     values: { workEnvironment: "", riskAppetite: "", salaryExpectation: "", workingStyle: "", constraints: "" },
     aspirations: { targetRoles: "", targetIndustries: "", horizon3y: "", horizon5y: "", definitionOfSuccess: "" },
-    imports: { linkedinProfileUrl: "" },
+    imports: { linkedinProfileUrl: "", resumeFileName: "", resumeRawText: "" },
   };
 }
 
@@ -254,7 +254,7 @@ export default function OnboardingChat() {
 
         // Pre-populate skills
         const detected = result.importedSkills.map(({ name, category, confidenceRating }) => ({
-          name, category, confidenceRating,
+          name, category, confidenceRating, source: "resume" as const,
         }));
         mergeImportedSkills(detected);
         setLastDetectedSkills(detected);
@@ -311,9 +311,17 @@ export default function OnboardingChat() {
             achievements: [...prev.achievements, ...freshAchievement],
             languages: [...prev.languages, ...freshLanguage],
             socialLinks: [...prev.socialLinks, ...freshLink],
-            imports: prev.imports,
+            imports: {
+              ...prev.imports,
+              resumeFileName: result.resumeFileName ?? resumeFile?.name ?? "",
+              resumeRawText: result.rawText ?? "",
+            },
           };
         });
+
+        if (result.warnings?.length) {
+          toast.message(result.warnings[0]);
+        }
 
         const parts: string[] = [];
         if (detected.length > 0) parts.push(`${detected.length} skill${detected.length === 1 ? "" : "s"}`);

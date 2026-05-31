@@ -25,4 +25,6 @@ export const Errors = {
     new HttpError(409, "CONFLICT", message),
   internal: (message = "Internal server error") =>
     new HttpError(500, "INTERNAL_ERROR", message),
+  observationsUnavailable: (message: string, details?: unknown) =>
+    new HttpError(503, "OBSERVATIONS_UNAVAILABLE", message, details),
 };

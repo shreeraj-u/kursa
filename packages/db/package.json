@@ -16,7 +16,8 @@
         "postinstall": "prisma generate",
         "db:studio": "prisma studio",
         "seed:dashboard": "SEED_SCENARIO=dashboard pnpm prisma db seed",
-        "seed:ai-observation": "SEED_SCENARIO=ai-observation pnpm prisma db seed"
+        "seed:ai-observation": "SEED_SCENARIO=ai-observation pnpm prisma db seed",
+        "seed:tester2": "SEED_SCENARIO=tester2 pnpm prisma db seed"
     },
     "dependencies": {
         "@kursa/env": "workspace:*",

@@ -82,4 +82,8 @@ export type ParsedEducation = z.infer<typeof parsedEducationSchema>;
 export type ParsedLanguage = z.infer<typeof parsedLanguageSchema>;
 export type ParsedSocialLink = z.infer<typeof parsedSocialLinkSchema>;
 export type ParsedBasics = z.infer<typeof parsedBasicsSchema>;
-export type ResumeParseResult = z.infer<typeof llmResponseSchema> & { rawText: string };
+export type ResumeParseResult = z.infer<typeof llmResponseSchema> & {
+  rawText: string;
+  extractionMethod: "llm" | "taxonomy" | "hybrid";
+  warnings: string[];
+};

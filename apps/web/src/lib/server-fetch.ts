@@ -3,24 +3,46 @@ import { headers } from "next/headers";
 import { env } from "@kursa/env/web";
 import type { ApiResponse } from "@kursa/types";
 
-
+export type ServerFetchResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number };
 
 /**
  * Typed fetch for Next.js server components.
  * Forwards cookies to the backend and unwraps the { success, data } envelope.
- * Returns null on any non-ok response.
  */
-export async function serverFetch<T>(path: string): Promise<T | null> {
+export async function serverFetch<T>(
+  path: string,
+  options?: { retries?: number },
+): Promise<ServerFetchResult<T>> {
   const requestHeaders = await headers();
   const cookie = requestHeaders.get("cookie") ?? "";
+  const retries = options?.retries ?? 1;
 
-  const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}${path}`, {
-    headers: { cookie },
-    cache: "no-store",
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}${path}`, {
+      headers: { cookie },
+      cache: "no-store",
+    });
 
-  if (!res.ok) return null;
+    if (res.ok) {
+      const json = (await res.json()) as ApiResponse<T>;
+      return { ok: true, data: json.data as T };
+    }
 
-  const json = (await res.json()) as ApiResponse<T>;
-  return json.data ?? null;
+    if (attempt < retries && (res.status >= 500 || res.status === 429)) {
+      await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
+      continue;
+    }
+
+    return { ok: false, status: res.status };
+  }
+
+  return { ok: false, status: 0 };
+}
+
+/** @deprecated Prefer serverFetch and check result.ok */
+export async function serverFetchOrNull<T>(path: string): Promise<T | null> {
+  const result = await serverFetch<T>(path);
+  return result.ok ? result.data : null;
 }

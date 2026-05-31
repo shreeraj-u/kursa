@@ -11,9 +11,11 @@ import { api } from "@/lib/api";
 import PathSelector from "./path-selector";
 import PathRoadmap from "./path-roadmap";
 import PathDetailsPanel from "./path-details-panel";
+import PathPulsePanel from "./path-pulse-panel";
 
 interface CareerPathPageProps {
   paths: CareerPath[];
+  materialChangeDetected?: boolean;
 }
 
 function setOnlyActivePath(paths: CareerPath[], activePathId: string) {
@@ -29,7 +31,7 @@ function reconcileActivatedPaths(paths: CareerPath[], requestedPathId: string) {
     : paths;
 }
 
-export default function CareerPathPage({ paths }: CareerPathPageProps) {
+export default function CareerPathPage({ paths, materialChangeDetected }: CareerPathPageProps) {
   const router = useRouter();
   const [localPaths, setLocalPaths] = useState(paths);
   const [generating, setGenerating] = useState(false);
@@ -199,6 +201,14 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
             {generating ? "regenerating…" : "regenerate paths"}
           </Button>
         </div>
+        {materialChangeDetected && !justRegenerated && (
+          <div
+            className="rounded-lg px-3 py-2 mono text-2xs"
+            style={{ border: "1px solid var(--line)", background: "var(--bg-sub)", color: "var(--mute)" }}
+          >
+            Your profile has shifted since these paths were generated — consider regenerating.
+          </div>
+        )}
         {justRegenerated && (
           <div className="mono text-2xs text-mute-2">
             paths regenerated — preview the options, then set one active when ready
@@ -226,6 +236,7 @@ export default function CareerPathPage({ paths }: CareerPathPageProps) {
             />
           </div>
         </div>
+        <PathPulsePanel />
       </div>
     </div>
   );
