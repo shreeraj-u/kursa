@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { skillCategorySchema } from "./skills.js";
+import { skillCategorySchema } from "./skills";
 
 export { skillCategorySchema };
 export const workEnvironmentSchema = z.enum(["startup", "corporate", "remote", "hybrid"]);

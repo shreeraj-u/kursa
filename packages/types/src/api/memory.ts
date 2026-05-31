@@ -1,6 +1,6 @@
-import type { ProfileInput, ProfileSignals } from "./insights.js";
-import type { CareerPath } from "./paths.js";
-import type { CareerEventSummary } from "./events.js";
+import type { ProfileInput, ProfileSignals } from "./insights";
+import type { CareerPath } from "./paths";
+import type { CareerEventSummary } from "./events";
 
 export interface UserMemorySummary {
   id: string;

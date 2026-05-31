@@ -1,4 +1,4 @@
-import type { EventEnrichment, MilestoneEvidence } from "./intelligence.js";
+import type { EventEnrichment, MilestoneEvidence } from "./intelligence";
 
 export type CareerEventType =
   | "checkin_weekly"

@@ -1,4 +1,4 @@
-import type { MilestoneStatus } from "./paths.js";
+import type { MilestoneStatus } from "./paths";
 
 export type MemoryCategory =
   | "skill_evidence"
