@@ -52,7 +52,11 @@ const payload: OnboardingPayload = {
     horizon5y: "build products",
     definitionOfSuccess: "useful work",
   },
-  imports: { linkedinProfileUrl: "" },
+  imports: {
+    linkedinProfileUrl: "",
+    resumeFileName: "",
+    resumeRawText: "",
+  },
 };
 
 const tests: TestCase[] = [

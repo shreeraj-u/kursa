@@ -15,6 +15,8 @@ import type {
   SkillUpdateInput,
   LearningGoalCreateInput,
   LearningGoalUpdateInput,
+  ProactiveNudge,
+  RelevanceSummary,
 } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
