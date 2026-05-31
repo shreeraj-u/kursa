@@ -143,7 +143,7 @@ const dateRangeSchema = <T extends z.ZodTypeAny>(schema: T) =>
     }
   });
 
-export const onboardingReviewStatusSchema = z.enum(["ready", "needs_user_review", "blocked"]);
+export const onboardingReviewStatusSchema = z.enum(["ready", "needs_user_review"]);
 export const onboardingReviewSeveritySchema = z.enum(["critical", "warning", "suggestion"]);
 export const onboardingReviewCategorySchema = z.enum([
   "validation",

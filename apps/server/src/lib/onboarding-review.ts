@@ -1,13 +1,18 @@
 import { z } from "zod";
 import {
   onboardingPayloadSchema,
-  onboardingReviewResponseSchema,
+  onboardingReviewIssueSchema,
   type OnboardingPayload,
   type OnboardingReviewIssue,
   type OnboardingReviewResponse,
 } from "@kursa/types";
 
 import { Models, PROFILE_INTAKE_REVIEW_PROMPT, CORRECT_PROFILE_INTAKE_REVIEW_PROMPT } from "./ai/prompts.js";
+import {
+  looseReviewResponseSchema,
+  type LooseReviewIssue,
+  type LooseReviewResponse,
+} from "../validators/onboarding.validator.js";
 
 const AI_REVIEW_TIMEOUT_MS = 8_000;
 const INJECTION_PATTERN = /\b(ignore|disregard|override|forget)\b.{0,80}\b(instruction|prompt|system|developer|policy|rules?)\b/i;
@@ -27,38 +32,124 @@ function makeIssue(params: Omit<OnboardingReviewIssue, "id"> & { id?: string }):
   };
 }
 
+function coerceLooseIssue(issue: LooseReviewIssue): OnboardingReviewIssue {
+  return makeIssue({
+    id: issue.id,
+    severity: issue.severity,
+    category: issue.category,
+    path: issue.path,
+    message: issue.message,
+    ...(issue.proposedValue !== undefined ? { proposedValue: issue.proposedValue } : {}),
+  });
+}
+
+function coerceLooseReview(review: LooseReviewResponse): OnboardingReviewResponse {
+  return {
+    status: review.status === "blocked" ? "needs_user_review" : review.status,
+    criticalIssues: review.criticalIssues.map(coerceLooseIssue),
+    warnings: review.warnings.map(coerceLooseIssue),
+    suggestions: review.suggestions.map(coerceLooseIssue),
+  };
+}
+
 function pathToString(path: PropertyKey[]): string {
   return path.map(String).join(".") || "payload";
 }
 
-function statusFor(criticalIssues: OnboardingReviewIssue[], warnings: OnboardingReviewIssue[], suggestions: OnboardingReviewIssue[]): OnboardingReviewResponse["status"] {
-  if (criticalIssues.length > 0) return "blocked";
+function statusFor(warnings: OnboardingReviewIssue[], suggestions: OnboardingReviewIssue[]): OnboardingReviewResponse["status"] {
   if (warnings.length > 0 || suggestions.length > 0) return "needs_user_review";
   return "ready";
 }
 
 function normalizeReview(review: Omit<OnboardingReviewResponse, "status">): OnboardingReviewResponse {
-  const criticalIssues = review.criticalIssues.map((issue) => ({ ...issue, severity: "critical" as const }));
-  const warnings = review.warnings.map((issue) => ({ ...issue, severity: "warning" as const }));
+  const demotedCriticalIssues = review.criticalIssues.map((issue) => ({
+    ...issue,
+    severity: "warning" as const,
+    message: issue.message.replace(/before saving|must fix|blocked/gi, "").trim() || issue.message,
+  }));
+  const warnings = [...demotedCriticalIssues, ...review.warnings].map((issue) => ({ ...issue, severity: "warning" as const }));
   const suggestions = review.suggestions.map((issue) => ({ ...issue, severity: "suggestion" as const }));
   return {
-    status: statusFor(criticalIssues, warnings, suggestions),
-    criticalIssues,
+    status: statusFor(warnings, suggestions),
+    criticalIssues: [],
     warnings,
     suggestions,
   };
 }
 
+function getPathValue(source: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>((target, segment) => {
+    if (target === null || typeof target !== "object") return undefined;
+    return (target as Record<string, unknown>)[segment];
+  }, source);
+}
+
+function setPathValue(target: unknown, path: string, value: unknown): boolean {
+  const segments = path.split(".");
+  if (segments.length < 2 || target === null || typeof target !== "object") return false;
+
+  let cursor = target as Record<string, unknown>;
+  for (const segment of segments.slice(0, -1)) {
+    const next = cursor[segment];
+    if (next === null || typeof next !== "object") return false;
+    cursor = next as Record<string, unknown>;
+  }
+
+  const leaf = segments.at(-1);
+  if (!leaf) return false;
+  cursor[leaf] = value;
+  return true;
+}
+
+export function sanitizeReviewProposedValue(payload: OnboardingPayload, path: string, proposedValue: unknown): unknown | undefined {
+  const pathAllowed = onboardingReviewIssueSchema.safeParse({
+    id: "proposal-check",
+    severity: "suggestion",
+    category: "quality",
+    path,
+    message: "Validate proposed value.",
+    proposedValue,
+  });
+  if (!pathAllowed.success) return undefined;
+
+  const candidate = structuredClone(payload) as OnboardingPayload;
+  if (!setPathValue(candidate, path, proposedValue)) return undefined;
+
+  const parsed = onboardingPayloadSchema.safeParse(candidate);
+  if (!parsed.success) return undefined;
+  return getPathValue(parsed.data, path);
+}
+
+function sanitizeIssueProposedValues(payload: OnboardingPayload, issues: OnboardingReviewIssue[]): OnboardingReviewIssue[] {
+  return issues.map((issue) => {
+    if (issue.proposedValue === undefined) return issue;
+    const proposedValue = sanitizeReviewProposedValue(payload, issue.path, issue.proposedValue);
+    if (proposedValue === undefined) {
+      const { proposedValue: _drop, ...withoutProposedValue } = issue;
+      return withoutProposedValue;
+    }
+    return { ...issue, proposedValue };
+  });
+}
+
+function sanitizeReview(payload: OnboardingPayload, review: OnboardingReviewResponse): OnboardingReviewResponse {
+  return normalizeReview({
+    criticalIssues: sanitizeIssueProposedValues(payload, review.criticalIssues),
+    warnings: sanitizeIssueProposedValues(payload, review.warnings),
+    suggestions: sanitizeIssueProposedValues(payload, review.suggestions),
+  });
+}
+
 export function deterministicOnboardingReview(input: unknown): OnboardingReviewResponse {
   const parsed = onboardingPayloadSchema.safeParse(input);
   if (!parsed.success) {
-    const criticalIssues = parsed.error.issues.map((issue) => makeIssue({
-      severity: "critical",
+    const warnings = parsed.error.issues.map((issue) => makeIssue({
+      severity: "warning",
       category: "validation",
       path: pathToString(issue.path),
       message: issue.message,
     }));
-    return normalizeReview({ criticalIssues, warnings: [], suggestions: [] });
+    return normalizeReview({ criticalIssues: [], warnings, suggestions: [] });
   }
 
   const payload = parsed.data;
@@ -190,9 +281,9 @@ async function runAiReview(payload: OnboardingPayload): Promise<OnboardingReview
 
     const content = response.choices[0]?.message?.content ?? "{}";
     const parsedJson = JSON.parse(content) as unknown;
-    const parsed = onboardingReviewResponseSchema.safeParse(parsedJson);
+    const parsed = looseReviewResponseSchema.safeParse(parsedJson);
     if (parsed.success) {
-      return normalizeReview(parsed.data);
+      return sanitizeReview(payload, coerceLooseReview(parsed.data));
     }
     console.error("[onboarding-review] AI review failed validation:", z.flattenError(parsed.error));
   }
@@ -219,9 +310,6 @@ function mergeReview(base: OnboardingReviewResponse, ai: OnboardingReviewRespons
 
 export async function reviewOnboardingDraft(input: unknown): Promise<OnboardingReviewResponse> {
   const deterministic = deterministicOnboardingReview(input);
-  if (deterministic.criticalIssues.length > 0) {
-    return deterministic;
-  }
 
   const parsed = onboardingPayloadSchema.safeParse(input);
   if (!parsed.success) return deterministic;

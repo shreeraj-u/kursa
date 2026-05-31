@@ -122,6 +122,32 @@ function applyReviewSuggestion(form: FormState, path: string, value: unknown): F
   return next;
 }
 
+
+function applyReviewSuggestions(form: FormState, review: OnboardingReviewResponse): { form: FormState; review: OnboardingReviewResponse; appliedCount: number } {
+  const applyableIssues = [...review.warnings, ...review.suggestions].filter((issue) => issue.proposedValue !== undefined);
+  if (applyableIssues.length === 0) return { form, review, appliedCount: 0 };
+
+  let nextForm = form;
+  const appliedIds = new Set<string>();
+
+  for (const issue of applyableIssues) {
+    const updatedForm = applyReviewSuggestion(nextForm, issue.path, issue.proposedValue);
+    if (updatedForm !== nextForm) {
+      nextForm = updatedForm;
+      appliedIds.add(issue.id);
+    }
+  }
+
+  const warnings = review.warnings.filter((issue) => !appliedIds.has(issue.id));
+  const suggestions = review.suggestions.filter((issue) => !appliedIds.has(issue.id));
+  const status = warnings.length > 0 || suggestions.length > 0 ? "needs_user_review" : "ready";
+  return {
+    form: nextForm,
+    review: { status, criticalIssues: [], warnings, suggestions },
+    appliedCount: appliedIds.size,
+  };
+}
+
 function emptyForm(): FormState {
   return {
     basics: { targetRole: "", location: "", yearsOfExperience: "", bio: "" },
@@ -147,6 +173,7 @@ export default function OnboardingChat() {
   const [isSaving, startSaving] = useTransition();
   const [isReviewing, startReviewing] = useTransition();
   const [review, setReview] = useState<OnboardingReviewResponse | null>(null);
+  const [appliedCleanupCount, setAppliedCleanupCount] = useState(0);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isUploading, startUploading] = useTransition();
   const [lastDetectedSkills, setLastDetectedSkills] = useState<SkillInput[]>([]);
@@ -308,36 +335,53 @@ export default function OnboardingChat() {
   };
 
   const handleRunReview = () => {
+    setReview(null);
+    setAppliedCleanupCount(0);
+    recordAnswer("Review my profile draft.");
+    advance();
     startReviewing(async () => {
       try {
         const result = await api.onboarding.review(buildPayload(form));
-        setReview(result);
-        recordAnswer("Review my profile draft.");
-        advance();
+        const applied = applyReviewSuggestions(form, result);
+        setForm(applied.form);
+        setReview(applied.review);
+        setAppliedCleanupCount(applied.appliedCount);
+
+        const remainingCount = applied.review.warnings.length + applied.review.suggestions.length;
+        if (applied.appliedCount > 0) {
+          toast.success(`AI cleaned this up — applied ${applied.appliedCount} ${applied.appliedCount === 1 ? "improvement" : "improvements"}`);
+        } else if (remainingCount > 0) {
+          toast.success(`AI found ${remainingCount} non-blocking ${remainingCount === 1 ? "note" : "notes"}`);
+        } else {
+          toast.message("AI reviewed your profile — no cleanup needed");
+        }
       } catch (error) {
+        setReview({ status: "ready", criticalIssues: [], warnings: [], suggestions: [] });
+        setAppliedCleanupCount(0);
         toast.error(error instanceof Error ? error.message : "Could not review onboarding draft");
       }
     });
   };
 
-  const acceptSuggestion = (path: string, value: unknown) => {
+  const acceptSuggestion = (issueId: string, path: string, value: unknown) => {
     setForm((prev) => applyReviewSuggestion(prev, path, value));
-    setReview((prev) => prev
-      ? { ...prev, suggestions: prev.suggestions.filter((issue) => !(issue.path === path && issue.proposedValue === value)) }
-      : prev);
+    setReview((prev) => {
+      if (!prev) return prev;
+      const warnings = prev.warnings.filter((issue) => issue.id !== issueId);
+      const suggestions = prev.suggestions.filter((issue) => issue.id !== issueId);
+      const status = warnings.length > 0 || suggestions.length > 0 ? "needs_user_review" : "ready";
+      return { status, criticalIssues: [], warnings, suggestions };
+    });
     toast.success("Suggestion applied");
   };
 
   const handleSave = () => {
-    if (review?.criticalIssues.length) {
-      toast.error("Resolve critical issues before saving.");
-      return;
-    }
     startSaving(async () => {
       try {
         await api.onboarding.complete(buildPayload(form));
         setForm(emptyForm());
         setReview(null);
+        setAppliedCleanupCount(0);
         setResumeFile(null);
         setLastDetectedSkills([]);
         toast.success("Onboarding saved");
@@ -477,7 +521,7 @@ export default function OnboardingChat() {
         />;
 
       case "review":
-        return <ReviewAnswer form={form} review={review} isSaving={isSaving} isReviewing={isReviewing} onBack={goBack} onSubmit={handleSave} onAcceptSuggestion={acceptSuggestion} />;
+        return <ReviewAnswer form={form} review={review} appliedCleanupCount={appliedCleanupCount} isSaving={isSaving} isReviewing={isReviewing} onBack={goBack} onSubmit={handleSave} onAcceptSuggestion={acceptSuggestion} />;
 
       case "education":
         return <EducationAnswer items={form.education}
