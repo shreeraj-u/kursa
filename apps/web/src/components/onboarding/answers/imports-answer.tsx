@@ -4,7 +4,7 @@ import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import { Label } from "@kursa/ui/components/label";
 
-import type { ImportsInput, SkillInput } from "@/app/onboarding/schema";
+import type { ImportsInput, SkillInput } from "@kursa/types";
 
 type ImportsAnswerProps = {
   imports: ImportsInput;
@@ -23,8 +23,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="grid gap-2 rounded-lg p-3"
-        style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
+        className="grid gap-2 rounded-lg p-3 border border-line bg-surface"
       >
         <Label>Resume (.pdf, .docx, .txt)</Label>
         <Input
@@ -33,9 +32,9 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
           onChange={(e) => props.onResumeFileChange(e.target.files?.[0] ?? null)}
         />
         <div className="flex items-center justify-between gap-2">
-          <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
-            {props.imports.resumeFileName
-              ? "Resume saved — re-upload to refresh detected skills."
+          <p className="text-xs text-mute">
+            {props.detectedSkills.length > 0
+              ? "Resume analyzed — re-upload to refresh detected skills."
               : "I'll read your PDF/DOCX and detect your skills automatically."}
           </p>
           <Button type="button" variant="outline" disabled={props.isUploading} onClick={props.onUploadResume}>
@@ -46,12 +45,11 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
         {props.isUploading ? (
           <div className="flex items-center gap-2 pt-1">
             <motion.span
-              className="inline-block h-3 w-3 rounded-full border-2"
-              style={{ borderColor: "var(--accent, #2f8a4a)", borderTopColor: "transparent" }}
+              className="inline-block h-3 w-3 rounded-full border-2 border-accent border-t-transparent"
               animate={{ rotate: 360 }}
               transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
             />
-            <span style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
+            <span className="text-xs text-mute">
               Reading your resume and scoring skills…
             </span>
           </div>
@@ -65,7 +63,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
               exit={{ opacity: 0, height: 0 }}
               className="flex flex-col gap-2 pt-1"
             >
-              <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>Detected skills (added to your list):</p>
+              <p className="text-xs text-mute">Detected skills (added to your list):</p>
               <div className="flex flex-wrap gap-1.5">
                 {props.detectedSkills.map((skill, i) => (
                   <motion.span
@@ -73,11 +71,10 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
                     initial={{ opacity: 0, scale: 0.8, y: 4 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.03, 0.6), type: "spring", stiffness: 300, damping: 20 }}
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1"
-                    style={{ fontSize: "var(--text-xs)", border: "1px solid var(--line)", background: "var(--bg-sub)", color: "var(--ink)" }}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs border border-line bg-bg-sub text-ink"
                   >
                     {skill.name}
-                    <span style={{ color: "var(--mute)" }}>· {skill.confidenceRating}/5</span>
+                    <span className="text-mute">· {skill.confidenceRating}/5</span>
                   </motion.span>
                 ))}
               </div>
@@ -87,8 +84,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
       </div>
 
       <div
-        className="grid gap-2 rounded-lg p-3"
-        style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
+        className="grid gap-2 rounded-lg p-3 border border-line bg-surface"
       >
         <Label>LinkedIn URL</Label>
         <Input
@@ -96,7 +92,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
           value={props.imports.linkedinProfileUrl}
           onChange={(e) => props.onChange({ ...props.imports, linkedinProfileUrl: e.target.value })}
         />
-        <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
+        <p className="text-xs text-mute">
           We'll save this for future LinkedIn enrichment.
         </p>
       </div>
@@ -105,7 +101,7 @@ export function ImportsAnswer(props: ImportsAnswerProps) {
         <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={props.onSkip}>Skip</Button>
-          <Button type="button" onClick={props.onContinue}>Continue</Button>
+          <Button type="button" disabled={props.isUploading} onClick={props.onContinue}>Continue</Button>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CareerPath } from "@kursa/types";
+import type { CareerPath, CareerPathDetails } from "@kursa/types";
 
 import { openai } from "../openai.js";
 import { CORRECT_PATHS_PROMPT, GENERATE_PATHS_PROMPT, Models } from "./prompts.js";
@@ -43,11 +43,43 @@ const milestoneSchema = z.object({
   status: z.enum(["not_started", "in_progress", "completed"]),
 });
 
+const pathDetailsSchema = z.object({
+  fitReasons: z.array(z.string().min(1)).default([]),
+  skillGaps: z
+    .array(
+      z.object({
+        skill: z.string().min(1),
+        whyItMatters: z.string().min(1),
+        priority: z.enum(["high", "medium", "low"]),
+      }),
+    )
+    .default([]),
+  nextActions: z
+    .array(
+      z.object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+        timeframe: z.string().min(1),
+      }),
+    )
+    .default([]),
+  risks: z
+    .array(
+      z.object({
+        risk: z.string().min(1),
+        mitigation: z.string().min(1),
+      }),
+    )
+    .default([]),
+  evidence: z.array(z.string().min(1)).default([]),
+});
+
 const generatedPathSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   confidenceScore: z.number().min(0).max(1),
   projectedTimelineMonths: z.number().int().positive(),
+  details: pathDetailsSchema.optional().nullable(),
   milestones: z.array(milestoneSchema).min(1),
 });
 
@@ -99,7 +131,7 @@ async function attempt(
     messages,
     response_format: { type: "json_object" },
     temperature: 0.5,
-    max_tokens: 2500,
+    max_tokens: 4000,
   });
 
   const content = response.choices[0]?.message?.content ?? "{}";
@@ -127,5 +159,15 @@ function normalisePath(path: GeneratedPath): GeneratedPath {
   const milestones = [...path.milestones]
     .sort((a, b) => a.estimatedMonthsFromNow - b.estimatedMonthsFromNow)
     .map((m, i) => ({ ...m, order: i + 1 }));
-  return { ...path, milestones };
+  return { ...path, details: normaliseDetails(path.details), milestones };
+}
+
+function normaliseDetails(details: CareerPathDetails | null | undefined): CareerPathDetails {
+  return {
+    fitReasons: details?.fitReasons ?? [],
+    skillGaps: details?.skillGaps ?? [],
+    nextActions: details?.nextActions ?? [],
+    risks: details?.risks ?? [],
+    evidence: details?.evidence ?? [],
+  };
 }

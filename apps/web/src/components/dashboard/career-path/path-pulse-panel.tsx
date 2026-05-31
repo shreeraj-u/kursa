@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
 
-import { JournalEngagementChart } from "../../journal/journal-engagement-chart";
+import { JournalEngagementChart } from "@/app/dashboard/journal/journal-engagement-chart";
 
 type RelevanceData = Awaited<ReturnType<typeof api.journal.relevance>>;
 

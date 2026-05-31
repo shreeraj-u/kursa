@@ -18,13 +18,11 @@ export function ChoiceAnswer<T extends string>(props: ChoiceAnswerProps<T>) {
               key={choice.value}
               type="button"
               onClick={() => props.onSelect(choice.value)}
-              className="rounded-full px-4 py-1.5 transition-colors"
-              style={{
-                fontSize: "var(--text-sm)",
-                border: isSelected ? "1px solid var(--ink)" : "1px solid var(--line)",
-                background: isSelected ? "var(--ink)" : "var(--surface)",
-                color: isSelected ? "var(--bg)" : "var(--ink)",
-              }}
+              className={`rounded-full px-4 py-1.5 transition-colors border text-sm ${
+                isSelected
+                  ? "border-ink bg-ink text-bg"
+                  : "border-line bg-surface text-ink hover:bg-bg-sub"
+              }`}
             >
               {choice.label}
             </button>

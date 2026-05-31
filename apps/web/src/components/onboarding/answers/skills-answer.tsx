@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
-import type { SkillCategory, SkillInput } from "@/app/onboarding/schema";
+import type { SkillCategory, SkillInput } from "@kursa/types";
 
 const SKILL_CATEGORIES: { value: SkillCategory; label: string }[] = [
   { value: "technical", label: "Technical" },
@@ -40,22 +40,21 @@ export function SkillsAnswer(props: SkillsAnswerProps) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
         {props.skills.length === 0 ? (
-          <p style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>No skills added yet.</p>
+          <p className="text-xs text-mute">No skills added yet.</p>
         ) : (
           props.skills.map((skill, i) => (
             <span
               key={`${skill.name}-${i}`}
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1"
-              style={{ fontSize: "var(--text-xs)", border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink)" }}
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs border border-line bg-surface text-ink"
             >
               <span>{skill.name}</span>
-              <span style={{ color: "var(--mute)" }}>{skill.category}</span>
-              <span style={{ color: "var(--mute)" }}>· {skill.confidenceRating}/5</span>
+              <span className="text-mute">{skill.category}</span>
+              <span className="text-mute">· {skill.confidenceRating}/5</span>
               <button
                 type="button"
                 aria-label={`Remove ${skill.name}`}
                 onClick={() => props.onChange(props.skills.filter((_, j) => j !== i))}
-                style={{ color: "var(--mute)" }}
+                className="text-mute hover:text-ink transition-colors"
               >×</button>
             </span>
           ))
@@ -70,8 +69,7 @@ export function SkillsAnswer(props: SkillsAnswerProps) {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
         />
         <select
-          className="h-9 rounded-md border bg-[var(--surface)] px-2"
-          style={{ borderColor: "var(--line)", fontSize: "var(--text-sm)", color: "var(--ink)" }}
+          className="h-9 rounded-md border border-line bg-surface px-2 text-ink text-sm"
           value={category}
           onChange={(e) => setCategory(e.target.value as SkillCategory)}
         >
@@ -80,8 +78,7 @@ export function SkillsAnswer(props: SkillsAnswerProps) {
           ))}
         </select>
         <select
-          className="h-9 rounded-md border bg-[var(--surface)] px-2"
-          style={{ borderColor: "var(--line)", fontSize: "var(--text-sm)", color: "var(--ink)" }}
+          className="h-9 rounded-md border border-line bg-surface px-2 text-ink text-sm"
           value={confidence}
           onChange={(e) => setConfidence(Number(e.target.value))}
         >

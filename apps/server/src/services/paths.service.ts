@@ -100,6 +100,10 @@ export async function generatePaths(userId: string): Promise<CareerPath[] | null
         description: p.description,
         confidenceScore: p.confidenceScore,
         projectedTimelineMonths: p.projectedTimelineMonths,
+        details:
+          p.details === null || p.details === undefined
+            ? Prisma.JsonNull
+            : (p.details as unknown as Prisma.InputJsonValue),
         milestones: p.milestones as unknown as Prisma.InputJsonValue,
         isActive: false,
       })),
@@ -186,6 +190,7 @@ function toCareerPath(row: {
   description: string;
   confidenceScore: number;
   projectedTimelineMonths: number;
+  details: unknown;
   milestones: unknown;
   isActive: boolean;
 }): CareerPath {
@@ -195,6 +200,7 @@ function toCareerPath(row: {
     description: row.description,
     confidenceScore: row.confidenceScore,
     projectedTimelineMonths: row.projectedTimelineMonths,
+    details: row.details as CareerPath["details"],
     milestones: (row.milestones as Milestone[]) ?? [],
     isActive: row.isActive,
   };
@@ -247,6 +253,50 @@ export function buildFallbackPaths(snapshot: PathProfileSnapshot): GeneratedPath
         "A starting roadmap based on your current profile. Add more skills and history, then regenerate for sharper, personalised paths.",
       confidenceScore: 0.5,
       projectedTimelineMonths: 18,
+      details: {
+        fitReasons: [
+          `Your current profile already points toward ${target}.`,
+          "The path starts with broad, profile-safe steps until richer career data is available.",
+        ],
+        skillGaps: snapshot.skills.length
+          ? []
+          : [
+              {
+                skill: "Profile depth",
+                whyItMatters:
+                  "Kursa needs skills and work history to generate sharper, personalised path gaps.",
+                priority: "high",
+              },
+            ],
+        nextActions: [
+          {
+            title: "Add recent work outcomes",
+            description:
+              "Capture concrete projects, achievements, and metrics so regenerated paths can reason from evidence.",
+            timeframe: "this week",
+          },
+          {
+            title: "Pick one near-term proof point",
+            description: `Choose a project that demonstrates readiness for ${target}.`,
+            timeframe: "next 30 days",
+          },
+        ],
+        risks: [
+          {
+            risk: "Sparse profile data can make this path generic.",
+            mitigation:
+              "Update your profile and regenerate paths for more specific recommendations.",
+          },
+        ],
+        evidence: [
+          snapshot.targetRole
+            ? `Target role: ${snapshot.targetRole}`
+            : `Current role context: ${startRole}`,
+          snapshot.location
+            ? `Location: ${snapshot.location}`
+            : "No location preference captured yet",
+        ],
+      },
       milestones,
     },
   ];

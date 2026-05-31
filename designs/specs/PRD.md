@@ -242,6 +242,19 @@ These principles govern every product and engineering decision:
 - Definition of success (not just title/salary — meaning, impact, lifestyle)
 - Updated during check-ins; versioned so trajectory shifts are visible over time
 
+#### 1.5 Onboarding Data Cleanup & Refinement
+
+To prevent the "garbage-in, garbage-out" problem with user-provided onboarding responses, the system must perform an automated cleanup of onboarding data after the onboarding questions are asked and answered.
+
+**Cleanup Process:**
+- **Raw Input Parsing:** When a user completes the onboarding questionnaire (answering questions about their current role, location, experiences, preferences, and goals in free-text fields or dynamic selectors), the raw answers are processed through Claude.
+- **Data Normalization:** 
+  - Standardize raw job titles (e.g., "Senior Software Eng." -> "Senior Software Engineer").
+  - Deduplicate and normalize skills (e.g., merging "js", "JavaScript", "Javascript" into "JavaScript").
+  - Translate raw text descriptions of outcomes and responsibilities into structured points.
+- **Categorization:** Classify preferences, risk appetites, and lifestyle constraints against standard system enums.
+- **Sanitization:** Strip out personally identifiable or irrelevant conversational filler (e.g., "I guess I want to...", "Currently trying to figure out...") to keep the core profile clean, concise, and highly semantic for downstream recommendation engines.
+
 ---
 
 ### Layer 2 — Career Path Intelligence
@@ -734,6 +747,7 @@ Build in this order. Each phase must be solid before moving to the next — dept
 - [ ] Resume parser (PDF upload → Claude extracts structured profile data)
 - [ ] Basic profile completeness scoring
 - [ ] Onboarding flow: guide user to minimum viable profile in first session
+- [ ] LLM onboarding data cleanup (process raw answers through Claude to standardize titles, skills, and preferences before persisting)
 - [ ] **Deliverable:** User leaves first session with a populated profile and one clear observation about their positioning
 
 ### Phase 2 — Path Intelligence (Weeks 5–8)

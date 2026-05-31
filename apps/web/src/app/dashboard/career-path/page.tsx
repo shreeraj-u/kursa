@@ -3,7 +3,7 @@ import type { CareerPath } from "@kursa/types";
 import { requireOnboarded } from "@/lib/require-onboarded";
 import { serverFetch } from "@/lib/server-fetch";
 
-import CareerPathPage from "./career-path";
+import CareerPathPage from "@/components/dashboard/career-path/career-path";
 
 export default async function Page() {
   await requireOnboarded();
