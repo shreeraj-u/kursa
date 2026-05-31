@@ -1,7 +1,7 @@
 import prisma from "@kursa/db";
 
 import type { CompleteOnboardingInput } from "../validators/onboarding.validator.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 export async function getOnboardingStatus(userId: string) {
   const profile = await prisma.profile.findUnique({

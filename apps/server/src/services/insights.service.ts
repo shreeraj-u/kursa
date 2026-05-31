@@ -5,7 +5,7 @@ import { assembleAdvisorContext, hashAdvisorContext } from "../lib/advisor-conte
 import { classifyCareerTrajectory } from "../lib/ai/insights.classify.js";
 import { generateObservations, type Observation } from "../lib/ai/insights.generate.js";
 import { generateRuleBasedObservations } from "../compute/observations.fallback.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const OBSERVATION_TTL_MS = 86400000;
 

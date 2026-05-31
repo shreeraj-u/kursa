@@ -252,10 +252,61 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
             </div>
 
 
+            {/* ── Help / Docs Nudge Card ────────────────────────── */}
+            <div className="px-2 mt-auto pb-3">
+                <div
+                    className="rounded-lg p-3 relative overflow-hidden transition-all group"
+                    style={{
+                        border: "1px solid var(--line-2)",
+                        background: "linear-gradient(135deg, var(--bg-sub) 0%, var(--bg-sub-2) 100%)",
+                    }}
+                >
+                    {/* Tiny accent decoration dot */}
+                    <div
+                        className="absolute top-0 right-0 w-8 h-8 rounded-full pointer-events-none opacity-20"
+                        style={{
+                            background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
+                            transform: "translate(25%, -25%)",
+                        }}
+                    />
+                    
+                    <div className="flex items-center gap-1.5 mb-1.5 text-accent font-medium">
+                        <CircleHelp size={12} style={{ color: "var(--accent)" }} />
+                        <span className="mono" style={{ fontSize: 9, letterSpacing: "0.06em", textTransform: "lowercase", color: "var(--accent)" }}>
+                            kursa docs
+                        </span>
+                    </div>
+
+                    <p 
+                        style={{ 
+                            fontSize: 9.5, 
+                            color: "var(--mute)", 
+                            lineHeight: 1.45, 
+                            marginBottom: 8 
+                        }}
+                    >
+                        Learn how Kursa works with your career telemetry & journal.
+                    </p>
+
+                    <Link
+                        href={"/dashboard/docs" as Route}
+                        className="mono inline-flex items-center justify-center w-full rounded py-1 px-2 transition-all text-center font-medium hover:opacity-90"
+                        style={{
+                            fontSize: 9,
+                            background: "var(--accent)",
+                            color: "#ffffff",
+                            textDecoration: "none",
+                        }}
+                    >
+                        explore guides
+                    </Link>
+                </div>
+            </div>
+
             {/* ── User footer ─────────────────────────────────── */}
             <Link
                 href="/dashboard/settings"
-                className="flex items-center justify-between gap-2 px-3 py-3 mt-auto"
+                className="flex items-center justify-between gap-2 px-3 py-3"
                 style={{ borderTop: "1px solid var(--line)" }}
             >
                 <div className="flex items-center gap-2">

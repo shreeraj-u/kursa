@@ -1,6 +1,6 @@
 import { requireOnboarded } from "@/lib/require-onboarded";
 
-import JournalClient from "./journal-client";
+import JournalClient from "@/components/dashboard/journal/journal-client";
 
 export default async function JournalPage() {
   await requireOnboarded();

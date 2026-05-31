@@ -4,7 +4,7 @@ import type { ProactiveNudge } from "@kursa/types";
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { shouldRegeneratePaths } from "../compute/advisor.compute.js";
 import { getMilestoneEvidenceForUser } from "./milestone.service.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 import { getNextCheckIn } from "./checkins.service.js";
 
 export async function getProactiveNudges(userId: string): Promise<ProactiveNudge[]> {

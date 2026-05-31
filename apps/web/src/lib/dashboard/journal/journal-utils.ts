@@ -103,6 +103,7 @@ export function groupByDay(entries: TimelineEntry[]): Map<string, TimelineEntry[
   return map;
 }
 
+/** @deprecated Use engagementTrendLabel calculated from the backend API response instead */
 export function computeTrendLabel(points: TrendPoint[]): string {
   if (points.length < 4) return "building baseline";
   const first = points.slice(0, 4).reduce((s, p) => s + p.value, 0) / 4;

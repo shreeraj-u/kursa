@@ -106,7 +106,12 @@ export function JournalRelevance({ data, loading }: Props) {
         </div>
       ) : null}
 
-      <JournalEngagementChart data={data.engagementTrend ?? []} height={48} compact />
+      <JournalEngagementChart
+        data={data.engagementTrend ?? []}
+        trendLabel={data.engagementTrendLabel}
+        height={48}
+        compact
+      />
     </div>
   );
 }

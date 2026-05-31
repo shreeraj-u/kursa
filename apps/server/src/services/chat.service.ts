@@ -4,7 +4,7 @@ import type { ChatDecisionType, ConversationSummary } from "@kursa/types";
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { openai } from "../lib/openai.js";
 import { Models } from "../lib/ai/prompts.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const CHAT_SYSTEM_PROMPT = `You are Kursa's AI career advisor (Aria). You have full context of the user's profile, memories, recent activity, and active career path.
 
