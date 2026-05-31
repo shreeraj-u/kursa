@@ -12,3 +12,4 @@ export * from './api/insights';
 export * from './api/paths';
 export * from './api/events';
 export * from './api/memory';
+export * from './api/intelligence';

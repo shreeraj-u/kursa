@@ -1,158 +1,125 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
+import type { Route } from "next";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import PageHeader from "@/components/dashboard/page-header";
 import { api } from "@/lib/api";
 
-type Tab = "log" | "wins" | "review" | "relevance";
-type ComposeType = "win" | "note" | "checkin";
+import { JournalCompose } from "./journal-compose";
+import { JournalTimelineTab } from "./journal-log";
+import { JournalReviewTab } from "./journal-review";
+import { JournalSidebar } from "./journal-sidebar";
+import type { ProactiveNudge, RelevanceSummary } from "@kursa/types";
 
-type Entry = {
-  id: string;
-  type: string;
-  body: string | null;
-  tag: string;
-  agent: boolean;
-  occurredAt: string;
-};
+import type {
+  ComposeType,
+  JournalContext,
+  JournalTab,
+  TimelineEntry,
+  TimelineFilter,
+} from "./journal-utils";
 
-type JournalContext = {
-  statusLabel: string;
-  company: string | null;
-  roleTitle: string | null;
-  tenureDays: number | null;
-};
-
-const BORDER_ACCENT: Record<string, string> = {
-  win: "border-l-accent",
-  checkin: "border-l-[var(--line-3)]",
-  aria: "border-l-[var(--mute-2)]",
-  note: "border-l-line-2",
-  feedback: "border-l-warn",
-};
-
-function dayGroupLabel(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const entryDay = new Date(d);
-  entryDay.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor((today.getTime() - entryDay.getTime()) / 86400000);
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "yesterday";
-  return d.toLocaleDateString([], { month: "short", day: "numeric" }).toLowerCase();
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
-function groupEntriesByDay(entries: Entry[]): Array<{ label: string; entries: Entry[] }> {
-  const groups: Array<{ label: string; entries: Entry[] }> = [];
-  let currentLabel: string | null = null;
-
-  for (const entry of entries) {
-    const label = dayGroupLabel(entry.occurredAt);
-    if (label !== currentLabel) {
-      groups.push({ label, entries: [entry] });
-      currentLabel = label;
-    } else {
-      groups[groups.length - 1]!.entries.push(entry);
-    }
-  }
-
-  return groups;
-}
-
-function EntryPill({ tag }: { tag: string }) {
-  const isWin = tag === "win";
-  return (
-    <span
-      className={`mono shrink-0 rounded-full border px-1.5 py-[1px] tracking-[0.03em] text-[9px] ${
-        isWin
-          ? "border-accent text-accent"
-          : "border-line bg-bg-sub-2 text-mute-2"
-      }`}
-    >
-      {tag}
-    </span>
-  );
-}
-
-function ComposeTypePill({
-  type,
-  label,
-  active,
-  onSelect,
-}: {
-  type: ComposeType;
-  label: string;
-  active: boolean;
-  onSelect: (t: ComposeType) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(type)}
-      className={`mono cursor-pointer rounded-full border px-2 py-[2px] tracking-[0.03em] text-[9px] transition-colors ${
-        active
-          ? type === "win"
-            ? "border-accent text-accent"
-            : "border-line-2 text-ink"
-          : "border-line bg-bg-sub-2 text-mute-2 hover:text-mute"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+const TABS: Array<{ id: JournalTab; label: string }> = [
+  { id: "timeline", label: "timeline" },
+  { id: "review", label: "review prep" },
+];
 
 export default function JournalClient() {
-  const [tab, setTab] = useState<Tab>("log");
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [tab, setTab] = useState<JournalTab>("timeline");
+  const [timelineFilter, setTimelineFilter] = useState<TimelineFilter>("all");
+  const [entries, setEntries] = useState<TimelineEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [context, setContext] = useState<JournalContext | null>(null);
-  const [trend, setTrend] = useState<Array<{ weekLabel: string; value: number }>>([]);
-  const [relevance, setRelevance] = useState<Awaited<ReturnType<typeof api.journal.relevance>> | null>(null);
-  const [reviewPrep, setReviewPrep] = useState<Awaited<ReturnType<typeof api.journal.reviewPrep>> | null>(null);
+  const [relevance, setRelevance] = useState<RelevanceSummary | null>(null);
+  const [relevanceLoading, setRelevanceLoading] = useState(true);
+  const [memories, setMemories] = useState<
+    Array<{ id: string; category: string; fact: string; confidence: number; validFrom: string }>
+  >([]);
+  const [memoriesLoading, setMemoriesLoading] = useState(true);
+  const [nudges, setNudges] = useState<ProactiveNudge[]>([]);
+  const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [checkIn, setCheckIn] = useState<Awaited<ReturnType<typeof api.checkins.next>> | null>(null);
   const [composeText, setComposeText] = useState("");
   const [composeType, setComposeType] = useState<ComposeType>("note");
-  const [pulseEnergy, setPulseEnergy] = useState("");
-  const [pulseChallenge, setPulseChallenge] = useState(3);
-  const [pulseRemember, setPulseRemember] = useState("");
+  const [feedbackRole, setFeedbackRole] = useState<"manager" | "peer" | "self">("peer");
+  const [skillNames, setSkillNames] = useState<string[]>([]);
+  const [impactMetric, setImpactMetric] = useState("");
+  const [noteMood, setNoteMood] = useState(3);
+  const [pulseResponses, setPulseResponses] = useState<Record<string, string | number>>({});
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const loadTimeline = useCallback((filter: "all" | "win" = "all") => {
-    startTransition(async () => {
+  const apiFilter = timelineFilter === "accomplishments" ? "win" : "all";
+
+  const loadTimeline = useCallback(
+    async (pageNum = 1, append = false) => {
       try {
-        const res = await api.journal.timeline({ filter });
-        setEntries(res.data);
+        const res = await api.journal.timeline({ page: pageNum, filter: apiFilter });
+        setEntries((prev) => (append ? [...prev, ...res.data] : res.data));
+        setPage(res.pagination.page);
+        setTotalPages(res.pagination.totalPages);
       } catch {
         toast.error("Could not load journal");
       }
-    });
+    },
+    [apiFilter],
+  );
+
+  const refreshIntelligence = useCallback(() => {
+    setRelevanceLoading(true);
+    api.journal
+      .relevance()
+      .then((r) => setRelevance(r))
+      .catch(() => setRelevance(null))
+      .finally(() => setRelevanceLoading(false));
+
+    setMemoriesLoading(true);
+    api.journal
+      .memories()
+      .then((r) => setMemories(r.data))
+      .catch(() => setMemories([]))
+      .finally(() => setMemoriesLoading(false));
+
+    api.journal
+      .proactive()
+      .then((r) => setNudges(r.nudges))
+      .catch(() => setNudges([]));
   }, []);
 
   useEffect(() => {
-    loadTimeline(tab === "wins" ? "win" : "all");
-    api.journal.context().then(setContext).catch(() => null);
-    api.journal.trend().then((r) => setTrend(r.data)).catch(() => null);
-    api.checkins.next().then(setCheckIn).catch(() => null);
-  }, [loadTimeline, tab]);
+    if (tab !== "timeline") return;
+    setPage(1);
+    void loadTimeline(1, false);
+  }, [tab, timelineFilter, loadTimeline]);
 
   useEffect(() => {
-    if (tab === "relevance") {
-      api.journal.relevance().then(setRelevance).catch(() => null);
-    }
-    if (tab === "review") {
-      api.journal.reviewPrep().then(setReviewPrep).catch(() => null);
-    }
-  }, [tab]);
+    api.journal.context().then(setContext).catch(() => null);
+    api.journal.skills().then((r) => setAvailableSkills(r.skills)).catch(() => null);
+    api.checkins.next().then(setCheckIn).catch(() => null);
+    refreshIntelligence();
 
-  const groupedEntries = useMemo(() => groupEntriesByDay(entries), [entries]);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kursa-journal-last-visit", new Date().toISOString());
+    }
+  }, [refreshIntelligence]);
+
+  const loadMore = async () => {
+    if (page >= totalPages || loadingMore) return;
+    setLoadingMore(true);
+    await loadTimeline(page + 1, true);
+    setLoadingMore(false);
+  };
+
+  const refreshAfterSave = () => {
+    if (tab === "timeline") void loadTimeline(1, false);
+    refreshIntelligence();
+  };
 
   const submitCompose = () => {
     const text = composeText.trim();
@@ -163,18 +130,34 @@ export default function JournalClient() {
 
     startTransition(async () => {
       try {
+        let newId: string | undefined;
         if (composeType === "win") {
           const [firstLine, ...rest] = text.split("\n");
           const title = firstLine.trim();
           const body = (rest.length > 0 ? rest.join("\n") : firstLine).trim();
-          await api.journal.createWin({ title, body });
+          const res = await api.journal.createWin({
+            title,
+            body,
+            skillNames: skillNames.length > 0 ? skillNames : undefined,
+            impactMetric: impactMetric.trim() || undefined,
+          });
+          newId = (res.event as { id?: string })?.id;
+          setSkillNames([]);
+          setImpactMetric("");
+        } else if (composeType === "feedback") {
+          const res = await api.journal.createFeedback({ body: text, fromRole: feedbackRole });
+          newId = (res.event as { id?: string })?.id;
+        } else if (composeType === "learning") {
+          const res = await api.journal.createLearning({ skillName: text.trim() });
+          newId = (res.event as { id?: string })?.id;
         } else {
-          await api.journal.createNote({ body: text });
+          const res = await api.journal.createNote({ body: text, mood: noteMood });
+          newId = (res.event as { id?: string })?.id;
         }
         setComposeText("");
-        toast.success(composeType === "win" ? "Win logged" : "Entry saved");
-        loadTimeline(tab === "wins" ? "win" : "all");
-        api.journal.trend().then((r) => setTrend(r.data)).catch(() => null);
+        if (newId) setHighlightId(newId);
+        toast.success("Entry saved");
+        refreshAfterSave();
       } catch {
         toast.error("Could not save entry");
       }
@@ -182,46 +165,44 @@ export default function JournalClient() {
   };
 
   const submitPulse = () => {
-    if (!pulseEnergy.trim()) {
+    if (!checkIn?.type) return;
+
+    const firstTextQ = checkIn.questions.find((q) => q.kind === "text");
+    if (firstTextQ && !String(pulseResponses[firstTextQ.id] ?? "").trim()) {
       toast.error("Answer the first question");
       return;
     }
+
     startTransition(async () => {
       try {
         await api.checkins.submit({
-          type: "checkin_weekly",
-          responses: {
-            energyFocus: pulseEnergy.trim(),
-            challengeLevel: pulseChallenge,
-            rememberThis: pulseRemember.trim() || undefined,
-          },
+          type: checkIn.type!,
+          responses: pulseResponses,
         });
-        setPulseEnergy("");
-        setPulseRemember("");
-        toast.success("Check-in saved");
+        setPulseResponses({});
+        toast.success(checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved");
         setCheckIn(await api.checkins.next());
-        loadTimeline(tab === "wins" ? "win" : "all");
-        api.journal.trend().then((r) => setTrend(r.data)).catch(() => null);
+        refreshAfterSave();
       } catch {
         toast.error("Could not save check-in");
       }
     });
   };
 
+  const scrollToEntry = (eventId: string) => {
+    setTab("timeline");
+    setHighlightId(eventId);
+    setTimeout(() => {
+      document.getElementById(`journal-entry-${eventId}`)?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+  };
+
   const chipParts = [
     context?.statusLabel,
+    context?.roleTitle,
     context?.company,
     context?.tenureDays != null ? `${context.tenureDays} days` : null,
   ].filter(Boolean);
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "log", label: "log" },
-    { id: "wins", label: "wins" },
-    { id: "review", label: "review prep" },
-    { id: "relevance", label: "relevance" },
-  ];
-
-  const maxTrend = Math.max(...trend.map((p) => Math.abs(p.value)), 0.01);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -230,12 +211,17 @@ export default function JournalClient() {
       <div className="flex flex-col gap-5 px-8 pb-8 pt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tighter text-ink">
-              The work doesn&apos;t end at signing.
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tighter text-ink">Journal</h1>
             <p className="mt-1.5 text-sm leading-relaxed text-mute">
-              Wins captured, drift noticed, reflections kept.
+              Capture what happened — notes, accomplishments, feedback — so Kursa can help.
             </p>
+            <Link
+              href={"/dashboard/docs" as Route}
+              className="mono mt-2 inline-block"
+              style={{ fontSize: 9, color: "var(--mute-2)", textDecoration: "underline" }}
+            >
+              How does this work?
+            </Link>
           </div>
           {chipParts.length > 0 && (
             <span className="chip mt-1.5 self-start">
@@ -246,235 +232,103 @@ export default function JournalClient() {
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_300px]">
-          {/* Left — compose + feed */}
-          <div className="flex flex-col gap-4">
-            {(tab === "log" || tab === "wins") && (
-              <div className="rounded-lg border border-line bg-surface p-4">
-                <textarea
-                  value={composeText}
-                  onChange={(e) => setComposeText(e.target.value)}
-                  placeholder="capture a win, note, or reflection..."
-                  rows={3}
-                  className="w-full resize-none rounded-lg border border-line-2 bg-bg px-3 py-2.5 text-sm leading-relaxed text-ink outline-none placeholder:text-mute-3 focus:border-ink-3"
-                />
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    <ComposeTypePill
-                      type="win"
-                      label="win"
-                      active={composeType === "win"}
-                      onSelect={setComposeType}
-                    />
-                    <ComposeTypePill
-                      type="note"
-                      label="note"
-                      active={composeType === "note"}
-                      onSelect={setComposeType}
-                    />
-                    <ComposeTypePill
-                      type="checkin"
-                      label="checkin"
-                      active={composeType === "checkin"}
-                      onSelect={setComposeType}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="btn sm"
-                    style={{ background: "var(--accent)", borderColor: "var(--accent)" }}
-                    onClick={() => {
-                      if (composeType === "checkin") {
-                        setPulseEnergy(composeText.trim());
-                        setComposeText("");
-                        toast.message("Added to weekly pulse — finish and submit on the right");
-                        return;
-                      }
-                      submitCompose();
-                    }}
-                    disabled={isPending}
-                  >
-                    {composeType === "win" ? "log win" : composeType === "checkin" ? "add to pulse" : "save entry"}
-                  </button>
-                </div>
-                {composeType === "win" && (
-                  <p className="mono mt-2 text-[9px] text-mute-3">
-                    first line becomes the title · rest is the story
-                  </p>
-                )}
-              </div>
-            )}
+          <div className="flex flex-col gap-4 min-w-0">
+            <JournalCompose
+              composeType={composeType}
+              onComposeTypeChange={setComposeType}
+              composeText={composeText}
+              onComposeTextChange={setComposeText}
+              onSubmit={submitCompose}
+              saving={isPending}
+              feedbackRole={feedbackRole}
+              onFeedbackRoleChange={setFeedbackRole}
+              skillNames={skillNames}
+              onSkillNamesChange={setSkillNames}
+              availableSkills={availableSkills}
+              impactMetric={impactMetric}
+              onImpactMetricChange={setImpactMetric}
+              noteMood={noteMood}
+              onNoteMoodChange={setNoteMood}
+            />
 
-            <div className="overflow-hidden rounded-lg border border-line bg-surface">
-              <div className="flex border-b border-line px-4">
-                {tabs.map((t) => (
+            <div
+              className="overflow-hidden rounded-lg"
+              style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
+            >
+              <div
+                className="flex px-4 relative"
+                style={{ borderBottom: "1px solid var(--line)" }}
+              >
+                {TABS.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setTab(t.id)}
-                    className="mono cursor-pointer bg-transparent py-2.5 px-3 text-[10.5px] capitalize"
+                    className="mono relative bg-transparent py-2.5 px-3 capitalize"
                     style={{
+                      fontSize: 10.5,
                       color: tab === t.id ? "var(--ink)" : "var(--mute)",
-                      borderBottom: tab === t.id ? "1.5px solid var(--ink)" : "1.5px solid transparent",
+                      border: "none",
+                      cursor: "pointer",
                     }}
                   >
                     {t.label}
+                    {tab === t.id && (
+                      <motion.div
+                        layoutId="journal-tab-underline"
+                        className="absolute bottom-0 left-2 right-2"
+                        style={{ height: 1.5, background: "var(--ink)" }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
                   </button>
                 ))}
               </div>
 
-              {tab === "review" && (
-                <div className="p-5 text-sm leading-relaxed text-mute">
-                  {reviewPrep?.sections.length ? (
-                    reviewPrep.sections.map((s) => (
-                      <div key={s.theme} className="mb-5">
-                        <p className="mono mb-2 text-2xs text-mute-2">{s.theme}</p>
-                        <ul className="list-disc space-y-1.5 pl-4">
-                          {s.bullets.map((b, i) => (
-                            <li key={`${s.theme}-${i}`}>{b}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))
-                  ) : (
-                    <p>Log wins and feedback to generate review prep.</p>
-                  )}
-                </div>
-              )}
-
-              {tab === "relevance" && (
-                <div className="flex flex-col gap-3 p-5 text-sm text-mute">
-                  {relevance ? (
-                    <>
-                      {relevance.pathAlignmentScore != null && (
-                        <p>
-                          Path alignment:{" "}
-                          <strong className="text-ink">{relevance.pathAlignmentScore}%</strong>
-                        </p>
-                      )}
-                      <p>
-                        Wins this quarter:{" "}
-                        <strong className="text-ink">{relevance.winsThisQuarter}</strong>
-                      </p>
-                      {relevance.staleSkills.length > 0 && (
-                        <p>Skills going stale: {relevance.staleSkills.join(", ")}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p>Loading relevance signals…</p>
-                  )}
-                </div>
-              )}
-
-              {(tab === "log" || tab === "wins") && (
-                <div className="flex flex-col">
-                  {entries.length === 0 && !isPending && (
-                    <p className="p-5 text-sm text-mute-3">
-                      Nothing written yet. Capture a win, note, or complete a weekly pulse.
-                    </p>
-                  )}
-
-                  {groupedEntries.map((group) => (
-                    <div key={group.label}>
-                      <div className="flex items-center justify-between border-b border-line bg-bg-sub px-5 py-2">
-                        <span className="mono text-2xs text-mute-2">{group.label}</span>
-                      </div>
-
-                      {group.entries.map((e) => {
-                        const borderClass = BORDER_ACCENT[e.tag] ?? BORDER_ACCENT.aria;
-                        return (
-                          <article
-                            key={e.id}
-                            className={`border-b border-line px-5 py-4 last:border-b-0 border-l-2 ${borderClass} ${
-                              e.agent ? "bg-bg" : "bg-surface"
-                            }`}
-                          >
-                            <div className="mb-2 flex items-center gap-2">
-                              <EntryPill tag={e.tag} />
-                              <span className="mono text-2xs text-mute-3">{formatTime(e.occurredAt)}</span>
-                            </div>
-                            <p className="text-[15px] leading-[1.65] text-ink-2">{e.body}</p>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right panel */}
-          <div className="flex flex-col gap-4">
-            {checkIn?.due && (
-              <div className="rounded-lg border border-line bg-surface p-4">
-                <p className="mono mb-3 text-2xs text-mute-2">weekly pulse</p>
-                <div className="flex flex-col gap-3">
-                  <textarea
-                    value={pulseEnergy}
-                    onChange={(e) => setPulseEnergy(e.target.value)}
-                    placeholder="What took most of your energy this week?"
-                    rows={2}
-                    className="w-full resize-none rounded-lg border border-line-2 bg-bg px-3 py-2 text-sm text-ink outline-none placeholder:text-mute-3 focus:border-ink-3"
-                  />
-                  <label className="text-xs text-mute">
-                    Challenge level (1–5): {pulseChallenge}
-                    <input
-                      type="range"
-                      min={1}
-                      max={5}
-                      value={pulseChallenge}
-                      onChange={(e) => setPulseChallenge(Number(e.target.value))}
-                      className="mt-1.5 w-full accent-[var(--accent)]"
-                    />
-                  </label>
-                  <input
-                    value={pulseRemember}
-                    onChange={(e) => setPulseRemember(e.target.value)}
-                    placeholder="Anything to remember? (optional)"
-                    className="w-full rounded-lg border border-line-2 bg-bg px-3 py-2 text-sm text-ink outline-none placeholder:text-mute-3 focus:border-ink-3"
-                  />
-                  <button
-                    type="button"
-                    className="btn sm self-start"
-                    style={{ background: "var(--accent)", borderColor: "var(--accent)" }}
-                    onClick={submitPulse}
-                    disabled={isPending}
+              <div className="p-5">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={tab}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    submit pulse
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-lg border border-line bg-surface p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="mono text-2xs text-mute-2">engagement · last 12 weeks</span>
-              </div>
-              {trend.length > 0 ? (
-                <div className="flex items-end gap-px" style={{ height: 18 }}>
-                  {trend.map((p, i) => {
-                    const normalized = Math.abs(p.value) / maxTrend;
-                    const filled = normalized > 0.15;
-                    return (
-                      <i
-                        key={`${p.weekLabel}-${i}`}
-                        title={p.weekLabel}
-                        className="not-italic flex-1 rounded-[1px]"
-                        style={{
-                          height: filled ? Math.max(4, normalized * 18) : 3,
-                          background: filled ? "var(--accent)" : "var(--line)",
-                        }}
+                    {tab === "timeline" && (
+                      <JournalTimelineTab
+                        entries={entries}
+                        context={context}
+                        highlightId={highlightId}
+                        hasMore={page < totalPages}
+                        loadingMore={loadingMore}
+                        timelineFilter={timelineFilter}
+                        onTimelineFilterChange={setTimelineFilter}
+                        onLoadMore={() => void loadMore()}
                       />
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs leading-relaxed text-mute-3">
-                  Complete check-ins to see your trend.
-                </p>
-              )}
+                    )}
+                    {tab === "review" && (
+                      <JournalReviewTab onScrollToEntry={scrollToEntry} />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
+
+          <JournalSidebar
+            relevance={relevance}
+            relevanceLoading={relevanceLoading}
+            memories={memories}
+            memoriesLoading={memoriesLoading}
+            nudges={nudges}
+            checkIn={checkIn}
+            pulseResponses={pulseResponses}
+            onPulseResponseChange={(id, value) =>
+              setPulseResponses((prev) => ({ ...prev, [id]: value }))
+            }
+            onSubmitPulse={submitPulse}
+            pulseSaving={isPending}
+          />
         </div>
       </div>
     </div>

@@ -15,6 +15,12 @@ const STAGES = [
 
 export interface DashboardData {
   user: { createdAt: Date };
+  intelligence?: {
+    winsThisQuarter: number;
+    checkInStreak: number;
+    journalActivityScore: number;
+    recentWins: Array<{ id: string; body: string; occurredAt: string }>;
+  } | null;
   profile: {
     bio: string | null;
     targetRole: string | null;
@@ -187,6 +193,20 @@ export function computeDashboardMetrics(data: DashboardData) {
     }
   });
 
+  if (data.intelligence) {
+    data.intelligence.recentWins.forEach((w) => {
+      const ts = new Date(w.occurredAt).getTime();
+      if (ts > cutoff) {
+        events.push({
+          label: `accomplishment logged · ${w.body.slice(0, 40)}`,
+          timeAgo: timeAgo(new Date(w.occurredAt)),
+          category: "profile",
+          ts,
+        });
+      }
+    });
+  }
+
   const recentActivity = events.sort((a, b) => b.ts - a.ts).slice(0, 6);
 
   // --- 3. In Flight ---
@@ -219,5 +239,6 @@ export function computeDashboardMetrics(data: DashboardData) {
     recentActivity,
     inFlight: { activeCount, closedCount, applications: formattedApps },
     greeting: { dayN, attentionCount: overdueGoalsCount + dormantSkillsCount },
+    intelligence: data.intelligence ?? null,
   };
 }

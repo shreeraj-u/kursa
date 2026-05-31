@@ -42,6 +42,7 @@ model CareerEvent {
   linkedSkillIds      String[] @default([])
   linkedPathId        String?
   linkedWorkHistoryId String?
+  enrichment          Json?
 
   occurredAt DateTime  @default(now())
   createdAt  DateTime  @default(now())

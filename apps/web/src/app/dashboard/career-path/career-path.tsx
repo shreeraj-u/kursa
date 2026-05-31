@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 
 import PathSelector from "./components/path-selector";
 import PathRoadmap from "./components/path-roadmap";
+import PathPulsePanel from "./components/path-pulse-panel";
 
 interface CareerPathPageProps {
   paths: CareerPath[];
@@ -114,6 +115,7 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
           />
           <PathRoadmap path={selectedPath} />
         </div>
+        <PathPulsePanel />
       </div>
     </div>
   );

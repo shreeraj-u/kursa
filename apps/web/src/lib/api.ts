@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@kursa/env/web";
-import type { CareerPath, UserSocialLink } from "@kursa/types";
+import type { CareerPath, ProactiveNudge, RelevanceSummary, UserSocialLink } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
 
@@ -101,6 +101,7 @@ export const api = {
           type: string;
           source: string;
           body: string | null;
+          structured: unknown;
           tag: string;
           agent: boolean;
           occurredAt: string;
@@ -108,17 +109,70 @@ export const api = {
         pagination: { total: number; page: number; limit: number; totalPages: number };
       }>(`/api/v1/journal?page=${params?.page ?? 1}&filter=${params?.filter ?? "all"}`),
 
-    createWin: (body: { title: string; body: string; skillNames?: string[] }) =>
+    createWin: (body: {
+      title: string;
+      body: string;
+      skillNames?: string[];
+      impactMetric?: string;
+      collaborators?: string[];
+    }) =>
       request<{ event: unknown }>("/api/v1/journal/win", {
         method: "POST",
         body: JSON.stringify(body),
       }),
 
-    createNote: (body: { body: string }) =>
+    createNote: (body: { body: string; mood?: number; tags?: string[] }) =>
       request<{ event: unknown }>("/api/v1/journal/note", {
         method: "POST",
         body: JSON.stringify(body),
       }),
+
+    createFeedback: (body: {
+      body: string;
+      fromRole?: "manager" | "peer" | "self";
+      linkedSkillNames?: string[];
+    }) =>
+      request<{ event: unknown }>("/api/v1/journal/feedback", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    createLearning: (body: {
+      skillName: string;
+      resourceType?: string;
+      hours?: number;
+      completed?: boolean;
+    }) =>
+      request<{ event: unknown }>("/api/v1/journal/learning", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    createDecision: (body: {
+      title: string;
+      optionsConsidered: string[];
+      choiceMade: string;
+      reasoning: string;
+    }) =>
+      request<{ event: unknown }>("/api/v1/journal/decision", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    skills: () => request<{ skills: string[] }>("/api/v1/journal/skills"),
+
+    proactive: () => request<{ nudges: ProactiveNudge[] }>("/api/v1/journal/proactive"),
+
+    memories: () =>
+      request<{
+        data: Array<{
+          id: string;
+          category: string;
+          fact: string;
+          confidence: number;
+          validFrom: string;
+        }>;
+      }>("/api/v1/memory"),
 
     context: () =>
       request<{
@@ -131,13 +185,7 @@ export const api = {
     trend: () =>
       request<{ data: Array<{ weekLabel: string; value: number }> }>("/api/v1/journal/trend"),
 
-    relevance: () =>
-      request<{
-        pathAlignmentScore: number | null;
-        staleSkills: string[];
-        winsThisQuarter: number;
-        engagementTrend: Array<{ weekLabel: string; value: number }>;
-      }>("/api/v1/journal/relevance"),
+    relevance: () => request<RelevanceSummary>("/api/v1/journal/relevance"),
 
     reviewPrep: (from?: string, to?: string) => {
       const q = new URLSearchParams();
@@ -146,7 +194,10 @@ export const api = {
       return request<{
         from: string;
         to: string;
-        sections: Array<{ theme: string; bullets: string[] }>;
+        sections: Array<{
+          theme: string;
+          bullets: Array<{ text: string; sourceEventId?: string }>;
+        }>;
       }>(`/api/v1/journal/review-prep?${q.toString()}`);
     },
   },
@@ -165,5 +216,39 @@ export const api = {
         method: "POST",
         body: JSON.stringify(body),
       }),
+  },
+
+  chat: {
+    list: () =>
+      request<{
+        conversations: Array<{
+          id: string;
+          decisionType: string | null;
+          createdAt: string;
+          updatedAt: string;
+          messages: Array<{ id: string; role: string; content: string; createdAt: string }>;
+        }>;
+      }>("/api/v1/chat"),
+
+    create: (decisionType?: string) =>
+      request<{ id: string }>("/api/v1/chat", {
+        method: "POST",
+        body: JSON.stringify({ decisionType }),
+      }),
+
+    send: (conversationId: string, content: string) =>
+      request<{ message: string; conversationId: string }>(`/api/v1/chat/${conversationId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      }),
+  },
+
+  linkedin: {
+    sync: () =>
+      request<{ synced: boolean; titleChanged: boolean; newSkills: string[]; message: string }>(
+        "/api/v1/linkedin/sync",
+        { method: "POST" },
+      ),
+    status: () => request<{ url: string | null; configured: boolean }>("/api/v1/linkedin/status"),
   },
 };

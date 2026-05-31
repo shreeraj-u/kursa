@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
+import { useEffect, useState } from "react";
 import {
     House,
     MapPin,
@@ -15,9 +16,12 @@ import {
     Pencil,
     Settings,
     ChevronRight,
+    CircleHelp,
 } from "lucide-react";
 import { Logo } from "../logo";
 import { ModeToggle } from "../mode-toggle";
+import { env } from "@kursa/env/web";
+import { api } from "@/lib/api";
 
 interface SidebarProps {
     user: { name: string; email: string; createdAt: string };
@@ -105,6 +109,30 @@ function NavItem({
 export default function Sidebar({ user, attentionCount, applicationCount }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const [journalBadge, setJournalBadge] = useState<number>(0);
+
+    useEffect(() => {
+        let count = 0;
+        const lastVisit = localStorage.getItem("kursa-journal-last-visit");
+
+        void api.checkins.next().then((next) => {
+            if (next.due) count += 1;
+
+            void fetch(
+                `${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=1&limit=1`,
+                { credentials: "include" },
+            )
+                .then((r) => (r.ok ? r.json() : null))
+                .then((json: { data?: { data?: Array<{ createdAt: string }> } } | null) => {
+                    const latest = json?.data?.data?.[0]?.createdAt;
+                    if (latest && lastVisit && new Date(latest) > new Date(lastVisit)) {
+                        count += 1;
+                    }
+                    setJournalBadge(count);
+                })
+                .catch(() => setJournalBadge(count));
+        }).catch(() => null);
+    }, [pathname]);
 
     const initials = user.name
         .split(" ")
@@ -214,13 +242,29 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                                     applicationCount !== undefined &&
                                     applicationCount > 0 ? (
                                     <Badge>{applicationCount}</Badge>
-                                ) : key === "journal" ? (
-                                    <Badge>draft</Badge>
+                                ) : key === "journal" && journalBadge > 0 ? (
+                                    <Badge>{journalBadge}</Badge>
                                 ) : undefined
                             }
                         />
                     ))}
                 </div>
+            </div>
+
+            {/* ── Help ───────────────────────────────────────── */}
+            <div className="px-2 pt-3">
+                <div
+                    className="eyebrow px-1 mb-1"
+                    style={{ fontSize: 9, letterSpacing: "0.06em" }}
+                >
+                    help
+                </div>
+                <NavItem
+                    href={"/dashboard/docs" as Route}
+                    label="Guide"
+                    Icon={CircleHelp}
+                    isActive={isActive("/dashboard/docs" as Route)}
+                />
             </div>
 
             {/* ── Quick find ──────────────────────────────────── */}

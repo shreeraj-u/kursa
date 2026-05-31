@@ -30,9 +30,18 @@ export function computeAdvisorSignals(
       e.sentiment !== null,
   );
 
+  const journalSentimentEvents = recentEvents.filter(
+    (e) =>
+      (e.type === "win" || e.type === "note") &&
+      new Date(e.occurredAt).getTime() >= twelveWeeksAgo &&
+      e.sentiment !== null,
+  );
+
+  const allSentiment = [...pulseEvents, ...journalSentimentEvents];
+
   const sentimentTrend12w =
-    pulseEvents.length > 0
-      ? pulseEvents.reduce((s, e) => s + (e.sentiment ?? 0), 0) / pulseEvents.length
+    allSentiment.length > 0
+      ? allSentiment.reduce((s, e) => s + (e.sentiment ?? 0), 0) / allSentiment.length
       : null;
 
   const checkInStreak = computeCheckInStreak(recentEvents);
@@ -47,9 +56,21 @@ export function computeAdvisorSignals(
   let pathMilestonesTotal = 0;
   if (activePath?.milestones) {
     pathMilestonesTotal = activePath.milestones.length;
-    pathMilestonesWithEvidence = activePath.milestones.filter(
-      (m) => m.status === "completed" || m.status === "in_progress",
-    ).length;
+    const milestoneOrdersWithEvidence = new Set<number>();
+
+    for (const event of recentEvents) {
+      for (const order of event.enrichment?.linkedMilestoneOrders ?? []) {
+        milestoneOrdersWithEvidence.add(order);
+      }
+    }
+
+    if (milestoneOrdersWithEvidence.size > 0) {
+      pathMilestonesWithEvidence = milestoneOrdersWithEvidence.size;
+    } else {
+      pathMilestonesWithEvidence = activePath.milestones.filter(
+        (m) => m.status === "completed" || m.status === "in_progress",
+      ).length;
+    }
   }
 
   const intentionActionGap = detectIntentionActionGap(profile, recentEvents);
@@ -106,6 +127,11 @@ function extractRepeatedThemes(events: CareerEventSummary[]): string[] {
   const stop = new Set(["the", "and", "for", "with", "that", "this", "have", "from", "been", "were"]);
 
   for (const event of events) {
+    const themeWords = event.enrichment?.themes ?? [];
+    for (const theme of themeWords) {
+      words.set(theme, (words.get(theme) ?? 0) + 1);
+    }
+
     const text = `${event.body ?? ""} ${JSON.stringify(event.structured)}`.toLowerCase();
     for (const word of text.match(/\b[a-z]{4,}\b/g) ?? []) {
       if (stop.has(word)) continue;
@@ -114,7 +140,7 @@ function extractRepeatedThemes(events: CareerEventSummary[]): string[] {
   }
 
   return [...words.entries()]
-    .filter(([, count]) => count >= 3)
+    .filter(([, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([word]) => word);
@@ -147,7 +173,10 @@ function detectIntentionActionGap(
     .map((e) => `${e.body ?? ""}`.toLowerCase())
     .join(" ");
 
-  const hasLeadershipActivity = leadershipHints.some((h) => recentBodies.includes(h));
+  const themes = events.flatMap((e) => e.enrichment?.themes ?? []);
+  const hasLeadershipTheme = themes.includes("leadership");
+  const hasLeadershipActivity =
+    hasLeadershipTheme || leadershipHints.some((h) => recentBodies.includes(h));
   return !hasLeadershipActivity;
 }
 
@@ -156,4 +185,14 @@ export function shouldRegeneratePaths(signals: AdvisorSignals): boolean {
   if (signals.sentimentTrend12w !== null && signals.sentimentTrend12w < -0.3) return true;
   if (signals.intentionActionGap) return true;
   return false;
+}
+
+export function computeJournalActivityScore(events: CareerEventSummary[]): number {
+  const fourWeeksAgo = Date.now() - 86400000 * 28;
+  const recent = events.filter(
+    (e) =>
+      new Date(e.occurredAt).getTime() >= fourWeeksAgo &&
+      ["win", "note", "feedback", "decision", "learning"].includes(e.type),
+  );
+  return Math.min(100, recent.length * 10);
 }

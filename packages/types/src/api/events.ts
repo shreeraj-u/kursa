@@ -1,3 +1,5 @@
+import type { EventEnrichment, MilestoneEvidence } from "./intelligence.js";
+
 export type CareerEventType =
   | "checkin_weekly"
   | "checkin_monthly"
@@ -33,15 +35,45 @@ export interface WinStructured {
   title: string;
   body: string;
   skillNames?: string[];
+  impactMetric?: string;
+  collaborators?: string[];
+  linkedMilestoneOrder?: number;
 }
 
 export interface NoteStructured {
   body: string;
+  mood?: number;
+  tags?: Array<"blocker" | "idea" | "reflection">;
 }
 
 export interface FeedbackStructured {
   body: string;
   fromRole: "manager" | "peer" | "self";
+  receivedAt?: string;
+  linkedSkillNames?: string[];
+}
+
+export interface DecisionStructured {
+  title: string;
+  optionsConsidered: string[];
+  choiceMade: string;
+  reasoning: string;
+  conversationId?: string;
+}
+
+export interface LearningStructured {
+  skillName: string;
+  resourceType?: "course" | "project" | "certification" | "experience";
+  hours?: number;
+  completed?: boolean;
+}
+
+export interface ApplicationUpdateStructured {
+  applicationId: string;
+  company: string;
+  roleTitle: string;
+  previousStage?: string;
+  newStage: string;
 }
 
 export interface CareerEventSummary {
@@ -51,6 +83,10 @@ export interface CareerEventSummary {
   body: string | null;
   structured: unknown;
   sentiment: number | null;
+  linkedSkillIds: string[];
+  linkedPathId: string | null;
+  linkedWorkHistoryId: string | null;
+  enrichment: EventEnrichment | null;
   occurredAt: string;
 }
 
@@ -76,10 +112,36 @@ export interface CreateWinInput {
   title: string;
   body: string;
   skillNames?: string[];
+  impactMetric?: string;
+  collaborators?: string[];
+  linkedMilestoneOrder?: number;
 }
 
 export interface CreateNoteInput {
   body: string;
+  mood?: number;
+  tags?: Array<"blocker" | "idea" | "reflection">;
+}
+
+export interface CreateFeedbackInput {
+  body: string;
+  fromRole: "manager" | "peer" | "self";
+  receivedAt?: string;
+  linkedSkillNames?: string[];
+}
+
+export interface CreateDecisionInput {
+  title: string;
+  optionsConsidered: string[];
+  choiceMade: string;
+  reasoning: string;
+}
+
+export interface CreateLearningInput {
+  skillName: string;
+  resourceType?: "course" | "project" | "certification" | "experience";
+  hours?: number;
+  completed?: boolean;
 }
 
 export interface SubmitCheckInInput {
@@ -94,9 +156,14 @@ export interface CheckInNextResponse {
   lastCompletedAt: string | null;
 }
 
+export interface ReviewPrepBullet {
+  text: string;
+  sourceEventId?: string;
+}
+
 export interface ReviewPrepSection {
   theme: string;
-  bullets: string[];
+  bullets: ReviewPrepBullet[];
 }
 
 export interface ReviewPrepResponse {
@@ -110,4 +177,12 @@ export interface RelevanceSummary {
   staleSkills: string[];
   winsThisQuarter: number;
   engagementTrend: SentimentTrendPoint[];
+  intentionActionGap: boolean;
+  recentMemoryFacts: string[];
+  materialChangeDetected: boolean;
+  activePathTitle: string | null;
+  memories: Array<{ id: string; category: string; fact: string; confidence: number; validFrom?: string }>;
+  milestoneEvidence: MilestoneEvidence[];
+  checkInStreak: number;
+  journalActivityScore: number;
 }

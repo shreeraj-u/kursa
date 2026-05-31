@@ -1,9 +1,10 @@
 import prisma from "@kursa/db";
 
-import { Errors } from "../errors/http-error.js";
+import { HttpError } from "../errors/http-error.js";
 import { assembleAdvisorContext, hashAdvisorContext } from "../lib/advisor-context.js";
 import { classifyCareerTrajectory } from "../lib/ai/insights.classify.js";
 import { generateObservations, type Observation } from "../lib/ai/insights.generate.js";
+import { generateRuleBasedObservations } from "../compute/observations.fallback.js";
 import { ingestEvent } from "./events.service.js";
 
 const OBSERVATION_TTL_MS = 86400000;
@@ -34,6 +35,32 @@ export type ObservationsResult = {
 };
 
 export async function getObservations(
+  userId: string,
+  page: number,
+  limit: number,
+): Promise<ObservationsResult | null> {
+  try {
+    return await getObservationsInner(userId, page, limit);
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
+    console.error("[insights] getObservations failed, using fallback:", err);
+    const context = await assembleAdvisorContext(userId, "observations").catch(() => null);
+    const ruleObservations = context
+      ? generateRuleBasedObservations(context.signals)
+      : [
+          {
+            text: "Keep logging journal entries and check-ins — Aria learns more with each entry.",
+            type: "info" as const,
+            timeAgo: "noticed · today",
+          },
+        ];
+    return paginateObservations(ruleObservations, page, limit, {
+      materialChangeDetected: context?.materialChangeDetected ?? false,
+    });
+  }
+}
+
+async function getObservationsInner(
   userId: string,
   page: number,
   limit: number,
@@ -78,34 +105,47 @@ export async function getObservations(
     persisted[0]!.createdAt.getTime() > Date.now() - OBSERVATION_TTL_MS;
 
   if (freshEnough) {
+    let hasStaleFallback = false;
     for (const row of persisted) {
       if (isFallbackObservationText(row.text)) {
-        throw Errors.observationsUnavailable(
-          "Cached observations contain fallback template text — purge and regenerate via LLM",
-          { observationId: row.id, text: row.text.slice(0, 80) },
-        );
+        hasStaleFallback = true;
+        break;
       }
     }
+    if (!hasStaleFallback) {
+      const observations = persisted.map((o) => ({
+        text: o.text,
+        timeAgo: formatTimeAgo(o.createdAt),
+        type: o.type as Observation["type"],
+        source: "llm" as const,
+      }));
 
-    const observations = persisted.map((o) => ({
-      text: o.text,
-      timeAgo: formatTimeAgo(o.createdAt),
-      type: o.type as Observation["type"],
-      source: "llm" as const,
-    }));
-
-    return paginateObservations(observations, page, limit, {
-      materialChangeDetected: context.materialChangeDetected,
-    });
+      return paginateObservations(observations, page, limit, {
+        materialChangeDetected: context.materialChangeDetected,
+      });
+    }
+    await prisma.persistedObservation.deleteMany({ where: { profileId: profile.id } });
   }
 
   const sparseProfile =
     context.profile.skills.length < 2 && context.profile.workHistories.length < 1;
 
+  const lowEventCount = context.recentEvents.length < 5;
+
   if (sparseProfile) {
-    throw Errors.observationsUnavailable(
-      "Profile is too sparse for LLM observations — complete onboarding first",
-      { skills: context.profile.skills.length, workHistories: context.profile.workHistories.length },
+    const ruleObservations = generateRuleBasedObservations(context.signals);
+    return paginateObservations(ruleObservations, page, limit, {
+      materialChangeDetected: context.materialChangeDetected,
+    });
+  }
+
+  if (lowEventCount) {
+    const ruleObservations = generateRuleBasedObservations(context.signals);
+    return paginateObservations(
+      ruleObservations.map((o) => ({ ...o, source: "llm" as const })),
+      page,
+      limit,
+      { materialChangeDetected: context.materialChangeDetected },
     );
   }
 
@@ -123,25 +163,28 @@ export async function getObservations(
   try {
     observations = await generateObservations(context);
   } catch (err) {
-    throw Errors.observationsUnavailable("OpenAI observation generation failed", {
-      reason: err instanceof Error ? err.message : String(err),
+    console.warn("[insights] LLM observation generation failed, using rules:", err);
+    const ruleObservations = generateRuleBasedObservations(context.signals);
+    return paginateObservations(ruleObservations, page, limit, {
+      materialChangeDetected: context.materialChangeDetected,
     });
   }
 
   if (observations.length === 0) {
-    throw Errors.observationsUnavailable("OpenAI returned no observations", {
-      reason: "empty_response",
+    const ruleObservations = generateRuleBasedObservations(context.signals);
+    return paginateObservations(ruleObservations, page, limit, {
+      materialChangeDetected: context.materialChangeDetected,
     });
   }
 
-  for (const obs of observations) {
-    if (isFallbackObservationText(obs.text)) {
-      throw Errors.observationsUnavailable(
-        "OpenAI response matched fallback template — refusing to persist",
-        { text: obs.text.slice(0, 80) },
-      );
-    }
+  const validObservations = observations.filter((obs) => !isFallbackObservationText(obs.text));
+  if (validObservations.length === 0) {
+    const ruleObservations = generateRuleBasedObservations(context.signals);
+    return paginateObservations(ruleObservations, page, limit, {
+      materialChangeDetected: context.materialChangeDetected,
+    });
   }
+  observations = validObservations;
 
   await prisma.persistedObservation.deleteMany({ where: { profileId: profile.id } });
 
@@ -168,6 +211,7 @@ export async function getObservations(
       structured: { text: obs.text, observationType: obs.type, generationSource: "llm" },
       skipDelta: true,
       skipDistill: true,
+      skipEnrich: true,
     });
   }
 

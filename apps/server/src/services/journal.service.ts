@@ -1,5 +1,8 @@
 import prisma from "@kursa/db";
 import type {
+  CreateDecisionInput,
+  CreateFeedbackInput,
+  CreateLearningInput,
   CreateNoteInput,
   CreateWinInput,
   JournalContext,
@@ -9,7 +12,9 @@ import type {
 } from "@kursa/types";
 
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
+import { computeJournalActivityScore } from "../compute/advisor.compute.js";
 import { eventToTag, ingestEvent, listEvents } from "./events.service.js";
+import { getMilestoneEvidenceForUser } from "./milestone.service.js";
 
 export async function getTimeline(
   userId: string,
@@ -49,6 +54,9 @@ export async function createWin(userId: string, input: CreateWinInput) {
       title: input.title,
       body: input.body,
       skillNames: input.skillNames ?? [],
+      impactMetric: input.impactMetric,
+      collaborators: input.collaborators,
+      linkedMilestoneOrder: input.linkedMilestoneOrder,
     },
   });
 }
@@ -58,7 +66,72 @@ export async function createNote(userId: string, input: CreateNoteInput) {
     type: "note",
     source: "user",
     body: input.body,
-    structured: { body: input.body },
+    structured: {
+      body: input.body,
+      mood: input.mood,
+      tags: input.tags,
+    },
+    skipDelta: true,
+  });
+}
+
+export async function createFeedback(userId: string, input: CreateFeedbackInput) {
+  return ingestEvent(userId, {
+    type: "feedback",
+    source: "user",
+    body: input.body,
+    structured: {
+      body: input.body,
+      fromRole: input.fromRole,
+      receivedAt: input.receivedAt,
+      linkedSkillNames: input.linkedSkillNames,
+    },
+  });
+}
+
+export async function createDecision(userId: string, input: CreateDecisionInput) {
+  return ingestEvent(userId, {
+    type: "decision",
+    source: "user",
+    body: input.reasoning,
+    structured: {
+      title: input.title,
+      optionsConsidered: input.optionsConsidered,
+      choiceMade: input.choiceMade,
+      reasoning: input.reasoning,
+    },
+  });
+}
+
+export async function createLearning(userId: string, input: CreateLearningInput) {
+  return ingestEvent(userId, {
+    type: "learning",
+    source: "user",
+    body: `Learning ${input.skillName}`,
+    structured: {
+      skillName: input.skillName,
+      resourceType: input.resourceType,
+      hours: input.hours,
+      completed: input.completed,
+    },
+  });
+}
+
+export async function createApplicationUpdate(
+  userId: string,
+  input: {
+    applicationId: string;
+    company: string;
+    roleTitle: string;
+    previousStage?: string;
+    newStage: string;
+  },
+) {
+  return ingestEvent(userId, {
+    type: "application_update",
+    source: "system",
+    body: `${input.company} · ${input.roleTitle}: ${input.previousStage ?? "unknown"} → ${input.newStage}`,
+    structured: input,
     skipDelta: true,
   });
 }
@@ -102,56 +175,116 @@ function getWeekStart(date: Date): Date {
   return d;
 }
 
-export async function getSentimentTrend(userId: string): Promise<SentimentTrendPoint[]> {
+export async function getCompositeEngagementTrend(userId: string): Promise<SentimentTrendPoint[]> {
   const twelveWeeksAgo = new Date(Date.now() - 86400000 * 7 * 12);
   const events = await prisma.careerEvent.findMany({
     where: {
       userId,
-      type: { in: ["checkin_weekly", "checkin_monthly"] },
-      occurredAt: { gte: twelveWeeksAgo },
       deletedAt: null,
+      occurredAt: { gte: twelveWeeksAgo },
     },
     orderBy: { occurredAt: "asc" },
   });
 
-  const weekBuckets = new Map<string, number[]>();
+  const weekBuckets = new Map<string, { sentiments: number[]; activity: number }>();
+
   for (const e of events) {
     const key = getWeekStart(e.occurredAt).toISOString().slice(0, 10);
-    const bucket = weekBuckets.get(key) ?? [];
-    bucket.push(e.sentiment ?? 0);
+    const bucket = weekBuckets.get(key) ?? { sentiments: [], activity: 0 };
+
+    if (e.type === "checkin_weekly" || e.type === "checkin_monthly") {
+      if (e.sentiment != null) bucket.sentiments.push(e.sentiment);
+    }
+    if (["win", "note", "feedback"].includes(e.type)) {
+      bucket.activity += 1;
+      if (e.sentiment != null) bucket.sentiments.push(e.sentiment);
+    }
+
     weekBuckets.set(key, bucket);
   }
 
   const points: SentimentTrendPoint[] = [];
   const now = new Date();
+
   for (let i = 11; i >= 0; i--) {
     const weekDate = new Date(now.getTime() - i * 7 * 86400000);
     const key = getWeekStart(weekDate).toISOString().slice(0, 10);
-    const values = weekBuckets.get(key) ?? [];
-    const value =
-      values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
-    points.push({ weekLabel: key, value });
+    const bucket = weekBuckets.get(key) ?? { sentiments: [], activity: 0 };
+
+    const avgSentiment =
+      bucket.sentiments.length > 0
+        ? bucket.sentiments.reduce((s, v) => s + v, 0) / bucket.sentiments.length
+        : 0;
+
+    const activityBoost = Math.min(0.3, bucket.activity * 0.05);
+    const normalized = Math.max(0, Math.min(1, (avgSentiment + 1) / 2 + activityBoost));
+
+    points.push({
+      weekLabel: key,
+      value: normalized,
+      summary:
+        bucket.activity > 0
+          ? `${bucket.activity} journal entries`
+          : bucket.sentiments.length > 0
+            ? "check-in recorded"
+            : undefined,
+    });
   }
 
   return points;
 }
 
+/** @deprecated Use getCompositeEngagementTrend — kept for backward compatibility */
+export async function getSentimentTrend(userId: string): Promise<SentimentTrendPoint[]> {
+  return getCompositeEngagementTrend(userId);
+}
+
 export async function getRelevance(userId: string): Promise<RelevanceSummary | null> {
-  const context = await assembleAdvisorContext(userId, "observations");
-  if (!context) return null;
+  try {
+    const context = await assembleAdvisorContext(userId, "journal");
+    if (!context) return null;
 
-  const { signals } = context;
-  const pathAlignmentScore =
-    signals.pathMilestonesTotal > 0
-      ? Math.round((signals.pathMilestonesWithEvidence / signals.pathMilestonesTotal) * 100)
-      : null;
+    const { signals } = context;
+    const pathAlignmentScore =
+      signals.pathMilestonesTotal > 0
+        ? Math.round((signals.pathMilestonesWithEvidence / signals.pathMilestonesTotal) * 100)
+        : null;
 
-  const engagementTrend = await getSentimentTrend(userId);
+    const engagementTrend = await getCompositeEngagementTrend(userId);
+    const milestoneEvidence = await getMilestoneEvidenceForUser(userId);
 
-  return {
-    pathAlignmentScore,
-    staleSkills: signals.dormantHighValueSkills.slice(0, 5),
-    winsThisQuarter: signals.winsThisQuarter,
-    engagementTrend,
-  };
+    const memories = context.memories.slice(0, 3).map((m) => ({
+      id: m.id,
+      category: m.category,
+      fact: m.fact,
+      confidence: m.confidence,
+      validFrom: m.validFrom,
+    }));
+
+    return {
+      pathAlignmentScore,
+      staleSkills: signals.dormantHighValueSkills.slice(0, 5),
+      winsThisQuarter: signals.winsThisQuarter,
+      engagementTrend,
+      intentionActionGap: signals.intentionActionGap,
+      recentMemoryFacts: signals.recentMemoryFacts,
+      materialChangeDetected: context.materialChangeDetected,
+      activePathTitle: context.activePath?.title ?? null,
+      memories,
+      milestoneEvidence,
+      checkInStreak: signals.checkInStreak,
+      journalActivityScore: computeJournalActivityScore(context.recentEvents),
+    };
+  } catch (err) {
+    console.error("[journal] getRelevance failed:", err);
+    return null;
+  }
+}
+
+export async function getUserSkillsForJournal(userId: string): Promise<string[]> {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    select: { skills: { select: { name: true }, orderBy: { name: "asc" } } },
+  });
+  return profile?.skills.map((s) => s.name) ?? [];
 }

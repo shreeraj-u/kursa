@@ -7,6 +7,7 @@ export type Observation = {
   text: string;
   timeAgo: string;
   type: "opportunity" | "warning" | "info";
+  source?: "llm" | "rules";
 };
 
 export async function generateObservations(context: AdvisorContext): Promise<Observation[]> {

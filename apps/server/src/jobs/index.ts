@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 
 import {
   runCheckInReminders,
+  runEnrichmentBackfill,
   runNightlyMemoryDistillation,
   runObservationRefresh,
   runPathStaleFlags,
@@ -21,6 +22,11 @@ export function startJobWorkers(redisUrl: string): void {
 
   queue = new Queue(QUEUE_NAME, { connection });
 
+  void queue.add(
+    "enrichment-backfill",
+    {},
+    { repeat: { pattern: "0 2 * * *" }, jobId: "enrichment-backfill" },
+  );
   void queue.add(
     "memory-distill-nightly",
     {},
@@ -46,6 +52,9 @@ export function startJobWorkers(redisUrl: string): void {
     QUEUE_NAME,
     async (job) => {
       switch (job.name) {
+        case "enrichment-backfill":
+          await runEnrichmentBackfill();
+          break;
         case "memory-distill-nightly":
           await runNightlyMemoryDistillation();
           break;

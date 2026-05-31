@@ -1,7 +1,9 @@
 import prisma from "@kursa/db";
 
-import { runMemoryDistillation } from "../services/memory.service.js";
+import { runMemoryDistillation, runBatchMemoryDistillation } from "../services/memory.service.js";
 import { getObservations } from "../services/insights.service.js";
+import { backfillEnrichment } from "../services/enrichment.service.js";
+import { runCheckInReminderScan } from "../services/proactive.service.js";
 
 export async function runNightlyMemoryDistillation(): Promise<void> {
   const profiles = await prisma.profile.findMany({
@@ -13,8 +15,28 @@ export async function runNightlyMemoryDistillation(): Promise<void> {
   for (const profile of profiles) {
     try {
       await runMemoryDistillation(profile.userId, profile.id);
+      await runBatchMemoryDistillation(profile.userId, profile.id);
     } catch (error) {
       console.error("[jobs] memory distill failed for", profile.userId, error);
+    }
+  }
+}
+
+export async function runEnrichmentBackfill(): Promise<void> {
+  const profiles = await prisma.profile.findMany({
+    where: { onboardingDone: true },
+    select: { userId: true, id: true },
+    take: 200,
+  });
+
+  for (const profile of profiles) {
+    try {
+      const count = await backfillEnrichment(profile.userId, profile.id, 90);
+      if (count > 0) {
+        console.info(`[jobs] enriched ${count} events for`, profile.userId);
+      }
+    } catch (error) {
+      console.error("[jobs] enrichment backfill failed for", profile.userId, error);
     }
   }
 }
@@ -36,8 +58,7 @@ export async function runObservationRefresh(): Promise<void> {
 }
 
 export async function runCheckInReminders(): Promise<void> {
-  // Placeholder: integrate email/in-app notifications when messaging layer exists.
-  console.info("[jobs] check-in reminder scan completed");
+  await runCheckInReminderScan();
 }
 
 export async function runPathStaleFlags(): Promise<void> {

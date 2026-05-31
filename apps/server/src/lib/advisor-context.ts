@@ -5,7 +5,7 @@ import type { AdvisorContext, AdvisorPurpose, ProfileInput } from "@kursa/types"
 import type { CareerPath } from "@kursa/types";
 
 import { computeAdvisorSignals, shouldRegeneratePaths } from "../compute/advisor.compute.js";
-import { getRecentEvents } from "../services/events.service.js";
+import { getRecentEvents, getAdvisorEventWindow } from "../services/events.service.js";
 import { getMemoriesForUser } from "../services/memory.service.js";
 
 const PROFILE_SELECT = {
@@ -61,9 +61,9 @@ export async function assembleAdvisorContext(
 
   if (!profile) return null;
 
-  const fourWeeksAgo = new Date(Date.now() - 86400000 * 28);
+  const since = await getAdvisorEventWindow(userId);
   const [rawEvents, memories] = await Promise.all([
-    getRecentEvents(userId, fourWeeksAgo, purpose === "paths" ? 100 : 40),
+    getRecentEvents(userId, since, purpose === "paths" ? 100 : 40),
     getMemoriesForUser(userId, purpose === "chat" ? 20 : 10),
   ]);
 
