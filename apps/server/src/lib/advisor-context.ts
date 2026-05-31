@@ -110,14 +110,23 @@ export async function assembleAdvisorContext(
 
   const materialChangeDetected = shouldRegeneratePaths(signals);
 
-  const eventBudget =
-    purpose === "journal" ? 10 : purpose === "observations" ? 15 : recentEvents.length;
+  const BUDGETS: Record<AdvisorPurpose, { events: number; skills: number }> = {
+    chat:         { events: 8,                   skills: 15 },
+    journal:      { events: 10,                  skills: Infinity },
+    paths:        { events: recentEvents.length, skills: Infinity },
+    observations: { events: 15,                  skills: Infinity },
+  };
+
+  const budget = BUDGETS[purpose];
 
   return {
     purpose,
-    profile: profileInput,
+    profile: {
+      ...profileInput,
+      skills: profileInput.skills.slice(0, budget.skills),
+    },
     signals,
-    recentEvents: recentEvents.slice(0, eventBudget),
+    recentEvents: recentEvents.slice(0, budget.events),
     memories: memories.slice(0, purpose === "observations" ? 5 : memories.length),
     activePath,
     materialChangeDetected,

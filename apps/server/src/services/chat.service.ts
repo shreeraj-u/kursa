@@ -75,7 +75,7 @@ export async function sendChatMessage(
     profile: {
       targetRole: context.profile.targetRole,
       careerTrajectory: context.profile.careerTrajectory,
-      skills: context.profile.skills.slice(0, 15).map((s) => s.name),
+      skills: context.profile.skills.map((s) => s.name),
     },
     signals: {
       winsThisQuarter: context.signals.winsThisQuarter,
@@ -83,7 +83,7 @@ export async function sendChatMessage(
       sentimentTrend12w: context.signals.sentimentTrend12w,
     },
     memories: context.memories.map((m) => m.fact),
-    recentEvents: context.recentEvents.slice(0, 8).map((e) => ({
+    recentEvents: context.recentEvents.map((e) => ({
       type: e.type,
       body: e.body?.slice(0, 200),
       themes: e.enrichment?.themes,

@@ -1,3 +1,12 @@
+// Section count limits — single source of truth for server validators and web editor.
+export const MAX_ROLES = 6;
+export const MAX_BULLETS = 5;
+export const MAX_SKILLS = 20;
+export const MAX_EDUCATION = 5;
+export const MAX_CERTIFICATIONS = 5;
+export const MAX_PROJECTS = 4;
+export const MAX_ACHIEVEMENTS = 12;
+
 // Resume Engine (Phase 6, Slice A) — shapes crossing the server/web boundary.
 // A Resume is a versioned output of the system's knowledge of the user, shaped
 // toward their active CareerPath / target role. Generation appends new versions;

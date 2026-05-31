@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { skillCategorySchema } from "./skills.js";
 
-export const skillCategorySchema = z.enum(["technical", "soft", "tool"]);
+export { skillCategorySchema };
 export const workEnvironmentSchema = z.enum(["startup", "corporate", "remote", "hybrid"]);
 export const riskAppetiteSchema = z.enum(["stability_seeking", "balanced", "high_growth"]);
 export const educationTypeSchema = z.enum(["degree", "certification", "course"]);
@@ -59,7 +60,7 @@ export const basicsSchema = z.object({
 });
 
 export const skillSchema = z.object({
-  name: boundedText(80),
+  name: boundedText(100),
   category: skillCategorySchema,
   confidenceRating: z.number().int().min(1).max(5),
   source: z.enum(["self_reported", "resume"]).optional(),

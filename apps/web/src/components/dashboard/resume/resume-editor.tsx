@@ -11,12 +11,25 @@ import type {
   ResumeProject,
   ResumeSectionKey,
 } from "@kursa/types";
+import {
+  MAX_ACHIEVEMENTS,
+  MAX_BULLETS,
+  MAX_CERTIFICATIONS,
+  MAX_EDUCATION,
+  MAX_PROJECTS,
+  MAX_ROLES,
+  MAX_SKILLS,
+} from "@kursa/types";
 
 import {
   ACHIEVEMENT_TYPE_LABELS,
   normalizeResumeSectionOrder,
   RESUME_SECTION_LABELS,
 } from "@/lib/dashboard/resume/section-order";
+import {
+  estimatePageWeight,
+  PAGE_FIT_WARNING_THRESHOLD,
+} from "@/lib/dashboard/resume/page-weight";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
@@ -25,14 +38,6 @@ interface ResumeEditorProps {
   onChange: (next: ResumeContent) => void;
 }
 
-const MAX_EXPERIENCE = 6;
-const MAX_BULLETS = 5;
-const MAX_SKILLS = 20;
-const MAX_EDUCATION = 5;
-const MAX_CERTIFICATIONS = 5;
-const MAX_PROJECTS = 4;
-const MAX_ACHIEVEMENTS = 12;
-const PAGE_FIT_WARNING_THRESHOLD = 112;
 
 const ACHIEVEMENT_TYPES = Object.keys(ACHIEVEMENT_TYPE_LABELS) as AchievementType[];
 
@@ -143,40 +148,6 @@ function ReorderControls({
   );
 }
 
-function estimatePageWeight(content: ResumeContent): number {
-  const projects = content.projects ?? [];
-  const summaryWeight = Math.ceil(content.summary.length / 95);
-  const bulletWeight = content.experience.reduce(
-    (total, exp) => total + exp.bullets.reduce((sum, bullet) => sum + 4 + Math.ceil(bullet.length / 90), 0),
-    0,
-  );
-  const roleWeight = content.experience.length * 7;
-  const projectWeight = projects.reduce(
-    (total, project) =>
-      total +
-      5 +
-      Math.ceil(
-        (project.title.length +
-          project.description.length +
-          (project.period?.length ?? 0) +
-          (project.url?.length ?? 0) +
-          (project.bullets ?? []).join(" ").length) /
-          120,
-      ),
-    0,
-  );
-  const credentialWeight = (content.education.length + content.certifications.length) * 3;
-  const achievementCount = content.achievements?.length ?? 0;
-  const achievementWeight = achievementCount > 0 ? 3 + Math.ceil(achievementCount / 3) : 0;
-  const skillsWeight = Math.ceil(content.skills.length / 4);
-  const contactWeight = Math.ceil(
-    [content.contact.email, content.contact.location, ...content.contact.links]
-      .filter(Boolean)
-      .join(" ").length / 120,
-  );
-
-  return summaryWeight + bulletWeight + roleWeight + projectWeight + credentialWeight + achievementWeight + skillsWeight + contactWeight;
-}
 
 export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
   const projects = value.projects ?? [];
@@ -188,8 +159,6 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
     onChange({ ...value, ...p });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _disablePageFitEstimate = estimatePageWeight;
 
   function setExperience(i: number, next: ResumeExperience) {
     patch({ experience: value.experience.map((e, idx) => (idx === i ? next : e)) });
@@ -272,7 +241,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
         <SectionHeader
           label="Experience"
           count={value.experience.length}
-          max={MAX_EXPERIENCE}
+          max={MAX_ROLES}
           addLabel="add experience"
           onAdd={() => patch({ experience: [...value.experience, { ...emptyExperience }] })}
         />

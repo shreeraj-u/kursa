@@ -67,18 +67,16 @@ export async function upsertProfile(userId: string, data: ProfileUpdateInput): P
  * Creates a social link for a user's profile.
  */
 export async function createSocialLink(userId: string, data: SocialLinkCreateInput) {
-  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
-  if (!profile) throw Errors.notFound("Profile");
-  return prisma.socialLink.create({ data: { profileId: profile.id, ...data } });
+  const profileId = await getProfileId(userId);
+  return prisma.socialLink.create({ data: { profileId, ...data } });
 }
 
 /**
  * Updates a social link belonging to a user's profile.
  */
 export async function updateSocialLink(userId: string, linkId: string, data: SocialLinkUpdateInput) {
-  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
-  if (!profile) throw Errors.notFound("Profile");
-  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId: profile.id } });
+  const profileId = await getProfileId(userId);
+  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId } });
   if (!link) throw Errors.notFound("Social link");
   return prisma.socialLink.update({ where: { id: linkId }, data });
 }
@@ -87,9 +85,8 @@ export async function updateSocialLink(userId: string, linkId: string, data: Soc
  * Deletes a social link belonging to a user's profile.
  */
 export async function deleteSocialLink(userId: string, linkId: string) {
-  const profile = await prisma.profile.findUnique({ where: { userId }, select: { id: true } });
-  if (!profile) throw Errors.notFound("Profile");
-  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId: profile.id } });
+  const profileId = await getProfileId(userId);
+  const link = await prisma.socialLink.findFirst({ where: { id: linkId, profileId } });
   if (!link) throw Errors.notFound("Social link");
   return prisma.socialLink.delete({ where: { id: linkId } });
 }

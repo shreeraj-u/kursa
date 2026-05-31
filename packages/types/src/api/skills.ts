@@ -1,8 +1,11 @@
 // Skill inventory — value lists and request shapes shared across the boundary.
 // Strength is two distinct dimensions: confidence (1–5) and proficiency (enum).
 
+import { z } from "zod";
+
 export const skillCategoryValues = ["technical", "soft", "tool"] as const;
 export type SkillCategoryValue = (typeof skillCategoryValues)[number];
+export const skillCategorySchema = z.enum(skillCategoryValues);
 
 export const skillProficiencyValues = [
   "beginner",
@@ -11,6 +14,7 @@ export const skillProficiencyValues = [
   "expert",
 ] as const;
 export type SkillProficiencyValue = (typeof skillProficiencyValues)[number];
+export const skillProficiencySchema = z.enum(skillProficiencyValues);
 
 export const learningGoalStatusValues = [
   "PLANNED",
@@ -18,6 +22,7 @@ export const learningGoalStatusValues = [
   "COMPLETED",
 ] as const;
 export type LearningGoalStatusValue = (typeof learningGoalStatusValues)[number];
+export const learningGoalStatusSchema = z.enum(learningGoalStatusValues);
 
 export interface SkillCreateInput {
   name: string;

@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  skillCategorySchema,
+  skillProficiencySchema,
+  learningGoalStatusSchema,
+} from "@kursa/types";
 
 // ── Sub-schemas ───────────────────────────────────────────────────────────────
 
@@ -109,14 +114,6 @@ export const socialLinkUpdateSchema = z.object({
 
 // ── Skill inventory schemas ───────────────────────────────────────────────────
 
-const skillCategorySchema = z.enum(["technical", "soft", "tool"]);
-const skillProficiencySchema = z.enum([
-  "beginner",
-  "intermediate",
-  "advanced",
-  "expert",
-]);
-
 export const skillCreateSchema = z.object({
   name: z.string().trim().min(1).max(100),
   category: skillCategorySchema,
@@ -134,8 +131,6 @@ export const skillUpdateSchema = z
   .partial();
 
 // ── Learning goal schemas ─────────────────────────────────────────────────────
-
-const learningGoalStatusSchema = z.enum(["PLANNED", "LEARNING", "COMPLETED"]);
 
 export const learningGoalCreateSchema = z.object({
   skillName: z.string().trim().min(1).max(100),
