@@ -7,6 +7,8 @@ const router: Router = Router();
 router.use(requireAuth);
 
 router.get("/", chatController.listConversations);
+router.get("/meta", chatController.getMeta);
+router.get("/suggested-prompts", chatController.getSuggestedPrompts);
 router.post("/", chatController.createConversation);
 router.post("/:id/messages", chatController.sendMessage);
 router.post("/:id/decision", chatController.recordDecision);

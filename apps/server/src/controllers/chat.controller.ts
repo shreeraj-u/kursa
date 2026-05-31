@@ -48,3 +48,13 @@ export async function recordDecision(req: Request, res: Response): Promise<void>
   });
   ok(res, { recorded: true });
 }
+
+export async function getMeta(req: Request, res: Response): Promise<void> {
+  const data = await chatService.getChatMeta(req.user!.id);
+  ok(res, data);
+}
+
+export async function getSuggestedPrompts(req: Request, res: Response): Promise<void> {
+  const prompts = await chatService.getSuggestedPrompts(req.user!.id);
+  ok(res, { prompts });
+}

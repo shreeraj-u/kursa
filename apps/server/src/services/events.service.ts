@@ -53,6 +53,7 @@ const SKIP_GRAPH_LINK_TYPES = new Set<CareerEventType>([
   "onboarding_complete",
   "application_update",
   "system",
+  "chat_insight",
 ]);
 
 export async function ingestEvent(userId: string, input: CreateCareerEventInput) {
@@ -114,9 +115,16 @@ export async function ingestEvent(userId: string, input: CreateCareerEventInput)
   return toSummary(event);
 }
 
+const JOURNAL_HIDDEN_TYPES: CareerEventType[] = ["chat_insight"];
+
 export async function listEvents(
   userId: string,
-  opts: { page?: number; limit?: number; type?: CareerEventType } = {},
+  opts: {
+    page?: number;
+    limit?: number;
+    type?: CareerEventType;
+    includeHidden?: boolean;
+  } = {},
 ): Promise<{ data: CareerEventSummary[]; total: number }> {
   const page = opts.page ?? 1;
   const limit = opts.limit ?? 30;
@@ -124,6 +132,9 @@ export async function listEvents(
     userId,
     deletedAt: null,
     ...(opts.type ? { type: opts.type } : {}),
+    ...(!opts.type && !opts.includeHidden
+      ? { type: { notIn: JOURNAL_HIDDEN_TYPES } }
+      : {}),
   };
 
   const [rows, total] = await Promise.all([

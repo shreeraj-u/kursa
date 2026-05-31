@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useState } from "react";
-import type { Observation, ObservationsResponse } from "@/types/profile";
+import type { ObservationsResponse } from "@/types/profile";
 import { env } from "@kursa/env/web";
 
 interface AriaNoticedProps {
@@ -109,9 +111,12 @@ export default function AriaNoticed({ initialObservations, initialError = null }
                                             {obs.timeAgo}
                                             {obs.source === "llm" && " · llm"}
                                         </span>
-                                        <span className="text-2xs text-accent cursor-pointer hover:underline">
+                                        <Link
+                                            href={`/dashboard/aria?prompt=${encodeURIComponent(obs.text)}` as Route}
+                                            className="text-2xs text-accent hover:underline"
+                                        >
                                             open
-                                        </span>
+                                        </Link>
                                         <span className="text-2xs text-mute-3 cursor-pointer hover:underline">
                                             dis
                                         </span>

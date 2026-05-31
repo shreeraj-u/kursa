@@ -7,6 +7,7 @@ import type { CareerPath } from "@kursa/types";
 import { computeAdvisorSignals, shouldRegeneratePaths } from "../compute/advisor.compute.js";
 import { getRecentEvents, getAdvisorEventWindow } from "../services/events.service.js";
 import { getMemoriesForUser } from "../services/memory.service.js";
+import { getMarketContextForProfile } from "../services/market.service.js";
 
 const PROFILE_SELECT = {
   bio: true,
@@ -107,7 +108,18 @@ export async function assembleAdvisorContext(
   const materialChangeDetected = shouldRegeneratePaths(signals);
 
   const eventBudget =
-    purpose === "journal" ? 10 : purpose === "observations" ? 15 : recentEvents.length;
+    purpose === "journal"
+      ? 10
+      : purpose === "observations"
+        ? 15
+        : purpose === "chat"
+          ? 20
+          : recentEvents.length;
+
+  const marketContext =
+    purpose === "chat" || purpose === "paths" || purpose === "observations"
+      ? await getMarketContextForProfile(userId, profileInput)
+      : null;
 
   return {
     purpose,
@@ -117,6 +129,7 @@ export async function assembleAdvisorContext(
     memories: memories.slice(0, purpose === "observations" ? 5 : memories.length),
     activePath,
     materialChangeDetected,
+    marketContext,
   };
 }
 

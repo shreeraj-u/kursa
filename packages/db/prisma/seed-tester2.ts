@@ -7,12 +7,8 @@
  * Run: cd packages/db && pnpm seed:tester2
  * Then: cd apps/server && npx tsx --env-file=.env scripts/bootstrap-tester2-real-run.ts
  */
-import { randomBytes, scrypt } from "node:crypto";
-import { promisify } from "node:util";
-
 import prisma from "../src/index.js";
-
-const scryptAsync = promisify(scrypt);
+import { hashPassword } from "./lib/hash-password.js";
 
 const TEST_USER = {
   id: "vtcP1lykashpapNolH1gqxsr4t8iEQCu",
@@ -31,21 +27,8 @@ function weeksAgo(weeks: number) {
   return daysAgo(weeks * 7);
 }
 
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const key = (await scryptAsync(password.normalize("NFKC"), salt, 64, {
-    N: 16384,
-    r: 16,
-    p: 1,
-    maxmem: 128 * 16384 * 16 * 2,
-  })) as Buffer;
-  return `${salt}:${key.toString("hex")}`;
-}
-
 async function main() {
   console.log("Seeding tester2@gmail.com (user-entered data only)…");
-
-  const password = await hashPassword(TEST_USER.password);
 
   await prisma.persistedObservation.deleteMany({ where: { userId: TEST_USER.id } });
   await prisma.careerEvent.deleteMany({ where: { userId: TEST_USER.id } });
@@ -69,10 +52,13 @@ async function main() {
     },
   });
 
-  await prisma.account.upsert({
-    where: { id: "yL1FiRQ9EQuV2vnBnQeqMSBdBTzQPTVK" },
-    update: { password },
-    create: {
+  await prisma.account.deleteMany({
+    where: { userId: TEST_USER.id, providerId: "credential" },
+  });
+
+  const password = await hashPassword(TEST_USER.password);
+  await prisma.account.create({
+    data: {
       id: `${TEST_USER.id}-credential`,
       accountId: TEST_USER.id,
       providerId: "credential",

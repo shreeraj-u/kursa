@@ -6,6 +6,7 @@ type Memory = {
   fact: string;
   confidence: number;
   validFrom: string;
+  learnedFromChat?: boolean;
 };
 
 type Props = {
@@ -25,7 +26,7 @@ export function JournalMemoriesPanel({ memories, loading }: Props) {
   if (memories.length === 0) {
     return (
       <p style={{ fontSize: "var(--text-xs)", color: "var(--mute-2)" }}>
-        Aria will distill facts as you log activity.
+        Aria will distill facts as you log activity or chat on the Main thread.
       </p>
     );
   }
@@ -40,6 +41,7 @@ export function JournalMemoriesPanel({ memories, loading }: Props) {
           <div className="flex items-center justify-between mb-0.5">
             <span className="mono" style={{ fontSize: 8, color: "var(--mute-3)" }}>
               {m.category.replace(/_/g, " ")}
+              {m.learnedFromChat ? " · chat" : ""}
             </span>
             <span className="mono" style={{ fontSize: 8, color: "var(--mute-3)" }}>
               {Math.round(m.confidence * 100)}%

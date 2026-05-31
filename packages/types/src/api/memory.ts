@@ -1,6 +1,7 @@
 import type { ProfileInput, ProfileSignals } from "./insights.js";
 import type { CareerPath } from "./paths.js";
 import type { CareerEventSummary } from "./events.js";
+import type { MarketContext } from "./market.js";
 
 export interface UserMemorySummary {
   id: string;
@@ -8,6 +9,8 @@ export interface UserMemorySummary {
   fact: string;
   confidence: number;
   validFrom: string;
+  /** Present when fact was sourced from Aria chat learning. */
+  learnedFromChat?: boolean;
 }
 
 export interface SkillLastUsedUpdate {
@@ -53,6 +56,7 @@ export interface AdvisorContext {
   memories: UserMemorySummary[];
   activePath: CareerPath | null;
   materialChangeDetected: boolean;
+  marketContext: MarketContext | null;
 }
 
 export interface MemoryCandidate {

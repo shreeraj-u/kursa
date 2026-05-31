@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { CareerPath } from "@kursa/types";
 
 import { requireOnboarded } from "@/lib/require-onboarded";
@@ -16,9 +17,11 @@ export default async function Page() {
   );
 
   return (
-    <CareerPathPage
-      paths={paths}
-      materialChangeDetected={obsResult.ok ? (obsResult.data.materialChangeDetected ?? false) : false}
-    />
+    <Suspense fallback={<div className="px-8 py-12 mono text-2xs text-mute">Loading career path…</div>}>
+      <CareerPathPage
+        paths={paths}
+        materialChangeDetected={obsResult.ok ? (obsResult.data.materialChangeDetected ?? false) : false}
+      />
+    </Suspense>
   );
 }

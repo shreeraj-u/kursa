@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { Route } from "next";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { CareerPath } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
@@ -33,6 +35,7 @@ function reconcileActivatedPaths(paths: CareerPath[], requestedPathId: string) {
 
 export default function CareerPathPage({ paths, materialChangeDetected }: CareerPathPageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [localPaths, setLocalPaths] = useState(paths);
   const [generating, setGenerating] = useState(false);
   const [pendingActivePathId, setPendingActivePathId] = useState<string | null>(null);
@@ -103,6 +106,15 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
   useEffect(() => {
     setSelectedMilestoneOrder(selectedPath?.milestones[0]?.order ?? null);
   }, [selectedPath?.id]);
+
+  useEffect(() => {
+    if (searchParams.get("regen") === "1" && localPaths.length > 0 && !generating) {
+      const ok = window.confirm("Regenerate all career paths from your latest profile?");
+      if (ok) void generate();
+      router.replace("/dashboard/career-path" as Route);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when regen param present
+  }, [searchParams]);
 
   async function generate() {
     setGenerating(true);
@@ -203,10 +215,16 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
         </div>
         {materialChangeDetected && !justRegenerated && (
           <div
-            className="rounded-lg px-3 py-2 mono text-2xs"
+            className="rounded-lg px-3 py-2 mono text-2xs flex flex-wrap items-center gap-3"
             style={{ border: "1px solid var(--line)", background: "var(--bg-sub)", color: "var(--mute)" }}
           >
-            Your profile has shifted since these paths were generated — consider regenerating.
+            <span>Your profile has shifted since these paths were generated — consider regenerating.</span>
+            <Link
+              href={"/dashboard/aria?prompt=" + encodeURIComponent("My profile changed — should we revisit my career paths?") as Route}
+              className="text-accent hover:underline"
+            >
+              Ask Aria
+            </Link>
           </div>
         )}
         {justRegenerated && (

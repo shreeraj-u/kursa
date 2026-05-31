@@ -4,6 +4,11 @@ import { env } from "@kursa/env/web";
 import type {
   AchievementInput,
   CareerPath,
+  ChatActionChip,
+  ChatDecisionType,
+  ChatMetaResponse,
+  ChatSendResponse,
+  ConversationListItem,
   ProactiveNudge,
   ProjectInput,
   RelevanceSummary,
@@ -248,27 +253,36 @@ export const api = {
   },
 
   chat: {
-    list: () =>
-      request<{
-        conversations: Array<{
-          id: string;
-          decisionType: string | null;
-          createdAt: string;
-          updatedAt: string;
-          messages: Array<{ id: string; role: string; content: string; createdAt: string }>;
-        }>;
-      }>("/api/v1/chat"),
+    list: () => request<{ conversations: ConversationListItem[] }>("/api/v1/chat"),
 
-    create: (decisionType?: string) =>
+    meta: () => request<ChatMetaResponse>("/api/v1/chat/meta"),
+
+    suggestedPrompts: () => request<{ prompts: string[] }>("/api/v1/chat/suggested-prompts"),
+
+    create: (decisionType?: ChatDecisionType) =>
       request<{ id: string }>("/api/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ decisionType }),
+        body: JSON.stringify(decisionType ? { decisionType } : {}),
       }),
 
     send: (conversationId: string, content: string) =>
-      request<{ message: string; conversationId: string }>(`/api/v1/chat/${conversationId}/messages`, {
+      request<ChatSendResponse>(`/api/v1/chat/${conversationId}/messages`, {
         method: "POST",
         body: JSON.stringify({ content }),
+      }),
+
+    recordDecision: (
+      conversationId: string,
+      body: {
+        title: string;
+        optionsConsidered: string[];
+        choiceMade: string;
+        reasoning: string;
+      },
+    ) =>
+      request<{ recorded: boolean }>(`/api/v1/chat/${conversationId}/decision`, {
+        method: "POST",
+        body: JSON.stringify(body),
       }),
   },
 

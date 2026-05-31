@@ -11,6 +11,7 @@ enum CareerEventType {
   onboarding_complete
   application_update
   system
+  chat_insight
 }
 
 enum CareerEventSource {
