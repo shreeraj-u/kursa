@@ -2,7 +2,8 @@
 
 import { env } from "@kursa/env/web";
 import type {
-  CareerPath,
+  CareerJourney,
+  CareerJourneyResponse,
   Resume,
   ResumeContent,
   UserSocialLink,
@@ -113,21 +114,23 @@ export const api = {
       method: "DELETE",
     }),
 
-  paths: {
+  journey: {
+    get: () => request<CareerJourneyResponse>("/api/v1/profile/me/journey"),
+
     generate: () =>
-      request<{ paths: CareerPath[] }>("/api/v1/profile/me/paths/generate", {
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/generate", {
         method: "POST",
       }),
 
-    activate: (id: string) =>
-      request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
-        method: "PUT",
-      }),
-
-    updateMilestone: (pathId: string, order: number, status: import("@kursa/types").MilestoneStatus | null) =>
-      request<{ path: CareerPath }>(`/api/v1/profile/me/paths/${pathId}/milestones/${order}`, {
+    updateMilestone: (order: number, status: import("@kursa/types").MilestoneStatus | null) =>
+      request<{ journey: CareerJourney }>(`/api/v1/profile/me/journey/milestones/${order}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
+      }),
+
+    extend: () =>
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/extend", {
+        method: "POST",
       }),
   },
 

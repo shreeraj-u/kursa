@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CareerPath, UserSkill, UserLearningGoal } from "@kursa/types";
+import type { CareerJourney, UserSkill, UserLearningGoal } from "@kursa/types";
 
 import { SkillInventory } from "./skill-inventory";
 import { LearningGoals } from "./learning-goals";
@@ -10,7 +10,7 @@ import { SkillGap } from "./skill-gap";
 interface SkillsStudioProps {
   initialSkills: UserSkill[];
   initialGoals: UserLearningGoal[];
-  activePath: CareerPath | null;
+  activePath: CareerJourney | null;
 }
 
 export function SkillsStudio({ initialSkills, initialGoals, activePath }: SkillsStudioProps) {

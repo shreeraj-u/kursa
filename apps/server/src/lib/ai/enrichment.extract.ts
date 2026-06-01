@@ -1,5 +1,5 @@
 import type { EventEnrichment } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone as Milestone } from "@kursa/types";
 
 import { Models } from "./prompts.js";
 import { openai } from "../openai.js";

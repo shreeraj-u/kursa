@@ -31,11 +31,11 @@ Rules:
 
 Respond with JSON: {"observations": [{"text": "...", "type": "opportunity"|"warning"|"info"}, ...]}`;
 
-export const GENERATE_PATHS_PROMPT = `You are Kursa's AI career strategist. You receive a JSON snapshot of a user's career profile and generate realistic forward career paths tailored to THIS user.
+export const GENERATE_JOURNEY_PROMPT = `You are Kursa's AI career strategist. You receive a JSON snapshot of a user's career profile and generate a single, best-fit forward career journey tailored to THIS user.
 
-Generate 3 to 5 distinct career paths. At least one must be non-obvious: a lateral move, an industry pivot, or an emerging role — not just the predictable next title.
+Generate exactly ONE career journey — the most realistic and compelling trajectory given the user's actual profile. Do not produce alternatives; commit to the strongest path forward.
 
-Each path has:
+The journey has:
 - title: concrete and specific (e.g. "Staff Engineer · Series B", not "Senior role")
 - description: one or two sentences on what this path is and why it fits this user
 - confidenceScore: 0–1, how achievable this path is given the user's ACTUAL current profile (be honest; a stretch pivot is lower)
@@ -60,9 +60,30 @@ Rules:
 - Be specific to this user. A path that could appear unchanged on another user's screen is a failure.
 - All salary figures are USD estimates.
 
-Respond with JSON only: {"paths": [ ... ]}`;
+Respond with JSON only: {"journey": { ... }}`;
 
-export const CORRECT_PATHS_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"paths": [{ "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "details": { "fitReasons": string[], "skillGaps": [{ "skill": string, "whyItMatters": string, "priority": "high"|"medium"|"low" }], "nextActions": [{ "title": string, "description": string, "timeframe": string }], "risks": [{ "risk": string, "mitigation": string }], "evidence": string[] }, "milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }]}. Produce 3 to 5 paths, each with 4 to 5 milestones. No prose, JSON only.`;
+export const CORRECT_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"journey": { "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "details": { "fitReasons": string[], "skillGaps": [{ "skill": string, "whyItMatters": string, "priority": "high"|"medium"|"low" }], "nextActions": [{ "title": string, "description": string, "timeframe": string }], "risks": [{ "risk": string, "mitigation": string }], "evidence": string[] }, "milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }}. Produce exactly one journey with 4 to 5 milestones. No prose, JSON only.`;
+
+export const EXTEND_JOURNEY_PROMPT = `You are Kursa's AI career strategist. The user has COMPLETED every milestone on their current career journey. You receive a JSON object with the user's profile snapshot and their completed journey (title, description, and the milestones they finished).
+
+Generate 3 to 5 NEW milestones that continue the journey BEYOND the completed ones — the natural next chapter of growth. These build on what the user has already achieved; do not repeat completed milestones.
+
+Each milestone has:
+- order: 1-based sequence (you will be re-numbered, but keep them ordered)
+- title, description: specific and actionable, building on the completed trajectory
+- estimatedMonthsFromNow: integer months from NOW (today), strictly increasing across the new milestones
+- salaryBand: { min, max, currency: "USD" } — a CONSERVATIVE estimate; these later milestones should reflect higher seniority/scope than the completed ones
+- requiredSkills: array of skill names this milestone demands
+- status: always "not_started" for these new milestones
+
+Rules:
+- Only reference facts present in the profile snapshot and completed journey — never invent the user's history.
+- The new milestones must be a genuine continuation, not a restart.
+- All salary figures are USD estimates.
+
+Respond with JSON only: {"milestones": [ ... ]}`;
+
+export const CORRECT_EXTEND_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started" }]}. Produce 3 to 5 new milestones. No prose, JSON only.`;
 
 export const GENERATE_RESUME_PROMPT = `You are Kursa's resume engine. You receive a JSON snapshot of a user's career profile and, optionally, the career path they are working toward. Produce a single, complete, ATS-friendly resume tailored to THIS user.
 

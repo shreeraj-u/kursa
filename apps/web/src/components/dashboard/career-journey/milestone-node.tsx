@@ -1,8 +1,8 @@
 import { Check } from "lucide-react";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone } from "@kursa/types";
 
 interface MilestoneNodeProps {
-  milestone: Milestone;
+  milestone: JourneyMilestone;
   isLast: boolean;
   isSelected: boolean;
   onSelect: () => void;
@@ -14,7 +14,7 @@ function estimatedDate(monthsFromNow: number): string {
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-function StatusCircle({ status }: { status: Milestone["status"] }) {
+function StatusCircle({ status }: { status: JourneyMilestone["status"] }) {
   if (status === "completed") {
     return (
       <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">

@@ -1,5 +1,5 @@
 import type { EventEnrichment, MemoryCategory } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone as Milestone } from "@kursa/types";
 
 const THEME_KEYWORDS: Record<string, string[]> = {
   leadership: ["lead", "team", "manage", "mentor", "direct", "people"],

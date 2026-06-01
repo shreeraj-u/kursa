@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import prisma from "@kursa/db";
 import type { AdvisorContext, AdvisorPurpose, ProfileInput } from "@kursa/types";
-import type { CareerPath } from "@kursa/types";
+import type { CareerJourney } from "@kursa/types";
 
 import { computeAdvisorSignals, shouldRegeneratePaths } from "../compute/advisor.compute.js";
 import {
@@ -89,16 +89,16 @@ export async function assembleAdvisorContext(
   };
 
   const activePathRow = profile.careerPaths[0];
-  const activePath: CareerPath | null = activePathRow
+  const activePath: CareerJourney | null = activePathRow
     ? {
         id: activePathRow.id,
+        profileId: activePathRow.profileId,
         title: activePathRow.title,
         description: activePathRow.description,
         confidenceScore: activePathRow.confidenceScore,
         projectedTimelineMonths: activePathRow.projectedTimelineMonths,
-        milestones: activePathRow.milestones as unknown as CareerPath["milestones"],
-        details: activePathRow.details as unknown as CareerPath["details"],
-        isActive: activePathRow.isActive,
+        milestones: activePathRow.milestones as unknown as CareerJourney["milestones"],
+        details: activePathRow.details as unknown as CareerJourney["details"],
       }
     : null;
 

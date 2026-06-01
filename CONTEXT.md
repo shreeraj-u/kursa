@@ -32,7 +32,7 @@ remove it — each as an individual change, not a bulk rewrite. Skills are group
 category; recency (`lastUsedDate`) is shown read-only where present (no manual
 editing — it is populated by later phases). The same surface also manages the user's
 **learning goals** (the "being built" set). Distinct from **skill-gap analysis**,
-which compares the inventory against the [[Active Path]] and is a separate surface
+which compares the inventory against the [[Career Journey]] and is a separate surface
 owned elsewhere.
 
 ### Dormant skill
@@ -40,41 +40,35 @@ A [[Skill]] not used recently — `lastUsedDate` older than ~6 months, especiall
 confidence is high (≥4). Surfaced as faded in the [[Skill inventory]] and as a
 dashboard observation, prompting the user to refresh or re-apply it.
 
-### Career Path
+### Career Journey
 An AI-generated projection of a realistic professional trajectory for a user,
-derived from their Profile. A user has several at once (typically 3). Each Career
-Path has a title, description, confidence score (0–1, how achievable given the
-current Profile), projected timeline, and an ordered list of **Milestones**.
-
-Career Paths are **disposable**: regeneration freely replaces a user's existing
-paths with a fresh set. They are AI output, not durable user records. The only
-user state attached to a path is **activation** (see Active Path).
+derived from their Profile. A user has a **single** Career Journey: the one
+best-fit trajectory the AI commits to (no alternatives to choose between). Each
+Career Journey has a title, description, confidence score (0–1, how achievable
+given the current Profile), projected timeline, and an ordered list of
+**Milestones**. Downstream features (skill gaps, job matching, resume) align to
+the Career Journey.
 
 ### Milestone
-An ordered step within a Career Path: title, description, estimated months from
+An ordered step within a Career Journey: title, description, estimated months from
 now, salary band, and the skills it requires. A Milestone carries a **status**
 (`not_started` / `in_progress` / `completed`) that is set by the AI from journal
 evidence **or** by the user as a manual override — user-set status always takes
 precedence and is never overridden by AI enrichment. Manual status is lost when
-the user regenerates their paths (they are warned before proceeding).
-
-### Active Path
-The single Career Path a user has chosen as their primary focus. Activation is the
-only piece of user state on a path. Downstream features (skill gaps, job matching,
-resume) are intended to align to the Active Path. At most one path is active at a
-time.
+the user regenerates their journey (they are warned before proceeding).
 
 ### Regeneration
-Replacing a user's current set of Career Paths with a freshly generated set.
-Triggered explicitly by the user ("regenerate paths") and, in later phases,
-automatically when the Profile changes significantly. Because paths are disposable,
-regeneration does not preserve milestone status and **clears activation** — the new
-path set comes back with nothing active, and the user re-selects their Active Path.
+Generating a fresh Career Journey to replace the user's current one. Triggered
+explicitly by the user ("regenerate journey") and, in later phases, automatically
+when the Profile changes significantly. Regeneration does not preserve milestone
+status. Separately, the journey **auto-extends**: when the user marks **every**
+milestone as `completed`, the AI appends new milestones that continue the journey
+beyond the completed ones — extending rather than replacing it.
 
 ### Résumé
 A generated document that starts as a live output of the system's knowledge of the
 user. AI generation is derived from the Profile and shaped toward the user's
-Active Path / target role. Its section order is **seniority-aware**: the engine
+Career Journey / target role. Its section order is **seniority-aware**: the engine
 chooses the order from the Profile (new grads lead with education and projects and
 omit the summary; experienced users lead with summary and experience). The Profile's
 **Achievements** surface here as the **Others** section — a compact block grouping

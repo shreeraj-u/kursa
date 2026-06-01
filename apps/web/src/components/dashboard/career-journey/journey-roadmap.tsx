@@ -1,8 +1,8 @@
-import type { CareerPath, MilestoneStatus } from "@kursa/types";
+import type { CareerJourney, MilestoneStatus } from "@kursa/types";
 import MilestoneNode from "./milestone-node";
 
-interface PathRoadmapProps {
-  path: CareerPath;
+interface JourneyRoadmapProps {
+  journey: CareerJourney;
   selectedMilestoneOrder: number | null;
   onSelectMilestone: (order: number) => void;
   onMilestoneStatusChange?: (order: number, status: MilestoneStatus | null) => void;
@@ -40,19 +40,19 @@ const STATUS_ACTIONS: { status: MilestoneStatus; label: string }[] = [
 ];
 
 function MilestoneInspector({
-  path,
+  journey,
   order,
   onStatusChange,
   updating,
 }: {
-  path: CareerPath;
+  journey: CareerJourney;
   order: number | null;
   onStatusChange?: (order: number, status: MilestoneStatus | null) => void;
   updating?: boolean;
 }) {
   const milestone =
-    path.milestones.find((m) => m.order === order) ??
-    path.milestones[0] ??
+    journey.milestones.find((m) => m.order === order) ??
+    journey.milestones[0] ??
     null;
   if (!milestone) return null;
 
@@ -147,42 +147,42 @@ function estimatedDate(monthsFromNow: number): string {
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-export default function PathRoadmap({
-  path,
+export default function JourneyRoadmap({
+  journey,
   selectedMilestoneOrder,
   onSelectMilestone,
   onMilestoneStatusChange,
   updatingMilestoneOrder,
-}: PathRoadmapProps) {
+}: JourneyRoadmapProps) {
   return (
     <div className="grid grid-cols-[1fr_280px] gap-4 max-xl:grid-cols-1">
       <div className="rounded-lg p-4 border border-line bg-surface">
         <div className="flex justify-between items-center mb-6">
           <div className="mono text-2xs text-mute-2 uppercase tracking-mono">
-            career path · {path.title}
+            career journey · {journey.title}
           </div>
           <div className="mono text-2xs text-mute-3">
-            {path.projectedTimelineMonths} months ·{" "}
-            {Math.round(path.confidenceScore * 100)}% confidence
+            {journey.projectedTimelineMonths} months ·{" "}
+            {Math.round(journey.confidenceScore * 100)}% confidence
           </div>
         </div>
 
         <div className="pl-1">
           <YouAreHereNode />
-          {path.milestones.map((m, i) => (
+          {journey.milestones.map((m, i) => (
             <MilestoneNode
               key={m.order}
               milestone={m}
-              isLast={i === path.milestones.length - 1}
+              isLast={i === journey.milestones.length - 1}
               isSelected={selectedMilestoneOrder === m.order}
               onSelect={() => onSelectMilestone(m.order)}
             />
           ))}
-          <TargetNode title={path.title} />
+          <TargetNode title={journey.title} />
         </div>
       </div>
       <MilestoneInspector
-        path={path}
+        journey={journey}
         order={selectedMilestoneOrder}
         onStatusChange={onMilestoneStatusChange}
         updating={updatingMilestoneOrder !== null && updatingMilestoneOrder !== undefined}

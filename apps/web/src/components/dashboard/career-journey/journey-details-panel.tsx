@@ -1,23 +1,19 @@
 import type { ReactNode } from "react";
-import type { CareerPath, CareerPathDetails } from "@kursa/types";
-import { Button } from "@kursa/ui/components/button";
+import type { CareerJourney, CareerJourneyDetails } from "@kursa/types";
 
-interface PathDetailsPanelProps {
-  path: CareerPath;
-  isActive: boolean;
-  activating: boolean;
-  onActivate: () => void;
+interface JourneyDetailsPanelProps {
+  journey: CareerJourney;
 }
 
-function detailsFor(path: CareerPath): CareerPathDetails {
+function detailsFor(journey: CareerJourney): CareerJourneyDetails {
   return {
-    fitReasons: path.details?.fitReasons?.length
-      ? path.details.fitReasons
-      : [path.description],
-    skillGaps: path.details?.skillGaps ?? [],
-    nextActions: path.details?.nextActions ?? [],
-    risks: path.details?.risks ?? [],
-    evidence: path.details?.evidence ?? [],
+    fitReasons: journey.details?.fitReasons?.length
+      ? journey.details.fitReasons
+      : [journey.description],
+    skillGaps: journey.details?.skillGaps ?? [],
+    nextActions: journey.details?.nextActions ?? [],
+    risks: journey.details?.risks ?? [],
+    evidence: journey.details?.evidence ?? [],
   };
 }
 
@@ -36,17 +32,12 @@ function EmptyLine({ children }: { children: ReactNode }) {
   return <div className="mono text-2xs text-mute-3">{children}</div>;
 }
 
-export default function PathDetailsPanel({
-  path,
-  isActive,
-  activating,
-  onActivate,
-}: PathDetailsPanelProps) {
-  const details = detailsFor(path);
+export default function JourneyDetailsPanel({ journey }: JourneyDetailsPanelProps) {
+  const details = detailsFor(journey);
 
   return (
     <div className="grid grid-cols-[1.15fr_0.85fr] gap-4 max-xl:grid-cols-1">
-      <Section title="why this path fits">
+      <Section title="why this journey fits">
         <div className="flex flex-col gap-2">
           {details.fitReasons.map((reason) => (
             <div
@@ -56,29 +47,6 @@ export default function PathDetailsPanel({
               {reason}
             </div>
           ))}
-        </div>
-      </Section>
-
-      <Section title="focus state">
-        <div className="flex flex-col gap-3">
-          <div className="text-xs text-mute-2">
-            {isActive
-              ? "This is your active path. Downstream resume and skill-gap features can align to it."
-              : "Previewing only. Set it active when you want Kursa to use it as your primary focus."}
-          </div>
-          <Button
-            onClick={onActivate}
-            disabled={isActive || activating}
-            variant="outline"
-            size="sm"
-            className="mono text-ink border-line rounded-sm bg-bg hover:bg-bg-sub-2 self-start"
-          >
-            {isActive
-              ? "active path"
-              : activating
-                ? "setting active…"
-                : "set active path"}
-          </Button>
         </div>
       </Section>
 
@@ -100,7 +68,7 @@ export default function PathDetailsPanel({
               </div>
             ))
           ) : (
-            <EmptyLine>No explicit gaps generated for this path.</EmptyLine>
+            <EmptyLine>No explicit gaps generated for this journey.</EmptyLine>
           )}
         </div>
       </Section>
@@ -121,7 +89,7 @@ export default function PathDetailsPanel({
               </div>
             ))
           ) : (
-            <EmptyLine>Regenerate paths to get recommended next actions.</EmptyLine>
+            <EmptyLine>Regenerate your journey to get recommended next actions.</EmptyLine>
           )}
         </div>
       </Section>
@@ -139,7 +107,7 @@ export default function PathDetailsPanel({
               </div>
             ))
           ) : (
-            <EmptyLine>No major risks generated for this path.</EmptyLine>
+            <EmptyLine>No major risks generated for this journey.</EmptyLine>
           )}
         </div>
       </Section>
@@ -156,7 +124,7 @@ export default function PathDetailsPanel({
               </div>
             ))
           ) : (
-            <EmptyLine>No profile evidence included on older generated paths.</EmptyLine>
+            <EmptyLine>No profile evidence included on this generated journey.</EmptyLine>
           )}
         </div>
       </Section>

@@ -9,7 +9,7 @@ export * from './models/job';
 export * from './api/dashboard';
 export * from './api/common';
 export * from './api/insights';
-export * from './api/paths';
+export * from './api/journey';
 export * from './api/events';
 export * from './api/memory';
 export * from './api/intelligence';

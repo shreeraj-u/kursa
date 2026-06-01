@@ -5,14 +5,14 @@ import type {
   ProfileInput,
   UserMemorySummary,
 } from "@kursa/types";
-import type { CareerPathDetails, Milestone } from "@kursa/types";
+import type { CareerJourneyDetails, JourneyMilestone } from "@kursa/types";
 
 import { computeProfileSignals } from "./insight.compute.js";
 
 type ActivePath = {
   title: string;
-  milestones: Milestone[];
-  details?: CareerPathDetails | null;
+  milestones: JourneyMilestone[];
+  details?: CareerJourneyDetails | null;
 } | null;
 
 export function computeAdvisorSignals(
