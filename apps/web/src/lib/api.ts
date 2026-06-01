@@ -123,6 +123,12 @@ export const api = {
       request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
         method: "PUT",
       }),
+
+    updateMilestone: (pathId: string, order: number, status: import("@kursa/types").MilestoneStatus | null) =>
+      request<{ path: CareerPath }>(`/api/v1/profile/me/paths/${pathId}/milestones/${order}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
   },
 
   resume: {
@@ -318,6 +324,28 @@ export const api = {
       request<{ message: string; conversationId: string }>(`/api/v1/chat/${conversationId}/messages`, {
         method: "POST",
         body: JSON.stringify({ content }),
+      }),
+  },
+
+  applications: {
+    list: () =>
+      request<import("@kursa/types").ApplicationListResponse>("/api/v1/profile/me/applications"),
+
+    create: (body: import("@kursa/types").ApplicationCreateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>("/api/v1/profile/me/applications", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: import("@kursa/types").ApplicationUpdateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "DELETE",
       }),
   },
 

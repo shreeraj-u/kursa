@@ -1,7 +1,7 @@
-// Career Path Intelligence (Phase 2) — shapes crossing the server/web boundary.
+// Career Path Intelligence — shapes crossing the server/web boundary.
 // A CareerPath is disposable AI output: regeneration replaces the user's set.
 // The only user state on a path is `isActive`. Milestone `status` is AI-inferred
-// at generation time, not user-edited (manual tracking is a later phase).
+// at generation time but can also be set manually by the user (user wins).
 
 export type MilestoneStatus = "not_started" | "in_progress" | "completed";
 
@@ -41,6 +41,7 @@ export interface Milestone {
   salaryBand: { min: number; max: number; currency: "USD" };
   requiredSkills: string[];
   status: MilestoneStatus;
+  manuallySet?: boolean;
 }
 
 export interface CareerPath {

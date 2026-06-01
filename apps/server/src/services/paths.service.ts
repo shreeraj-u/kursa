@@ -1,5 +1,5 @@
 import prisma, { Prisma } from "@kursa/db";
-import type { CareerPath, Milestone } from "@kursa/types";
+import type { CareerPath, Milestone, MilestoneStatus } from "@kursa/types";
 
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import {
@@ -150,6 +150,40 @@ export async function activatePath(
   });
 
   return rows.map(toCareerPath);
+}
+
+export async function updateMilestoneStatus(
+  userId: string,
+  pathId: string,
+  milestoneOrder: number,
+  status: MilestoneStatus | null,
+): Promise<CareerPath | null> {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!profile) return null;
+
+  const path = await prisma.careerPath.findFirst({
+    where: { id: pathId, profileId: profile.id },
+  });
+  if (!path) return null;
+
+  const milestones = (path.milestones as unknown as Milestone[]).map((m) => {
+    if (m.order !== milestoneOrder) return m;
+    if (status === null) {
+      const { manuallySet: _, ...rest } = m;
+      return { ...rest, manuallySet: false };
+    }
+    return { ...m, status, manuallySet: true };
+  });
+
+  const updated = await prisma.careerPath.update({
+    where: { id: pathId },
+    data: { milestones: milestones as unknown as Prisma.InputJsonValue },
+  });
+
+  return toCareerPath(updated);
 }
 
 // --- helpers ---

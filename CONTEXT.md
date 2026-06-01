@@ -53,9 +53,10 @@ user state attached to a path is **activation** (see Active Path).
 ### Milestone
 An ordered step within a Career Path: title, description, estimated months from
 now, salary band, and the skills it requires. A Milestone carries a **status**
-(`not_started` / `in_progress` / `completed`) that is **inferred by the AI at
-generation time** from the Profile — it is NOT user-edited in Phase 2. Manual
-milestone progress tracking is deferred to a later phase.
+(`not_started` / `in_progress` / `completed`) that is set by the AI from journal
+evidence **or** by the user as a manual override — user-set status always takes
+precedence and is never overridden by AI enrichment. Manual status is lost when
+the user regenerates their paths (they are warned before proceeding).
 
 ### Active Path
 The single Career Path a user has chosen as their primary focus. Activation is the

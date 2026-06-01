@@ -17,3 +17,4 @@ export * from './api/resume';
 export * from './api/onboarding';
 export * from './api/skills';
 export * from './api/github';
+export * from './api/applications';

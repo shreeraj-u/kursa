@@ -1,10 +1,12 @@
-import type { CareerPath } from "@kursa/types";
+import type { CareerPath, MilestoneStatus } from "@kursa/types";
 import MilestoneNode from "./milestone-node";
 
 interface PathRoadmapProps {
   path: CareerPath;
   selectedMilestoneOrder: number | null;
   onSelectMilestone: (order: number) => void;
+  onMilestoneStatusChange?: (order: number, status: MilestoneStatus | null) => void;
+  updatingMilestoneOrder?: number | null;
 }
 
 function YouAreHereNode() {
@@ -32,12 +34,21 @@ function TargetNode({ title }: { title: string }) {
   );
 }
 
+const STATUS_ACTIONS: { status: MilestoneStatus; label: string }[] = [
+  { status: "in_progress", label: "in progress" },
+  { status: "completed", label: "complete" },
+];
+
 function MilestoneInspector({
   path,
   order,
+  onStatusChange,
+  updating,
 }: {
   path: CareerPath;
   order: number | null;
+  onStatusChange?: (order: number, status: MilestoneStatus | null) => void;
+  updating?: boolean;
 }) {
   const milestone =
     path.milestones.find((m) => m.order === order) ??
@@ -55,8 +66,11 @@ function MilestoneInspector({
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="rounded-md border border-line bg-bg-sub-2 p-2">
           <div className="mono text-2xs text-mute-3">status</div>
-          <div className="mono text-2xs text-ink">
+          <div className="mono text-2xs text-ink flex items-center gap-1">
             {milestone.status.replace("_", " ")}
+            {milestone.manuallySet && (
+              <span className="mono text-2xs text-mute-3">· you</span>
+            )}
           </div>
         </div>
         <div className="rounded-md border border-line bg-bg-sub-2 p-2">
@@ -66,6 +80,43 @@ function MilestoneInspector({
           </div>
         </div>
       </div>
+
+      {onStatusChange && (
+        <div className="flex items-center gap-1.5 mb-3">
+          {STATUS_ACTIONS.map(({ status, label }) => (
+            <button
+              key={status}
+              type="button"
+              disabled={updating || milestone.status === status}
+              onClick={() => onStatusChange(milestone.order, status)}
+              className={`mono text-2xs py-[3px] px-2.5 rounded-[5px] border border-line-2 transition-all ${
+                milestone.status === status
+                  ? "bg-accent text-white"
+                  : "bg-bg-sub-2 text-mute"
+              } ${
+                milestone.status === status || updating
+                  ? "cursor-default"
+                  : "cursor-pointer"
+              } ${updating ? "opacity-60" : "opacity-100"}`}
+            >
+              {label}
+            </button>
+          ))}
+          {milestone.manuallySet && (
+            <button
+              type="button"
+              disabled={updating}
+              onClick={() => onStatusChange(milestone.order, null)}
+              className={`mono text-2xs py-[3px] px-2.5 rounded-[5px] border border-line bg-transparent text-mute-3 transition-opacity ${
+                updating ? "cursor-default opacity-60" : "cursor-pointer opacity-100"
+              }`}
+            >
+              reset
+            </button>
+          )}
+        </div>
+      )}
+
       {milestone.salaryBand.max > 0 && (
         <div className="mono text-2xs text-mute-2 mb-3">
           salary estimate · ${(milestone.salaryBand.min / 1000).toFixed(0)}k–
@@ -100,6 +151,8 @@ export default function PathRoadmap({
   path,
   selectedMilestoneOrder,
   onSelectMilestone,
+  onMilestoneStatusChange,
+  updatingMilestoneOrder,
 }: PathRoadmapProps) {
   return (
     <div className="grid grid-cols-[1fr_280px] gap-4 max-xl:grid-cols-1">
@@ -128,7 +181,12 @@ export default function PathRoadmap({
           <TargetNode title={path.title} />
         </div>
       </div>
-      <MilestoneInspector path={path} order={selectedMilestoneOrder} />
+      <MilestoneInspector
+        path={path}
+        order={selectedMilestoneOrder}
+        onStatusChange={onMilestoneStatusChange}
+        updating={updatingMilestoneOrder !== null && updatingMilestoneOrder !== undefined}
+      />
     </div>
   );
 }

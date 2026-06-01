@@ -45,6 +45,8 @@ export async function updateMilestonesFromEnrichment(
     const count = evidenceCounts.get(m.order) ?? 0;
     let status: MilestoneStatus = m.status;
 
+    if (m.manuallySet) return m;
+
     if (count >= EVIDENCE_TO_COMPLETE) {
       status = "completed";
     } else if (count >= EVIDENCE_TO_IN_PROGRESS && status === "not_started") {

@@ -13,6 +13,7 @@ import {
     FileText,
     Bookmark,
     BookOpen,
+    Briefcase,
     Pencil,
     Settings,
     ChevronRight,
@@ -40,6 +41,7 @@ const JOB_SEARCH_NAV: Array<{ href: Route; label: string; Icon: React.ElementTyp
     { href: "/dashboard/roadmap" as Route, label: "Roadmap", Icon: RouteIcon, key: "roadmap" },
     { href: "/dashboard/resume" as Route, label: "Resume studio", Icon: FileText, key: "resume" },
     { href: "/dashboard/shortlist" as Route, label: "Shortlist", Icon: Bookmark, key: "shortlist" },
+    { href: "/dashboard/applications" as Route, label: "Applications", Icon: Briefcase, key: "applications" },
     { href: "/dashboard/journal" as Route, label: "Journal", Icon: BookOpen, key: "journal" },
 ];
 
@@ -238,7 +240,7 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                             Icon={Icon}
                             isActive={isActive(href)}
                             badge={
-                                key === "shortlist" &&
+                                key === "applications" &&
                                     applicationCount !== undefined &&
                                     applicationCount > 0 ? (
                                     <Badge>{applicationCount}</Badge>

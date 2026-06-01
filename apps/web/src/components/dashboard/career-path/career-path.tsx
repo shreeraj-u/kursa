@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CareerPath } from "@kursa/types";
+import type { CareerPath, MilestoneStatus } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
 import { Button } from "@kursa/ui/components/button";
@@ -39,6 +39,8 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
   const [optimisticActivePathId, setOptimisticActivePathId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justRegenerated, setJustRegenerated] = useState(false);
+  const [updatingMilestoneOrder, setUpdatingMilestoneOrder] = useState<number | null>(null);
+  const [showRegenWarning, setShowRegenWarning] = useState(false);
 
   const activePath = localPaths.find((p) => p.isActive);
   const [selectedPathId, setSelectedPathId] = useState<string | null>(
@@ -104,7 +106,19 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
     setSelectedMilestoneOrder(selectedPath?.milestones[0]?.order ?? null);
   }, [selectedPath?.id]);
 
-  async function generate() {
+  function requestGenerate() {
+    const hasManualMilestones = localPaths
+      .find((p) => p.isActive)
+      ?.milestones.some((m) => m.manuallySet);
+    if (hasManualMilestones) {
+      setShowRegenWarning(true);
+    } else {
+      void doGenerate();
+    }
+  }
+
+  async function doGenerate() {
+    setShowRegenWarning(false);
     setGenerating(true);
     setPendingActivePathId(null);
     setOptimisticActivePathId(null);
@@ -119,6 +133,19 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
       setError(e instanceof Error ? e.message : "Failed to generate paths");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function updateMilestone(order: number, status: MilestoneStatus | null) {
+    if (!selectedPath || updatingMilestoneOrder !== null) return;
+    setUpdatingMilestoneOrder(order);
+    try {
+      const { path } = await api.paths.updateMilestone(selectedPath.id, order, status);
+      setLocalPaths((prev) => prev.map((p) => (p.id === path.id ? path : p)));
+    } catch {
+      setError("Failed to update milestone");
+    } finally {
+      setUpdatingMilestoneOrder(null);
     }
   }
 
@@ -170,7 +197,7 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
               milestones, estimated salary, and a timeline.
             </div>
             <Button
-              onClick={generate}
+              onClick={requestGenerate}
               disabled={generating || pendingActivePathId !== null}
               variant="outline"
               size="sm"
@@ -192,7 +219,7 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
         <div className="flex items-center justify-between">
           <div className="mono text-xs text-mute">{selectedPath.title}</div>
           <Button
-            onClick={generate}
+            onClick={requestGenerate}
             disabled={generating || pendingActivePathId !== null}
             variant="outline"
             size="sm"
@@ -233,11 +260,66 @@ export default function CareerPathPage({ paths, materialChangeDetected }: Career
               path={selectedPath}
               selectedMilestoneOrder={selectedMilestoneOrder}
               onSelectMilestone={setSelectedMilestoneOrder}
+              onMilestoneStatusChange={updateMilestone}
+              updatingMilestoneOrder={updatingMilestoneOrder}
             />
           </div>
         </div>
         <PathPulsePanel />
       </div>
+
+      {showRegenWarning && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+        >
+          <div
+            className="rounded-xl p-6 max-w-sm w-full mx-4 flex flex-col gap-4"
+            style={{ background: "var(--bg)", border: "1px solid var(--line-2)" }}
+          >
+            <div className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+              Regenerate paths?
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--mute-2)" }}>
+              Regenerating will reset your milestone progress — manually set statuses on your active path will be lost.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRegenWarning(false)}
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  padding: "5px 14px",
+                  borderRadius: 6,
+                  border: "1px solid var(--line-2)",
+                  background: "transparent",
+                  color: "var(--mute)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void doGenerate()}
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  padding: "5px 14px",
+                  borderRadius: 6,
+                  border: "none",
+                  background: "var(--accent)",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
