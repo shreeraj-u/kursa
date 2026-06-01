@@ -134,7 +134,12 @@ export function SkillGap({ activePath, skills, goals, onGoalAdded }: SkillGapPro
 
   async function track(gap: CareerPathSkillGap) {
     try {
-      const { learningGoal } = await api.createLearningGoal({ skillName: gap.skill });
+      const { learningGoal } = await api.createLearningGoal({
+        skillName: gap.skill,
+        gapPriority: gap.priority,
+        pathTitle: activePath?.title,
+        whyItMatters: gap.whyItMatters,
+      });
       onGoalAdded(learningGoal);
       toast.success(`"${gap.skill}" added to learning goals`);
     } catch (err) {

@@ -1,15 +1,18 @@
 import type {
   AdvisorSignals,
   CareerEventSummary,
+  GapSignals,
   ProfileInput,
   UserMemorySummary,
 } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { CareerPathDetails, Milestone } from "@kursa/types";
 
 import { computeProfileSignals } from "./insight.compute.js";
 
 type ActivePath = {
+  title: string;
   milestones: Milestone[];
+  details?: CareerPathDetails | null;
 } | null;
 
 export function computeAdvisorSignals(
@@ -80,6 +83,8 @@ export function computeAdvisorSignals(
     .slice(0, 5)
     .map((m) => m.fact);
 
+  const gapSignals = computeGapSignals(activePath, profile);
+
   return {
     ...base,
     sentimentTrend12w,
@@ -90,6 +95,47 @@ export function computeAdvisorSignals(
     pathMilestonesTotal,
     intentionActionGap,
     recentMemoryFacts,
+    gapSignals,
+  };
+}
+
+function computeGapSignals(activePath: ActivePath, profile: ProfileInput): GapSignals {
+  const gaps = activePath?.details?.skillGaps ?? [];
+  const goalMap = new Map(
+    profile.learningGoals.map((g) => [g.skillName.toLowerCase(), g.status]),
+  );
+
+  let coveredCount = 0;
+  let inProgressCount = 0;
+  let completedCount = 0;
+  let missingCount = 0;
+  const highPriorityMissing: string[] = [];
+  let highPriorityCompletedCount = 0;
+
+  for (const gap of gaps) {
+    const needle = gap.skill.toLowerCase();
+    const goalStatus = goalMap.get(needle);
+
+    if (goalStatus === "COMPLETED") {
+      completedCount++;
+      if (gap.priority === "high") highPriorityCompletedCount++;
+    } else if (goalStatus === "PLANNED" || goalStatus === "LEARNING") {
+      inProgressCount++;
+    } else {
+      missingCount++;
+      if (gap.priority === "high") highPriorityMissing.push(gap.skill);
+    }
+  }
+
+  return {
+    activePathTitle: activePath?.title ?? null,
+    totalGaps: gaps.length,
+    coveredCount,
+    inProgressCount,
+    completedCount,
+    missingCount,
+    highPriorityMissing,
+    highPriorityCompletedCount,
   };
 }
 
@@ -184,6 +230,7 @@ export function shouldRegeneratePaths(signals: AdvisorSignals): boolean {
   if (signals.winsThisQuarter >= 3) return true;
   if (signals.sentimentTrend12w !== null && signals.sentimentTrend12w < -0.3) return true;
   if (signals.intentionActionGap) return true;
+  if (signals.gapSignals.highPriorityCompletedCount > 0) return true;
   return false;
 }
 

@@ -32,6 +32,17 @@ export interface ProfileUpdateDelta {
   newLearningGoals?: NewLearningGoalDelta[];
 }
 
+export interface GapSignals {
+  activePathTitle: string | null;
+  totalGaps: number;
+  coveredCount: number;
+  inProgressCount: number;
+  completedCount: number;
+  missingCount: number;
+  highPriorityMissing: string[];
+  highPriorityCompletedCount: number;
+}
+
 export interface AdvisorSignals extends ProfileSignals {
   sentimentTrend12w: number | null;
   checkInStreak: number;
@@ -41,6 +52,7 @@ export interface AdvisorSignals extends ProfileSignals {
   pathMilestonesTotal: number;
   intentionActionGap: boolean;
   recentMemoryFacts: string[];
+  gapSignals: GapSignals;
 }
 
 export type AdvisorPurpose = "observations" | "paths" | "journal" | "chat";
