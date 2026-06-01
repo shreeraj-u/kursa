@@ -329,4 +329,14 @@ export const api = {
       ),
     status: () => request<{ url: string | null; configured: boolean }>("/api/v1/linkedin/status"),
   },
+
+  github: {
+    repos: () =>
+      request<import("@kursa/types").GitHubSyncPreviewResponse>("/api/v1/github/repos"),
+    sync: (body: import("@kursa/types").GitHubSyncConfirmRequest) =>
+      request<{ imported: number; merged: number }>("/api/v1/github/sync", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  },
 };

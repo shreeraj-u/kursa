@@ -10,6 +10,7 @@ enum CareerEventType {
   profile_import
   onboarding_complete
   application_update
+  github_sync
   system
 }
 
@@ -24,6 +25,7 @@ enum SkillSource {
   resume
   inferred_checkin
   inferred_journal
+  github_import
 }
 
 model CareerEvent {

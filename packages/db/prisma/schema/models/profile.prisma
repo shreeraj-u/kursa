@@ -267,6 +267,7 @@ model SocialLink {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([profileId, platform])
   @@index([profileId])
   @@map("social_link")
 }

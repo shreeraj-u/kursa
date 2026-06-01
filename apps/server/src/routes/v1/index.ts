@@ -7,6 +7,7 @@ import memoryRouter from "./memory.js";
 import profileRouter from "./profile.js";
 import chatRouter from "./chat.js";
 import linkedinRouter from "./linkedin.js";
+import githubRouter from "./github.js";
 
 const v1Router: Router = Router();
 
@@ -17,5 +18,6 @@ v1Router.use("/checkins", checkinsRouter);
 v1Router.use("/memory", memoryRouter);
 v1Router.use("/chat", chatRouter);
 v1Router.use("/linkedin", linkedinRouter);
+v1Router.use("/github", githubRouter);
 
 export default v1Router;
