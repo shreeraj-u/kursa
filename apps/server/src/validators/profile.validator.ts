@@ -137,6 +137,9 @@ export const learningGoalCreateSchema = z.object({
   targetProficiency: skillProficiencySchema.nullish(),
   deadline: z.string().nullish(),
   status: learningGoalStatusSchema.optional(),
+  gapPriority: z.string().optional(),
+  pathTitle: z.string().optional(),
+  whyItMatters: z.string().optional(),
 });
 
 export const learningGoalUpdateSchema = z

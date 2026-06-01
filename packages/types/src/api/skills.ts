@@ -44,6 +44,10 @@ export interface LearningGoalCreateInput {
   targetProficiency?: SkillProficiencyValue | null;
   deadline?: string | null;
   status?: LearningGoalStatusValue;
+  // Optional gap metadata — when tracking from the skill-gap panel
+  gapPriority?: string;
+  pathTitle?: string;
+  whyItMatters?: string;
 }
 
 export interface LearningGoalUpdateInput {

@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { UserSkill, UserLearningGoal } from "@kursa/types";
+import type { CareerPath, UserSkill, UserLearningGoal } from "@kursa/types";
 
 import { SkillInventory } from "./skill-inventory";
 import { LearningGoals } from "./learning-goals";
+import { SkillGap } from "./skill-gap";
 
 interface SkillsStudioProps {
   initialSkills: UserSkill[];
   initialGoals: UserLearningGoal[];
+  activePath: CareerPath | null;
 }
 
-export function SkillsStudio({ initialSkills, initialGoals }: SkillsStudioProps) {
+export function SkillsStudio({ initialSkills, initialGoals, activePath }: SkillsStudioProps) {
   const [skills, setSkills] = useState<UserSkill[]>(initialSkills);
   const [goals, setGoals] = useState<UserLearningGoal[]>(initialGoals);
 
@@ -31,15 +33,13 @@ export function SkillsStudio({ initialSkills, initialGoals }: SkillsStudioProps)
           <LearningGoals goals={goals} onChange={setGoals} />
         </div>
 
-        {/* Right: reserved slot for the skill-gap analysis (gap.tsx) */}
-        <div className="min-h-[160px] rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] p-4">
-          <div className="mb-1 text-sm font-semibold text-[var(--ink)]">
-            Gap to chosen path
-          </div>
-          <p className="text-sm text-[var(--mute)]">
-            Skill-gap analysis against your active career path appears here.
-          </p>
-        </div>
+        {/* Right: skill-gap analysis against active career path */}
+        <SkillGap
+          activePath={activePath}
+          skills={skills}
+          goals={goals}
+          onGoalAdded={(goal) => setGoals((prev) => [...prev, goal])}
+        />
       </div>
     </div>
   );

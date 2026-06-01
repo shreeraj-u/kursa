@@ -97,6 +97,7 @@ export async function assembleAdvisorContext(
         confidenceScore: activePathRow.confidenceScore,
         projectedTimelineMonths: activePathRow.projectedTimelineMonths,
         milestones: activePathRow.milestones as unknown as CareerPath["milestones"],
+        details: activePathRow.details as unknown as CareerPath["details"],
         isActive: activePathRow.isActive,
       }
     : null;

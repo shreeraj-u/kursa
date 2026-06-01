@@ -6,6 +6,7 @@ import { Errors } from "../errors/http-error.js";
 import { ok, created } from "../lib/respond.js";
 import * as profileService from "../services/profile.service.js";
 import * as insightsService from "../services/insights.service.js";
+import { ingestEvent } from "../services/career-event-intelligence/index.js";
 import {
   profileUpdateSchema,
   socialLinkCreateSchema,
@@ -137,6 +138,25 @@ export async function deleteSkill(req: Request, res: Response): Promise<void> {
 export async function createLearningGoal(req: Request, res: Response): Promise<void> {
   const data = parseOrThrow(learningGoalCreateSchema, req.body);
   const learningGoal = await profileService.createLearningGoal(req.user!.id, data);
+
+  if (data.gapPriority) {
+    ingestEvent(req.user!.id, {
+      type: "learning",
+      source: "user",
+      body: `Identified skill gap: ${data.skillName} (${data.gapPriority} priority${data.pathTitle ? ` for ${data.pathTitle}` : ""})`,
+      structured: {
+        skillName: data.skillName,
+        gapPriority: data.gapPriority,
+        pathTitle: data.pathTitle,
+        whyItMatters: data.whyItMatters,
+        context: "gap_tracking",
+      },
+      skipDelta: true,
+    }).catch((err: unknown) => {
+      console.warn("[gap_tracking] ingestEvent failed silently:", err);
+    });
+  }
+
   created(res, { learningGoal });
 }
 
