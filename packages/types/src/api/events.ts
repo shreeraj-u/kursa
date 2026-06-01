@@ -12,6 +12,7 @@ export type CareerEventType =
   | "profile_import"
   | "onboarding_complete"
   | "application_update"
+  | "github_sync"
   | "system";
 
 export type CareerEventSource = "user" | "aria" | "system";

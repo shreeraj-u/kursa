@@ -10,6 +10,7 @@ import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 import type { UserSocialLink } from "@/types/profile";
 import { SectionHeader } from "./settings-ui";
+import GitHubImportSection from "./github-import-section";
 
 const PLATFORMS = [
   { key: "github", label: "GitHub", Icon: GitHubLogoIcon },
@@ -158,6 +159,8 @@ export default function ConnectionsSection({
           />
         ))}
       </div>
+
+      <GitHubImportSection />
     </div>
   );
 }
