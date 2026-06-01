@@ -15,3 +15,4 @@ export * from './api/memory';
 export * from './api/intelligence';
 export * from './api/resume';
 export * from './api/onboarding';
+export * from './api/skills';

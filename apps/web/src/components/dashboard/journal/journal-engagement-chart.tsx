@@ -3,11 +3,12 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
 
-import type { TrendPoint } from "./journal-utils";
-import { computeTrendLabel } from "./journal-utils";
+import type { TrendPoint } from "@/lib/dashboard/journal/journal-utils";
+import { computeTrendLabel } from "@/lib/dashboard/journal/journal-utils";
 
 type Props = {
   data: TrendPoint[];
+  trendLabel?: string;
   height?: number;
   showLabel?: boolean;
   compact?: boolean;
@@ -16,6 +17,7 @@ type Props = {
 
 export function JournalEngagementChart({
   data,
+  trendLabel: passedTrendLabel,
   height = 60,
   showLabel = true,
   compact = false,
@@ -24,7 +26,7 @@ export function JournalEngagementChart({
   const reduced = useReducedMotion();
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
-  const { path, dots, width, trendLabel } = useMemo(() => {
+  const { path, dots, width, trendLabel: calculatedLabel } = useMemo(() => {
     const w = 480;
     const h = height;
     const pad = 8;
@@ -51,6 +53,8 @@ export function JournalEngagementChart({
       trendLabel: computeTrendLabel(data),
     };
   }, [data, height]);
+
+  const trendLabel = passedTrendLabel ?? calculatedLabel;
 
   if (data.length === 0) {
     return (

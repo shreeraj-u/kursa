@@ -115,6 +115,15 @@ export async function enrichEventAsync(
     },
   });
 
+  await applyEnrichmentSideEffects(userId, eventId, ctx.activePathId, enrichment);
+}
+
+async function applyEnrichmentSideEffects(
+  userId: string,
+  eventId: string,
+  activePathId: string | null,
+  enrichment: EventEnrichment,
+): Promise<void> {
   if (enrichment.memoryCandidates?.length) {
     await mergeMemoryCandidates(
       userId,
@@ -127,8 +136,8 @@ export async function enrichEventAsync(
     );
   }
 
-  if (ctx.activePathId && enrichment.linkedMilestoneOrders.length > 0) {
-    await updateMilestonesFromEnrichment(userId, ctx.activePathId, enrichment);
+  if (activePathId && enrichment.linkedMilestoneOrders.length > 0) {
+    await updateMilestonesFromEnrichment(userId, activePathId, enrichment);
   }
 }
 

@@ -13,7 +13,7 @@ import type {
 
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { computeJournalActivityScore } from "../compute/advisor.compute.js";
-import { eventToTag, ingestEvent, listEvents } from "./events.service.js";
+import { eventToTag, ingestEvent, listEvents } from "./career-event-intelligence/index.js";
 import { getMilestoneEvidenceForUser } from "./milestone.service.js";
 
 export async function getTimeline(
@@ -239,6 +239,16 @@ export async function getSentimentTrend(userId: string): Promise<SentimentTrendP
   return getCompositeEngagementTrend(userId);
 }
 
+export function computeTrendLabel(points: SentimentTrendPoint[]): string {
+  if (points.length < 4) return "building baseline";
+  const first = points.slice(0, 4).reduce((s, p) => s + p.value, 0) / 4;
+  const last = points.slice(-4).reduce((s, p) => s + p.value, 0) / 4;
+  const delta = last - first;
+  if (delta > 0.08) return "quiet uptick";
+  if (delta < -0.08) return "slipping";
+  return "holding steady";
+}
+
 export async function getRelevance(userId: string): Promise<RelevanceSummary | null> {
   try {
     const context = await assembleAdvisorContext(userId, "journal");
@@ -266,6 +276,7 @@ export async function getRelevance(userId: string): Promise<RelevanceSummary | n
       staleSkills: signals.dormantHighValueSkills.slice(0, 5),
       winsThisQuarter: signals.winsThisQuarter,
       engagementTrend,
+      engagementTrendLabel: computeTrendLabel(engagementTrend),
       intentionActionGap: signals.intentionActionGap,
       recentMemoryFacts: signals.recentMemoryFacts,
       materialChangeDetected: context.materialChangeDetected,

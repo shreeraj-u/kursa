@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  skillCategorySchema,
+  skillProficiencySchema,
+  learningGoalStatusSchema,
+} from "@kursa/types";
 
 // ── Sub-schemas ───────────────────────────────────────────────────────────────
 
@@ -106,5 +111,41 @@ export const socialLinkCreateSchema = z.object({
 export const socialLinkUpdateSchema = z.object({
   url: z.string().url().max(500),
 });
+
+// ── Skill inventory schemas ───────────────────────────────────────────────────
+
+export const skillCreateSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  category: skillCategorySchema,
+  confidenceRating: z.number().int().min(1).max(5),
+  proficiencyLevel: skillProficiencySchema.nullish(),
+});
+
+export const skillUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    category: skillCategorySchema,
+    confidenceRating: z.number().int().min(1).max(5),
+    proficiencyLevel: skillProficiencySchema.nullable(),
+  })
+  .partial();
+
+// ── Learning goal schemas ─────────────────────────────────────────────────────
+
+export const learningGoalCreateSchema = z.object({
+  skillName: z.string().trim().min(1).max(100),
+  targetProficiency: skillProficiencySchema.nullish(),
+  deadline: z.string().nullish(),
+  status: learningGoalStatusSchema.optional(),
+});
+
+export const learningGoalUpdateSchema = z
+  .object({
+    skillName: z.string().trim().min(1).max(100),
+    targetProficiency: skillProficiencySchema.nullable(),
+    deadline: z.string().nullable(),
+    status: learningGoalStatusSchema,
+  })
+  .partial();
 
 // Type inference moved to @kursa/types

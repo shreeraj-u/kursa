@@ -1,7 +1,7 @@
 import prisma from "@kursa/db";
 import type { CheckInNextResponse, SubmitCheckInInput } from "@kursa/types";
 
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const WEEKLY_QUESTIONS: CheckInNextResponse["questions"] = [
   { id: "energyFocus", label: "What took most of your energy this week?", kind: "text" },

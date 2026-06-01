@@ -7,7 +7,7 @@ import {
   type JournalContext,
   type TimelineEntry,
   type TimelineFilter,
-} from "./journal-utils";
+} from "@/lib/dashboard/journal/journal-utils";
 
 type Props = {
   entries: TimelineEntry[];

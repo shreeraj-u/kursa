@@ -9,19 +9,18 @@ import { toast } from "sonner";
 import PageHeader from "@/components/dashboard/page-header";
 import { api } from "@/lib/api";
 
-import { JournalCompose } from "./journal-compose";
+import { JournalCompose, type JournalComposeData } from "./journal-compose";
 import { JournalTimelineTab } from "./journal-log";
 import { JournalReviewTab } from "./journal-review";
 import { JournalSidebar } from "./journal-sidebar";
 import type { ProactiveNudge, RelevanceSummary } from "@kursa/types";
 
 import type {
-  ComposeType,
   JournalContext,
   JournalTab,
   TimelineEntry,
   TimelineFilter,
-} from "./journal-utils";
+} from "@/lib/dashboard/journal/journal-utils";
 
 const TABS: Array<{ id: JournalTab; label: string }> = [
   { id: "timeline", label: "timeline" },
@@ -45,13 +44,6 @@ export default function JournalClient() {
   const [nudges, setNudges] = useState<ProactiveNudge[]>([]);
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [checkIn, setCheckIn] = useState<Awaited<ReturnType<typeof api.checkins.next>> | null>(null);
-  const [composeText, setComposeText] = useState("");
-  const [composeType, setComposeType] = useState<ComposeType>("note");
-  const [feedbackRole, setFeedbackRole] = useState<"manager" | "peer" | "self">("peer");
-  const [skillNames, setSkillNames] = useState<string[]>([]);
-  const [impactMetric, setImpactMetric] = useState("");
-  const [noteMood, setNoteMood] = useState(3);
-  const [pulseResponses, setPulseResponses] = useState<Record<string, string | number>>({});
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -121,71 +113,63 @@ export default function JournalClient() {
     refreshIntelligence();
   };
 
-  const submitCompose = () => {
-    const text = composeText.trim();
-    if (!text) {
-      toast.error("Write something first");
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        let newId: string | undefined;
-        if (composeType === "win") {
-          const [firstLine, ...rest] = text.split("\n");
-          const title = firstLine.trim();
-          const body = (rest.length > 0 ? rest.join("\n") : firstLine).trim();
-          const res = await api.journal.createWin({
-            title,
-            body,
-            skillNames: skillNames.length > 0 ? skillNames : undefined,
-            impactMetric: impactMetric.trim() || undefined,
-          });
-          newId = (res.event as { id?: string })?.id;
-          setSkillNames([]);
-          setImpactMetric("");
-        } else if (composeType === "feedback") {
-          const res = await api.journal.createFeedback({ body: text, fromRole: feedbackRole });
-          newId = (res.event as { id?: string })?.id;
-        } else if (composeType === "learning") {
-          const res = await api.journal.createLearning({ skillName: text.trim() });
-          newId = (res.event as { id?: string })?.id;
-        } else {
-          const res = await api.journal.createNote({ body: text, mood: noteMood });
-          newId = (res.event as { id?: string })?.id;
+  const submitCompose = (data: JournalComposeData): Promise<boolean> => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          let newId: string | undefined;
+          if (data.type === "win") {
+            const [firstLine, ...rest] = data.text.split("\n");
+            const title = firstLine.trim();
+            const body = (rest.length > 0 ? rest.join("\n") : firstLine).trim();
+            const res = await api.journal.createWin({
+              title,
+              body,
+              skillNames: data.skillNames.length > 0 ? data.skillNames : undefined,
+              impactMetric: data.impactMetric.trim() || undefined,
+            });
+            newId = (res.event as { id?: string })?.id;
+          } else if (data.type === "feedback") {
+            const res = await api.journal.createFeedback({ body: data.text, fromRole: data.role });
+            newId = (res.event as { id?: string })?.id;
+          } else if (data.type === "learning") {
+            const res = await api.journal.createLearning({ skillName: data.text.trim() });
+            newId = (res.event as { id?: string })?.id;
+          } else {
+            const res = await api.journal.createNote({ body: data.text, mood: data.mood });
+            newId = (res.event as { id?: string })?.id;
+          }
+          if (newId) setHighlightId(newId);
+          toast.success("Entry saved");
+          refreshAfterSave();
+          resolve(true);
+        } catch {
+          toast.error("Could not save entry");
+          resolve(false);
         }
-        setComposeText("");
-        if (newId) setHighlightId(newId);
-        toast.success("Entry saved");
-        refreshAfterSave();
-      } catch {
-        toast.error("Could not save entry");
-      }
+      });
     });
   };
 
-  const submitPulse = () => {
-    if (!checkIn?.type) return;
+  const submitPulse = (responses: Record<string, string | number>): Promise<boolean> => {
+    if (!checkIn?.type) return Promise.resolve(false);
 
-    const firstTextQ = checkIn.questions.find((q) => q.kind === "text");
-    if (firstTextQ && !String(pulseResponses[firstTextQ.id] ?? "").trim()) {
-      toast.error("Answer the first question");
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        await api.checkins.submit({
-          type: checkIn.type!,
-          responses: pulseResponses,
-        });
-        setPulseResponses({});
-        toast.success(checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved");
-        setCheckIn(await api.checkins.next());
-        refreshAfterSave();
-      } catch {
-        toast.error("Could not save check-in");
-      }
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          await api.checkins.submit({
+            type: checkIn.type!,
+            responses,
+          });
+          toast.success(checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved");
+          setCheckIn(await api.checkins.next());
+          refreshAfterSave();
+          resolve(true);
+        } catch {
+          toast.error("Could not save check-in");
+          resolve(false);
+        }
+      });
     });
   };
 
@@ -234,21 +218,9 @@ export default function JournalClient() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_300px]">
           <div className="flex flex-col gap-4 min-w-0">
             <JournalCompose
-              composeType={composeType}
-              onComposeTypeChange={setComposeType}
-              composeText={composeText}
-              onComposeTextChange={setComposeText}
-              onSubmit={submitCompose}
-              saving={isPending}
-              feedbackRole={feedbackRole}
-              onFeedbackRoleChange={setFeedbackRole}
-              skillNames={skillNames}
-              onSkillNamesChange={setSkillNames}
               availableSkills={availableSkills}
-              impactMetric={impactMetric}
-              onImpactMetricChange={setImpactMetric}
-              noteMood={noteMood}
-              onNoteMoodChange={setNoteMood}
+              saving={isPending}
+              onSubmit={submitCompose}
             />
 
             <div
@@ -322,10 +294,6 @@ export default function JournalClient() {
             memoriesLoading={memoriesLoading}
             nudges={nudges}
             checkIn={checkIn}
-            pulseResponses={pulseResponses}
-            onPulseResponseChange={(id, value) =>
-              setPulseResponses((prev) => ({ ...prev, [id]: value }))
-            }
             onSubmitPulse={submitPulse}
             pulseSaving={isPending}
           />

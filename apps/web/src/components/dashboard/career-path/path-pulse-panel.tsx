@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
 
-import { JournalEngagementChart } from "@/app/dashboard/journal/journal-engagement-chart";
+import { JournalEngagementChart } from "@/components/dashboard/journal/journal-engagement-chart";
 
 type RelevanceData = Awaited<ReturnType<typeof api.journal.relevance>>;
 
@@ -126,7 +126,11 @@ export default function PathPulsePanel() {
         </div>
       )}
 
-      <JournalEngagementChart data={data.engagementTrend} height={56} />
+      <JournalEngagementChart
+        data={data.engagementTrend}
+        trendLabel={data.engagementTrendLabel}
+        height={56}
+      />
 
       {data.memories.length > 0 && (
         <div>

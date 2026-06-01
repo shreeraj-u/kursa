@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TypingIndicator } from "@/components/onboarding/typing-indicator";
 import { api } from "@/lib/api";
 
-import { dateRangeFromDays, REVIEW_RANGES } from "./journal-utils";
+import { dateRangeFromDays, REVIEW_RANGES } from "@/lib/dashboard/journal/journal-utils";
 
 type ReviewSection = {
   theme: string;

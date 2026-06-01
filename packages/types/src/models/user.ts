@@ -97,7 +97,7 @@ export interface UserLearningGoal {
   profileId: string;
   skillName: string;
   targetProficiency: string | null;
-  deadline: Date | null;
+  deadline: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;

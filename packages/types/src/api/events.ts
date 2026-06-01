@@ -1,4 +1,4 @@
-import type { EventEnrichment, MilestoneEvidence } from "./intelligence.js";
+import type { EventEnrichment, MilestoneEvidence } from "./intelligence";
 
 export type CareerEventType =
   | "checkin_weekly"
@@ -177,6 +177,7 @@ export interface RelevanceSummary {
   staleSkills: string[];
   winsThisQuarter: number;
   engagementTrend: SentimentTrendPoint[];
+  engagementTrendLabel: string;
   intentionActionGap: boolean;
   recentMemoryFacts: string[];
   materialChangeDetected: boolean;

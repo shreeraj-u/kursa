@@ -29,6 +29,14 @@ meRouter.post("/social-links", profileController.createSocialLink);
 meRouter.put("/social-links/:id", profileController.updateSocialLink);
 meRouter.delete("/social-links/:id", profileController.deleteSocialLink);
 
+meRouter.post("/skills", profileController.createSkill);
+meRouter.patch("/skills/:id", profileController.updateSkill);
+meRouter.delete("/skills/:id", profileController.deleteSkill);
+
+meRouter.post("/learning-goals", profileController.createLearningGoal);
+meRouter.patch("/learning-goals/:id", profileController.updateLearningGoal);
+meRouter.delete("/learning-goals/:id", profileController.deleteLearningGoal);
+
 router.use("/me", meRouter);
 
 export default router;

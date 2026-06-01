@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kursa Intelligence System v2 — Deep Dive Doc</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090B11;
+      --surface: #101424;
+      --surface-glass: rgba(16, 20, 36, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 242, 254, 0.4);
+      --text: #E2E8F0;
+      --text-muted: #94A3B8;
+      --primary: #8B5CF6;
+      --secondary: #00F2FE;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Beautiful Glow Effects */
+    body::before {
+      content: "";
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      top: -100px;
+      left: -100px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, transparent 70%);
+      top: 30%;
+      right: -200px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 320px;
+      background-color: rgba(9, 11, 17, 0.95);
+      border-right: 1px solid var(--border);
+      padding: 2.5rem 1.75rem;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 3rem;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--secondary);
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+      background: linear-gradient(to right, #FFFFFF, var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--primary);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      color: var(--text);
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: #FFFFFF;
+      background: linear-gradient(to right, rgba(139, 92, 246, 0.1), rgba(0, 242, 254, 0.05));
+      border-color: rgba(0, 242, 254, 0.25);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Main Content Area */
+    main {
+      flex: 1;
+      margin-left: 320px;
+      padding: 3.5rem 4rem;
+      max-width: 1200px;
+    }
+
+    header {
+      margin-bottom: 4rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #FFFFFF 30%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 720px;
+      font-weight: 400;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 5rem;
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+
+    h2::before {
+      content: "";
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(to bottom, var(--primary), var(--secondary));
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin: 2rem 0 1rem 0;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .accent-text {
+      color: var(--secondary);
+      font-weight: 500;
+    }
+
+    /* Grid Layouts & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background-color: var(--surface-glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+    }
+
+    .card:hover {
+      border-color: var(--border-focus);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 40px rgba(0, 242, 254, 0.05);
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #FFFFFF;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-body {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .card-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--primary);
+      margin-top: 1rem;
+      display: block;
+    }
+
+    /* Database Table Layouts */
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      background-color: rgba(16, 20, 36, 0.4);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background-color: rgba(9, 11, 17, 0.5);
+      color: #FFFFFF;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td.bold-white {
+      color: #FFFFFF;
+      font-weight: 500;
+    }
+
+    td code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--secondary);
+    }
+
+    /* Code Blocks */
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(9, 11, 17, 0.85);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px 8px 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .code-block-header span.file-badge {
+      color: var(--primary);
+    }
+
+    pre {
+      background-color: rgba(9, 11, 17, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 0 0 8px 8px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #E2E8F0;
+    }
+
+    /* SVG / Flowcharts */
+    .flowchart-container {
+      display: flex;
+      justify-content: center;
+      background-color: rgba(16, 20, 36, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Custom Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-primary { background: rgba(139, 92, 246, 0.15); color: var(--primary); border: 1px solid rgba(139, 92, 246, 0.25); }
+    .badge-secondary { background: rgba(0, 242, 254, 0.15); color: var(--secondary); border: 1px solid rgba(0, 242, 254, 0.25); }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.25); }
+
+    /* Alert blocks */
+    .alert-block {
+      background: linear-gradient(to right, rgba(139, 92, 246, 0.08), transparent);
+      border-left: 3px solid var(--primary);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 2rem;
+    }
+
+    .alert-block p {
+      margin-bottom: 0;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .alert-block strong {
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside>
+      <div class="logo-container">
+        <div class="logo-dot"></div>
+        <span class="logo-text">KURSA INTEL</span>
+        <span class="logo-badge">V2</span>
+      </div>
+      
+      <ul class="nav-list">
+        <li><a class="nav-item active" onclick="showSection('overview')">Overview & Architecture</a></li>
+        <li><a class="nav-item" onclick="showSection('database')">Database Models</a></li>
+        <li><a class="nav-item" onclick="showSection('ingest')">Event Ingestion Pipeline</a></li>
+        <li><a class="nav-item" onclick="showSection('distill')">Memory Distillation</a></li>
+        <li><a class="nav-item" onclick="showSection('context')">Advisor Context Assembler</a></li>
+        <li><a class="nav-item" onclick="showSection('codemap')">Core Files Reference</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      
+      <header>
+        <h1>Intelligence Layer & Deep Profiling</h1>
+        <p class="subtitle">A technical deep-dive into Kursa's event-driven semantic memory architecture, detailing exact schema files, ingestion loops, context processors, and active LLM integration points.</p>
+      </header>
+
+      <!-- Section: Overview -->
+      <section id="overview" class="active">
+        <h2>System Overview</h2>
+        <p>In previous iterations, Kursa's career intelligence worked on a simple static pipeline: it loaded the user's current structural profile (skills, experiences) directly into the LLM context to run estimations and paths. This created a major ceiling—Kursa possessed no persistent memories, could not track short-term sentiment trends, and had no way of understanding daily user activity.</p>
+        
+        <div class="alert-block">
+          <p><strong>The Core Mental Model Shift:</strong> Instead of simple snapshot processing, Kursa now processes a pipeline of: <span class="accent-text">Event Ingestion &rarr; Context Extraction &rarr; Structural Delta Application &rarr; Semantic Memory Distillation &rarr; Target Assembler &rarr; LLM Narration.</span></p>
+        </div>
+
+        <h3>The Architectural Blueprint</h3>
+        <p>Your teammate integrated a multi-layered profiling framework divided into three distinct operational data boundaries:</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              <span class="badge badge-success">Layer 1</span>
+              Structural Profile
+            </div>
+            <div class="card-body">
+              Prisma <code>Profile</code> and direct relational models (Skills, WorkHistory, Education). Stores long-term, hard queryable facts such as current employer, years of experience, and verified skill arrays.
+            </div>
+            <span class="card-meta">Location: schema.prisma &rarr; profile.prisma</span>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span class="badge badge-primary">Layer 2</span>
+              Episodic Log
+            </div>
+            <div class="card-body">
+              Persistent, timestamped log of daily telemetry actions (<code>CareerEvent</code>). Every check-in, logged accomplishment, peer feedback, or text note is captured chronologically.
+            </div>
+            <span class="card-meta">Location: schema.prisma &rarr; memory.prisma</span>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span class="badge badge-secondary">Layer 3</span>
+              Semantic Memory
+            </div>
+            <div class="card-body">
+              Persistent distilled user facts (<code>UserMemory</code>). Tracks high-level patterns (like low engagement streaks or career goals) complete with confidence ratings and reference mapping to parent events.
+            </div>
+            <span class="card-meta">Location: schema.prisma &rarr; memory.prisma</span>
+          </div>
+        </div>
+
+        <div class="flowchart-container">
+          <svg width="680" height="180" viewBox="0 0 680 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Node: Ingestion -->
+            <rect x="10" y="55" width="120" height="70" rx="8" fill="#101424" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+            <text x="70" y="85" fill="#E2E8F0" font-family="Inter" font-weight="600" font-size="12" text-anchor="middle">1. Event Logged</text>
+            <text x="70" y="105" fill="#94A3B8" font-family="Inter" font-size="10" text-anchor="middle">Wins, Notes, Check-ins</text>
+            
+            <path d="M130 90H170" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4 4"/>
+            <polygon points="170,90 162,85 162,95" fill="#8B5CF6"/>
+
+            <!-- Node: Processing -->
+            <rect x="175" y="55" width="140" height="70" rx="8" fill="#101424" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+            <text x="245" y="80" fill="#E2E8F0" font-family="Inter" font-weight="600" font-size="12" text-anchor="middle">2. Service Router</text>
+            <text x="245" y="98" fill="#00F2FE" font-family="Fira Code" font-size="9" text-anchor="middle">computeProfileDelta()</text>
+            <text x="245" y="112" fill="#8B5CF6" font-family="Fira Code" font-size="9" text-anchor="middle">distillMemories()</text>
+
+            <path d="M315 75H355" stroke="#10B981" stroke-width="2"/>
+            <polygon points="355,75 347,70 347,80" fill="#10B981"/>
+            
+            <path d="M315 105H355" stroke="#00F2FE" stroke-width="2"/>
+            <polygon points="355,105 347,100 347,110" fill="#00F2FE"/>
+
+            <!-- Node: Profile -->
+            <rect x="360" y="15" width="130" height="60" rx="8" fill="#101424" stroke="rgba(16, 185, 129, 0.4)" stroke-width="2"/>
+            <text x="425" y="40" fill="#E2E8F0" font-family="Inter" font-weight="600" font-size="11" text-anchor="middle">Layer 1: Profile</text>
+            <text x="425" y="55" fill="#94A3B8" font-family="Inter" font-size="9" text-anchor="middle">Achievements & Skills</text>
+
+            <!-- Node: Memory -->
+            <rect x="360" y="105" width="130" height="60" rx="8" fill="#101424" stroke="rgba(0, 242, 254, 0.4)" stroke-width="2"/>
+            <text x="425" y="130" fill="#E2E8F0" font-family="Inter" font-weight="600" font-size="11" text-anchor="middle">Layer 3: Memory</text>
+            <text x="425" y="145" fill="#94A3B8" font-family="Inter" font-size="9" text-anchor="middle">Sentiment & Contradictions</text>
+
+            <path d="M490 45H510V80H525" stroke="#E2E8F0" stroke-width="1.5"/>
+            <path d="M490 135H510V100H525" stroke="#E2E8F0" stroke-width="1.5"/>
+            <polygon points="525,90 517,85 517,95" fill="#E2E8F0"/>
+
+            <!-- Node: Context -->
+            <rect x="530" y="55" width="140" height="70" rx="8" fill="#101424" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+            <text x="600" y="85" fill="#E2E8F0" font-family="Inter" font-weight="600" font-size="12" text-anchor="middle">4. Context Assembler</text>
+            <text x="600" y="105" fill="#94A3B8" font-family="Inter" font-size="10" text-anchor="middle">Purpose-built LLM Prompts</text>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Section: Database Models -->
+      <section id="database">
+        <h2>Prisma Database Schemas</h2>
+        <p>The core intelligence schemas are kept inside <span class="accent-text">packages/db/prisma/schema/models/memory.prisma</span>. This modular layout prevents database congestion. Below are the precise schemas supporting events and distillation:</p>
+
+        <h3>Career Event Log (Episodic)</h3>
+        <p>Holds the telemetry signals generated by user check-ins or other integrations:</p>
+        
+        <div class="code-block-header">
+          <span class="file-badge">packages/db/prisma/schema/models/memory.prisma</span>
+          <span>Prisma Model</span>
+        </div>
+        <pre><code>model CareerEvent {
+  id                  String            @id @default(uuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId           String
+  profile             Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type                CareerEventType
+  source              CareerEventSource
+  body                String?
+  structured          Json              // Stores custom event JSON payload
+  sentiment           Float?            // Floating-point sentiment score (-1 to 1)
+
+  linkedSkillIds      String[]          @default([])
+  linkedPathId        String?
+  linkedWorkHistoryId String?
+  enrichment          Json?             // Post-processing AI enrichment facts
+
+  occurredAt          DateTime          @default(now())
+  createdAt           DateTime          @default(now())
+  deletedAt           DateTime?
+
+  @@index([userId, occurredAt])
+  @@index([profileId, type])
+  @@map("career_event")
+}</code></pre>
+
+        <h3>Semantic Memory Model</h3>
+        <p>Maintains persistent user observations derived over time by our distillation loop:</p>
+        
+        <div class="code-block-header">
+          <span class="file-badge">packages/db/prisma/schema/models/memory.prisma</span>
+          <span>Prisma Model</span>
+        </div>
+        <pre><code>model UserMemory {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       String    // e.g., "sentiment", "pattern", "skill", "goal", "contradiction"
+  fact           String    // High level observation text
+  confidence     Float     // Decay-supported rating between 0 and 1
+  sourceEntryIds String[]  @default([]) // Provenance IDs linking back to CareerEvents
+  validFrom      DateTime  @default(now())
+  validUntil     DateTime? // Populated when memory becomes stale or superseded
+  supersededBy   String?   // Points to the UserMemory id that replaced it
+  createdAt      DateTime  @default(now())
+
+  @@index([userId, category])
+  @@map("user_memory")
+}</code></pre>
+
+        <h3>Core Database Enums</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Enum Name</th>
+                <th>Database Values</th>
+                <th>System Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bold-white"><code>CareerEventType</code></td>
+                <td>
+                  <code>checkin_weekly</code>, <code>checkin_monthly</code>, <code>win</code>, <code>note</code>, <code>feedback</code>, <code>decision</code>, <code>learning</code>, <code>aria_observation</code>, <code>profile_import</code>, <code>onboarding_complete</code>, <code>application_update</code>, <code>system</code>
+                </td>
+                <td>Differentiates structural telemetry events from user entries vs system markers.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>CareerEventSource</code></td>
+                <td><code>user</code>, <code>aria</code>, <code>system</code></td>
+                <td>Determines provenance. Aria's self-generated observations are kept in check so they don't corrupt user patterns.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>SkillSource</code></td>
+                <td><code>self_reported</code>, <code>resume</code>, <code>inferred_checkin</code>, <code>inferred_journal</code></td>
+                <td>Identifies where a profile skill originated, useful for weighting relevance.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section: Ingestion -->
+      <section id="ingest">
+        <h2>The Event Ingestion Loop</h2>
+        <p>The ingestion sequence begins when a telemetry transaction is recorded. For example, logging a career "win" sends a request to the server, routed through <span class="accent-text">apps/server/src/services/events.service.ts</span>:</p>
+
+        <div class="code-block-header">
+          <span class="file-badge">apps/server/src/services/events.service.ts</span>
+          <span>ingestEvent()</span>
+        </div>
+        <pre><code>export async function ingestEvent(userId: string, input: CreateCareerEventInput) {
+  const profile = await resolveProfile(userId);
+  const extracted = extractFromEvent(input.type, input.structured);
+
+  // 1. Resolve entity mapping (Skills, Path, etc.)
+  const links = await resolveInitialLinks(profile.id, input.type, input.structured);
+
+  // 2. Create the CareerEvent log
+  const event = await prisma.careerEvent.create({
+    data: {
+      userId,
+      profileId: profile.id,
+      type: input.type,
+      source: input.source,
+      body: input.body ?? null,
+      structured: input.structured as never,
+      sentiment: extracted.sentiment,
+      linkedSkillIds: links.linkedSkillIds,
+      linkedPathId: links.linkedPathId,
+      linkedWorkHistoryId: links.linkedWorkHistoryId,
+      occurredAt: input.occurredAt ?? new Date(),
+    },
+  });
+
+  // 3. Apply profile updates automatically using a computed delta
+  if (!input.skipDelta) {
+    const delta = computeProfileUpdateDelta({
+      id: event.id,
+      type: event.type,
+      body: event.body,
+      structured: event.structured,
+    });
+    await applyProfileUpdateDelta(profile.id, delta);
+  }
+
+  // 4. Distill semantic observations immediately
+  if (!input.skipDistill) {
+    await runMemoryDistillation(userId, profile.id);
+  }
+
+  return toSummary(event);
+}</code></pre>
+
+        <h3>Automatic Structural Updates (`profile-delta.ts`)</h3>
+        <p>When an event is captured, the system maps it to structural changes to update the main user profile. For example, a <code>"win"</code> event updates the target skill usage dates and achievements:</p>
+
+        <div class="code-block-header">
+          <span class="file-badge">apps/server/src/compute/profile-delta.ts</span>
+          <span>computeProfileUpdateDelta()</span>
+        </div>
+        <pre><code>export function computeProfileUpdateDelta(event: CareerEventForDelta): ProfileUpdateDelta {
+  const structured = event.structured as Record&lt;string, unknown&gt;;
+
+  switch (event.type) {
+    case "win": {
+      const title = String(structured.title ?? event.body ?? "Win");
+      const skillNames = Array.isArray(structured.skillNames) ? structured.skillNames : [];
+      return {
+        newAchievements: [
+          {
+            title,
+            description: String(structured.body ?? "") || undefined,
+            dateAchieved: new Date(),
+            skillNames,
+          },
+        ],
+        skillLastUsed: skillNames.map((name) => ({ name, date: new Date() })),
+      };
+    }
+    case "learning": {
+      const skillName = String(structured.skillName ?? "").trim();
+      return {
+        newLearningGoals: [{ skillName }],
+        skillLastUsed: [{ name: skillName, date: new Date() }],
+      };
+    }
+    default:
+      return {};
+  }
+}</code></pre>
+      </section>
+
+      <!-- Section: Distill -->
+      <section id="distill">
+        <h2>Memory Distillation Architecture</h2>
+        <p>Distillation crunches the episodic log to extract persistent traits, operating through a hybrid deterministic and semantic LLM pipeline:</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              <span class="badge badge-success">Deterministic Rules</span>
+              Heuristic Engine
+            </div>
+            <div class="card-body">
+              Evaluates hard-coded metrics over the telemetry history, such as low challenge scores in weekly check-ins or theme word repetitions.
+            </div>
+            <span class="card-meta">File: compute/memory.distill.ts</span>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span class="badge badge-primary">AI / LLM Extraction</span>
+              Enrichment Engine
+            </div>
+            <div class="card-body">
+              Uses <code>distillMemoriesWithLlm()</code> to semantic-crunch logs, extracting detailed pattern matches and qualitative sentiment adjustments.
+            </div>
+            <span class="card-meta">File: lib/ai/enrichment.extract.ts</span>
+          </div>
+        </div>
+
+        <h3>Contradiction & Overriding Mechanism</h3>
+        <p>A key capability of the memory system is managing contradictory traits. If a user states a target role of "Staff Leadership", but their check-ins show no collaborative or leadership actions, it flags a <code>"contradiction"</code> memory. If check-ins then shift to a collaborative nature, the system overwrites the older trait:</p>
+
+        <div class="code-block-header">
+          <span class="file-badge">apps/server/src/services/memory.service.ts</span>
+          <span>upsertMemoryCandidates()</span>
+        </div>
+        <pre><code>// Handles contradictions by setting validUntil and linking the new superseding memory
+const contradiction = existingMemories.find(
+  (m) => m.category === candidate.category && isContradiction(m.category, m.fact, candidate.fact)
+);
+
+if (contradiction) {
+  const newMemory = await prisma.userMemory.create({
+    data: {
+      userId,
+      category: candidate.category,
+      fact: candidate.fact,
+      confidence: candidate.confidence,
+      sourceEntryIds: candidate.sourceEntryIds,
+    },
+  });
+  
+  await prisma.userMemory.update({
+    where: { id: contradiction.id },
+    data: { 
+      validUntil: new Date(), 
+      supersededBy: newMemory.id 
+    },
+  });
+}</code></pre>
+
+        <h3>Confidence Decay</h3>
+        <p>Memory confidence naturally decays unless refreshed by active career events: if no events matching the memory's <code>sourceEntryIds</code> occur within 90 days, the memory's confidence score decays by 15% (<code>DECAY_FACTOR = 0.85</code>).</p>
+      </section>
+
+      <!-- Section: Context -->
+      <section id="context">
+        <h2>Advisor Context Assembler</h2>
+        <p>LLM prompts never interact directly with raw database layers. Instead, the backend aggregates profile stats, episodic logs, and semantic memories into a targeted payload called the <code>AdvisorContext</code>:</p>
+
+        <div class="code-block-header">
+          <span class="file-badge">apps/server/src/lib/advisor-context.ts</span>
+          <span>assembleAdvisorContext()</span>
+        </div>
+        <pre><code>export async function assembleAdvisorContext(
+  userId: string,
+  purpose: AdvisorPurpose,
+): Promise&lt;AdvisorContext | null&gt; {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    select: { ...PROFILE_SELECT, careerPaths: { where: { isActive: true }, take: 1 } },
+  });
+
+  if (!profile) return null;
+
+  // Retrieve relevant time windows (e.g., 28 days for active users, 84 days for stagnant users)
+  const since = await getAdvisorEventWindow(userId);
+  const [rawEvents, memories] = await Promise.all([
+    getRecentEvents(userId, since, purpose === "paths" ? 100 : 40),
+    getMemoriesForUser(userId, purpose === "chat" ? 20 : 10),
+  ]);
+
+  // Prevent recursive loops by skipping observations produced by Aria itself
+  const recentEvents = rawEvents.filter((e) => e.type !== "aria_observation");
+
+  const signals = computeAdvisorSignals(profileInput, recentEvents, memories, activePath);
+  const materialChangeDetected = shouldRegeneratePaths(signals);
+
+  return {
+    purpose,
+    profile: profileInput,
+    signals,
+    recentEvents: recentEvents.slice(0, purpose === "journal" ? 10 : 15),
+    memories: memories.slice(0, 5),
+    activePath,
+    materialChangeDetected,
+  };
+}</code></pre>
+
+        <h3>Cache & Hash Gating (`hashAdvisorContext`)</h3>
+        <p>To optimize performance and minimize LLM expenses, observations are cached in the database (<code>PersistedObservation</code>). The system hashes the <code>AdvisorContext</code> including active memory IDs, event IDs, and skill update timestamps. If the hash matches, the system serves cached observations, bypassing LLM queries entirely.</p>
+      </section>
+
+      <!-- Section: Code Maps -->
+      <section id="codemap">
+        <h2>Core Intelligence Files</h2>
+        <p>Below is a directory map of all components introduced or refactored for the Kursa Intelligence Layer:</p>
+        
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>File Path</th>
+                <th>Logical Role</th>
+                <th>Core Functionality / Methods</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bold-white"><code>packages/db/prisma/schema/models/memory.prisma</code></td>
+                <td>Database Schemas</td>
+                <td>Declares <code>CareerEvent</code>, <code>UserMemory</code>, <code>PersistedObservation</code> tables and enums.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/services/events.service.ts</code></td>
+                <td>Event Service Layer</td>
+                <td>Exposes <code>ingestEvent()</code>, <code>listEvents()</code>, and manages entity-graph matching.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/compute/profile-delta.ts</code></td>
+                <td>Telemetry Computations</td>
+                <td>Computes delta patches for the user profile based on newly logged actions.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/compute/memory.distill.ts</code></td>
+                <td>Deterministic Heuristics</td>
+                <td>Scans for low-challenge streaks, repeat keyword patterns, and intention-action gaps.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/services/memory.service.ts</code></td>
+                <td>Memory Database Service</td>
+                <td>Executes distillation, decays confidence, and supercedes contradicting user memories.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/lib/advisor-context.ts</code></td>
+                <td>Context Middleware</td>
+                <td>Aggregates user data into <code>AdvisorContext</code> and hashes payloads for cache invalidation.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/compute/advisor.compute.ts</code></td>
+                <td>Signals Processor</td>
+                <td>Processes recent sentiment trends, check-in streaks, and signals trajectory updates.</td>
+              </tr>
+              <tr>
+                <td class="bold-white"><code>apps/server/src/services/insights.service.ts</code></td>
+                <td>Insights Controller Service</td>
+                <td>Gathers observations and orchestrates LLM-backed insights or falls back to rule-based logic.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script>
+    function showSection(sectionId) {
+      // Toggle active classes on sections
+      const sections = document.querySelectorAll('section');
+      sections.forEach(s => s.classList.remove('active'));
+      
+      const targetSection = document.getElementById(sectionId);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+
+      // Toggle active classes on navigation items
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => item.classList.remove('active'));
+
+      // Find the link that clicked
+      const activeLink = Array.from(navItems).find(item => item.getAttribute('onclick').includes(sectionId));
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+
+      // Smooth scroll to top of main area
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

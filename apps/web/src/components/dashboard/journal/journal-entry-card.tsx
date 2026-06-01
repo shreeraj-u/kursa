@@ -12,7 +12,7 @@ import {
   TAG_ACCENT,
   tagDisplayLabel,
   type TimelineEntry,
-} from "./journal-utils";
+} from "@/lib/dashboard/journal/journal-utils";
 
 type Props = {
   entry: TimelineEntry;
