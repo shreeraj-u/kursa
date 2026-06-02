@@ -109,6 +109,11 @@ export interface ResumeListResponse {
   quota: ResumeQuota;
 }
 
+export interface ResumeImproveAtsResponse {
+  draft: ResumeContent;
+  changedPaths: string[];
+}
+
 export interface ResumeProfileSnapshot {
   fullName: string;
   email: string | null;

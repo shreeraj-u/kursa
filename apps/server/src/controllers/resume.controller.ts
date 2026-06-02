@@ -8,6 +8,7 @@ import {
   InvalidResumeContentError,
   QuotaExceededError,
   RESUME_DAILY_LIMIT,
+  IMPROVE_ATS_DAILY_LIMIT,
 } from "../services/resume.service.js";
 
 /**
@@ -79,6 +80,33 @@ export async function analyzeResume(req: Request, res: Response): Promise<void> 
   } catch (err) {
     if (err instanceof GenerationInProgressError) {
       throw Errors.conflict("This resume is already being analyzed. Please wait.");
+    }
+    throw err;
+  }
+}
+
+
+/**
+ * POST /api/v1/profile/me/resumes/:id/improve-ats
+ * Produces a reviewable AI draft that applies current ATS suggestions.
+ */
+export async function improveResumeAts(req: Request, res: Response): Promise<void> {
+  const id = req.params.id as string;
+  if (!id) throw Errors.badRequest("Resume id is required");
+
+  try {
+    const result = await resumeService.improveResumeAts(req.user!.id, id);
+    if (result === null) throw Errors.notFound("Resume");
+    ok(res, result);
+  } catch (err) {
+    if (err instanceof QuotaExceededError) {
+      throw Errors.tooManyRequests(
+        `You've used today's AI improvement (${IMPROVE_ATS_DAILY_LIMIT}/day). Try again tomorrow.`,
+        { used: err.used, limit: err.limit },
+      );
+    }
+    if (err instanceof GenerationInProgressError) {
+      throw Errors.conflict("This resume is already being improved. Please wait.");
     }
     throw err;
   }

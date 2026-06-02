@@ -123,6 +123,37 @@ Respond with JSON only:
 
 Judge: keyword coverage against the target role/skills, weak/passive phrasing, missing quantification, structural problems. Each issue must name a specific, actionable fix — not a generic tip.`;
 
+
+export const CORRECT_IMPROVE_ATS_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form { "resume": ResumeContent } where ResumeContent matches the resume shape exactly. Hard caps: max 6 roles, max 5 bullets per role, max 20 skills (never more than 20), max 4 projects with max 3 project bullets each, max 12 achievements. sectionOrder must list ONLY populated sections using EXACTLY these keys: "summary", "skills", "experience", "projects", "others", "education", "certifications" — use "others" for achievements, never "achievements". No prose, JSON only.`;
+
+export const IMPROVE_RESUME_ATS_PROMPT = `You are Kursa's ATS improvement editor. You receive JSON containing:
+- resume: the current ResumeContent JSON
+- atsIssues: array of ATS issues, each with a "fix" instruction you must follow
+- target: the target role/path context including requiredSkills
+- profile: the user's structured profile snapshot for grounding
+
+Return JSON only with this shape:
+{ "resume": ResumeContent }
+
+Your job is to apply EVERY issue's "fix" instruction aggressively. High-severity issues must be addressed. For each atsIssue, read the "fix" field and implement it directly in the resume.
+
+What you MUST do:
+- Rewrite weak or passive bullets into strong, active, impact-led statements using the XYZ principle (action + scope + outcome). Use verbs like Led, Built, Architected, Reduced, Scaled, Automated, Shipped.
+- Add target-role keywords from target.requiredSkills into bullets and the skills list wherever the profile evidence supports them. If the user did the work, name the technology.
+- Expand the skills list to include relevant technical skills evident from profile.workHistories and profile.projects — up to the 20-item cap.
+- Rewrite the summary to front-load the target role title and 2–3 strongest qualifications.
+- Reorder sections in sectionOrder if it improves ATS readability (summary and skills near the top for experienced candidates).
+- Quantify impact wherever profile.workHistories.outcomes or project outcomes provide any numbers, scale, or scope to draw from.
+
+What you must NOT do:
+- Invent employers, job titles, dates, credentials, awards, links, or metrics not present in the resume or profile.
+- Add skills the user has no evidence of using.
+- Leave high-severity issues unaddressed when the profile has enough evidence to fix them.
+
+Hard caps: max 6 roles, max 5 bullets per role, max 20 skills (never more than 20), max 4 projects with 3 project bullets each, max 12 achievements.
+sectionOrder must use ONLY: "summary", "skills", "experience", "projects", "others", "education", "certifications". Use "others" for achievements — never "achievements".
+`;
+
 export const EXTRACT_RESUME_DATA_PROMPT = `You are a resume data extractor. Given resume text, extract structured professional data.
 
 Return a JSON object with these fields:

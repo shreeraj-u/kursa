@@ -5,6 +5,7 @@ import type {
   CareerPath,
   Resume,
   ResumeContent,
+  ResumeImproveAtsResponse,
   UserSocialLink,
   AchievementInput,
   ProjectInput,
@@ -139,6 +140,11 @@ export const api = {
 
     analyze: (id: string) =>
       request<{ resume: Resume }>(`/api/v1/profile/me/resumes/${id}/analyze`, {
+        method: "POST",
+      }),
+
+    improveAts: (id: string) =>
+      request<ResumeImproveAtsResponse>(`/api/v1/profile/me/resumes/${id}/improve-ats`, {
         method: "POST",
       }),
   },

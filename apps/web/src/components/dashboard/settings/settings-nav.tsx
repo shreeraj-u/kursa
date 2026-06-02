@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Briefcase, Link2, Lock, Shield, Sparkles, User } from "lucide-react";
+import { Bell, Briefcase, Link2, Lock, Shield, Sparkles, User, CircleHelp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { key: "notifications", label: "Notifications", Icon: Bell },
   { key: "privacy", label: "Privacy", Icon: Shield },
   { key: "plan", label: "Plan", Icon: Sparkles },
+  { key: "docs", label: "Documentation", Icon: CircleHelp },
 ];
 
 export default function SettingsNav({
@@ -37,7 +38,13 @@ export default function SettingsNav({
             <button
               key={key}
               type="button"
-              onClick={() => router.push(`/dashboard/settings?section=${key}`)}
+              onClick={() => {
+                if (key === "docs") {
+                  router.push("/dashboard/docs");
+                } else {
+                  router.push(`/dashboard/settings?section=${key}`);
+                }
+              }}
               style={{
                 fontSize: "var(--text-xs)",
                 fontFamily: "var(--font-mono)",

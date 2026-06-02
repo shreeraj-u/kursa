@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, Sparkles } from "lucide-react";
 import type { AtsIssue, Resume, ResumeContent, ResumeQuota } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
@@ -30,15 +30,18 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
   const resumes = initialResumes;
   const [generating, setGenerating] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [improving, setImproving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(resumes[0]?.id ?? null);
   const [draft, setDraft] = useState<ResumeContent | null>(null); // non-null = editing
+  const [aiDraftActive, setAiDraftActive] = useState(false);
+  const [aiChangedPaths, setAiChangedPaths] = useState<string[]>([]);
 
   const selected = resumes.find((r) => r.id === selectedId) ?? resumes[0] ?? null;
   const quotaReached = quota.used >= quota.limit;
   const editing = draft !== null;
-  const busy = generating || analyzing || saving;
+  const busy = generating || analyzing || improving || saving;
 
   async function generate() {
     setGenerating(true);
@@ -59,7 +62,10 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
     setError(null);
     try {
       await api.resume.update(selected.id, draft);
+      if (aiDraftActive) await api.resume.analyze(selected.id);
       setDraft(null);
+      setAiDraftActive(false);
+      setAiChangedPaths([]);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save changes");
@@ -79,6 +85,23 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
       setError(e instanceof Error ? e.message : "Failed to analyze resume");
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+
+  async function improveAts() {
+    if (!selected) return;
+    setImproving(true);
+    setError(null);
+    try {
+      const result = await api.resume.improveAts(selected.id);
+      setDraft(result.draft);
+      setAiChangedPaths(result.changedPaths);
+      setAiDraftActive(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to apply ATS improvements");
+    } finally {
+      setImproving(false);
     }
   }
 
@@ -151,7 +174,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDraft(null)}
+                  onClick={() => { setDraft(null); setAiDraftActive(false); setAiChangedPaths([]); }}
                   disabled={saving}
                   className="mono text-mute border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
@@ -164,7 +187,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
                   disabled={saving}
                   className="mono text-ink border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
-                  {saving ? "saving…" : "save"}
+                  {saving ? (aiDraftActive ? "saving + analyzing…" : "saving…") : "save"}
                 </Button>
               </>
             ) : (
@@ -172,7 +195,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDraft(structuredClone(selected.content))}
+                  onClick={() => { setDraft(structuredClone(selected.content)); setAiDraftActive(false); setAiChangedPaths([]); }}
                   disabled={busy}
                   className="mono text-ink border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
@@ -248,7 +271,14 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
         {/* Body: document/editor + ATS panel */}
         <div className="grid grid-cols-[1fr_280px] gap-5 max-lg:flex max-lg:flex-col">
           {editing && draft ? (
-            <ResumeEditor value={draft} onChange={setDraft} />
+            <div className="flex flex-col gap-3">
+              {aiDraftActive && (
+                <div className="rounded-lg border border-line bg-surface px-4 py-3 mono text-2xs text-mute leading-relaxed">
+                  AI applied ATS suggestions — review highlighted changes before saving. Saving will re-score ATS automatically.
+                </div>
+              )}
+              <ResumeEditor value={draft} onChange={setDraft} changedPaths={aiChangedPaths} />
+            </div>
           ) : (
             <div className="rounded-lg p-5 bg-bg-sub overflow-auto">
               <ResumeDocument content={selected.content} />
@@ -259,7 +289,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
             {/* ATS score */}
             <div className="rounded-lg p-4 border border-line bg-surface flex items-center gap-3">
               <AtsScoreCircle score={selected.atsScore} />
-              <div>
+              <div className="flex-1">
                 <div className="font-medium text-ink text-[11px]">
                   ATS readability
                 </div>
@@ -269,6 +299,17 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
                     : `${selected.atsIssues.length} suggestion${selected.atsIssues.length === 1 ? "" : "s"} to improve.`}
                 </div>
               </div>
+              {selected.atsIssues.length > 0 && !editing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={improveAts}
+                  disabled={busy}
+                  className="mono text-ink border-line rounded-sm px-2 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
+                >
+                  <Sparkles size={11} /> {improving ? "applying…" : "apply with AI"}
+                </Button>
+              )}
             </div>
 
             {/* ATS issues */}
@@ -294,7 +335,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
             )}
             {editing && (
               <div className="mono text-2xs text-mute-3">
-                save your edits, then run “analyze ATS again” to re-score.
+                {aiDraftActive ? "save to apply this AI draft and re-score automatically." : "save your edits, then run “analyze ATS again” to re-score."}
               </div>
             )}
           </div>

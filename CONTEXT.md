@@ -101,6 +101,14 @@ on demand ("analyze ATS again") after the user edits the text. Re-analysis updat
 the score in place, does **not** consume the Generation quota (it creates no new
 version), and is guarded by the single-in-flight lock.
 
+
+### ATS improvement draft
+A temporary résumé-only draft produced by AI from the selected [[Resume version]] and
+its current [[ATS score]] issues. It applies ATS fixes in edit mode for user review
+before persistence, may only make truth-preserving changes grounded in the résumé or
+Profile, and does not write back to the Profile. Saving the draft mutates the
+selected Resume version in place and re-runs ATS scoring.
+
 ### Impact statement
 A work-experience bullet written as context → action → outcome with concrete,
 truthful results. The résumé engine rewrites raw responsibilities into impact
