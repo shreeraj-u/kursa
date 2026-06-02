@@ -4,9 +4,6 @@ interface CareerPulseProps {
     metrics: DashboardMetrics | null;
 }
 
-// TODO: Make this dynamic with AI 
-const HEIGHTS = [3, 8, 14];
-
 export default function CareerPulse({ metrics }: CareerPulseProps) {
     if (!metrics) {
         return (
@@ -46,7 +43,7 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
                                 key={i}
                                 className="not-italic flex-1 rounded-[1px]"
                                 style={{
-                                    height: HEIGHTS[v],
+                                    height: Math.max(2, v * 9),
                                     background:
                                         i >= 10 && v > 0
                                             ? "var(--accent)"

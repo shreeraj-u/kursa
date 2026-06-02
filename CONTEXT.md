@@ -65,6 +65,29 @@ status. Separately, the journey **auto-extends**: when the user marks **every**
 milestone as `completed`, the AI appends new milestones that continue the journey
 beyond the completed ones — extending rather than replacing it.
 
+### Journey Details
+AI-generated justification for a [[Career Journey]]: why it fits the user's Profile
+(fit reasons), skill gaps to close, suggested next actions, risks and mitigations,
+and the Profile evidence the AI used. Generated once alongside the journey and
+rarely changes. Secondary/contextual — not needed on every visit to the Journey
+page; rendered collapsed by default. Distinct from the [[Action Queue]], which is
+live and cross-domain.
+
+### Action Queue
+A journey-wide, urgency-sorted (`urgent` / `important` / `later`) list of concrete
+next steps computed dynamically from the full Profile state. Spans three domains:
+**path** (milestone-related), **skill** (skill gaps), and **application** (job
+applications). Each item carries a deep link to the relevant surface. Lives on the
+[[Career Journey]] page as the primary "what do I do next" answer. Distinct from
+the static "next actions" inside [[Journey Details]], which are narrative AI
+suggestions generated once at journey creation time with no links.
+
+### Journey Pulse
+Retrospective health data about a user's engagement with their [[Career Journey]]:
+path-alignment score, accomplishments this quarter, dormant skills, milestone
+evidence, engagement trend, and distilled memories. Lives on the main dashboard
+as a widget, not on the Journey page itself.
+
 ### Résumé
 A generated document that starts as a live output of the system's knowledge of the
 user. AI generation is derived from the Profile and shaped toward the user's

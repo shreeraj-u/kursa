@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DashboardMetrics } from "@/types/profile";
 
 interface RecentActivityProps {
@@ -13,9 +14,12 @@ export default function RecentActivity({ metrics }: RecentActivityProps) {
                 <span className="mono text-2xs text-mute-2">
                     recent activity
                 </span>
-                <span className="mono text-2xs text-mute-3">
-                    last 48h
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="mono text-2xs text-mute-3">last 48h</span>
+                    <Link href="/dashboard/journal" className="mono text-2xs text-mute-3 hover:text-ink transition-colors">
+                        →
+                    </Link>
+                </div>
             </div>
 
             {events.length === 0 ? (

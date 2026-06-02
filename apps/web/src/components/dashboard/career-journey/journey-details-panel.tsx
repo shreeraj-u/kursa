@@ -19,7 +19,7 @@ function detailsFor(journey: CareerJourney): CareerJourneyDetails {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4">
+    <section className="py-4 border-t border-line first:border-t-0 first:pt-0">
       <div className="mono text-2xs text-mute-2 uppercase tracking-mono mb-3">
         {title}
       </div>
@@ -36,7 +36,7 @@ export default function JourneyDetailsPanel({ journey }: JourneyDetailsPanelProp
   const details = detailsFor(journey);
 
   return (
-    <div className="grid grid-cols-[1.15fr_0.85fr] gap-4 max-xl:grid-cols-1">
+    <div className="flex flex-col">
       <Section title="why this journey fits">
         <div className="flex flex-col gap-2">
           {details.fitReasons.map((reason) => (

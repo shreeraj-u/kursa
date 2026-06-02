@@ -155,12 +155,10 @@ export default function JourneyRoadmap({
   updatingMilestoneOrder,
 }: JourneyRoadmapProps) {
   return (
-    <div className="grid grid-cols-[1fr_280px] gap-4 max-xl:grid-cols-1">
+    <div className="flex flex-col gap-4">
       <div className="rounded-lg p-4 border border-line bg-surface">
         <div className="flex justify-between items-center mb-6">
-          <div className="mono text-2xs text-mute-2 uppercase tracking-mono">
-            career journey · {journey.title}
-          </div>
+          <div className="mono text-2xs text-mute-2 uppercase tracking-mono">milestones</div>
           <div className="mono text-2xs text-mute-3">
             {journey.projectedTimelineMonths} months ·{" "}
             {Math.round(journey.confidenceScore * 100)}% confidence
@@ -181,6 +179,7 @@ export default function JourneyRoadmap({
           <TargetNode title={journey.title} />
         </div>
       </div>
+
       <MilestoneInspector
         journey={journey}
         order={selectedMilestoneOrder}

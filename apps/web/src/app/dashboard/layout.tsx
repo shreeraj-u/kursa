@@ -31,6 +31,7 @@ export default async function DashboardLayout({
 
     const now = Date.now();
 
+    // Must stay in sync with dashboard.compute.ts greeting.attentionCount logic
     const attentionCount =
         profile?.learningGoals?.filter(
             (g) => g.deadline !== null && new Date(g.deadline).getTime() < now

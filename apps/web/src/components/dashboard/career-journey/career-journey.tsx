@@ -15,7 +15,6 @@ import { api } from "@/lib/api";
 
 import JourneyRoadmap from "./journey-roadmap";
 import JourneyDetailsPanel from "./journey-details-panel";
-import JourneyPulsePanel from "./journey-pulse-panel";
 import JourneyActionQueue from "./journey-action-queue";
 
 interface CareerJourneyPageProps {
@@ -147,20 +146,27 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
           </div>
         )}
         {error && <div className="mono text-2xs text-warn">{error}</div>}
-        <div className="grid grid-cols-[1fr_320px] gap-5 max-lg:grid-cols-1">
-          <div className="flex flex-col gap-4">
-            <JourneyDetailsPanel journey={journey} />
-            <JourneyRoadmap
-              journey={journey}
-              selectedMilestoneOrder={selectedMilestoneOrder}
-              onSelectMilestone={setSelectedMilestoneOrder}
-              onMilestoneStatusChange={updateMilestone}
-              updatingMilestoneOrder={updatingMilestoneOrder}
-            />
-          </div>
+        <div className="grid grid-cols-[1fr_300px] gap-5 max-lg:grid-cols-1">
+          <JourneyRoadmap
+            journey={journey}
+            selectedMilestoneOrder={selectedMilestoneOrder}
+            onSelectMilestone={setSelectedMilestoneOrder}
+            onMilestoneStatusChange={updateMilestone}
+            updatingMilestoneOrder={updatingMilestoneOrder}
+          />
           <JourneyActionQueue actionQueue={actionQueue} />
         </div>
-        <JourneyPulsePanel />
+
+        <details className="group rounded-lg border border-line bg-surface">
+          <summary className="flex items-center justify-between px-4 py-3 cursor-pointer list-none select-none">
+            <span className="mono text-2xs text-mute-2 uppercase tracking-mono">journey details</span>
+            <span className="mono text-2xs text-mute-3 group-open:hidden">show</span>
+            <span className="mono text-2xs text-mute-3 hidden group-open:inline">hide</span>
+          </summary>
+          <div className="px-4 pb-4">
+            <JourneyDetailsPanel journey={journey} />
+          </div>
+        </details>
       </div>
 
       {showRegenWarning && (

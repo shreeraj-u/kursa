@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DashboardMetrics } from "@/types/profile";
 
 interface InFlightProps {
@@ -41,6 +42,9 @@ export default function InFlight({ metrics }: InFlightProps) {
                     <span className="mono text-2xs text-mute-3">
                         {activeCount} active · {closedCount} closed
                     </span>
+                    <Link href="/dashboard/applications" className="mono text-2xs text-mute-3 hover:text-ink transition-colors">
+                        →
+                    </Link>
                 </div>
             </div>
 

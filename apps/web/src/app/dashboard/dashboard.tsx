@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import PageHeader from "@/components/dashboard/page-header";
 import Greeting from "@/components/dashboard/greeting";
 import CareerPulse from "@/components/dashboard/career-pulse";
 import AriaNoticed from "@/components/dashboard/aria-noticed";
 import InFlight from "@/components/dashboard/in-flight";
 import RecentActivity from "@/components/dashboard/recent-activity";
+import CheckinPrompt from "@/components/dashboard/checkin-prompt";
+import TopAction from "@/components/dashboard/top-action";
 import type { UserProfile, ObservationsResponse, DashboardMetrics } from "@/types/profile";
+import type { JourneyActionItem } from "@kursa/types";
 
 interface DashboardProps {
     profile: UserProfile | null;
@@ -14,11 +18,10 @@ interface DashboardProps {
     initialObservations: ObservationsResponse | null;
     observationsError?: string | null;
     metrics: DashboardMetrics | null;
+    topAction: JourneyActionItem | null;
 }
 
-export default function Dashboard({ profile, user, initialObservations, observationsError, metrics }: DashboardProps) {
-    const attentionCount = metrics?.greeting.attentionCount ?? 0;
-
+export default function Dashboard({ profile, user, initialObservations, observationsError, metrics, topAction }: DashboardProps) {
     return (
         <div className="flex flex-col min-h-full">
             <PageHeader pageTitle="Home" />
@@ -26,16 +29,29 @@ export default function Dashboard({ profile, user, initialObservations, observat
             {/* Greeting row */}
             <div className="px-8 pt-6 pb-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <Greeting user={user} metrics={metrics} />
-                {/* export button */}
-                <button className="flex-shrink-0 rounded-md px-3 py-1.5 mono transition-colors text-xs text-mute border border-line bg-bg cursor-pointer mt-1.5 self-start sm:self-auto">
-                    export weekly digest
-                </button>
+                <div className="flex items-center gap-2 mt-1.5 self-start sm:self-auto flex-shrink-0">
+                    <Link
+                        href="/dashboard/journal"
+                        className="rounded-md px-3 py-1.5 mono transition-colors text-xs text-accent border border-line bg-bg hover:bg-surface"
+                    >
+                        log a win →
+                    </Link>
+                    <button className="rounded-md px-3 py-1.5 mono transition-colors text-xs text-mute border border-line bg-bg cursor-pointer">
+                        export weekly digest
+                    </button>
+                </div>
             </div>
 
             {/* Main grid */}
             <div className="px-8 pb-8 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 flex-1">
                 {/* Left column */}
                 <div className="flex flex-col gap-4">
+                    {/* Checkin prompt — renders only when a check-in is due */}
+                    <CheckinPrompt />
+
+                    {/* Top journey action */}
+                    {topAction && <TopAction item={topAction} />}
+
                     {/* Career pulse card */}
                     <div className="rounded-lg p-4 border border-line bg-surface">
                         <div className="mono mb-3 text-2xs text-mute-2">
