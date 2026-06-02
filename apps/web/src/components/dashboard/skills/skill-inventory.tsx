@@ -9,26 +9,26 @@ import { api } from "@/lib/api";
 type Category = (typeof skillCategoryValues)[number];
 type Proficiency = (typeof skillProficiencyValues)[number];
 
-const CATEGORY_LABEL: Record<Category, string> = {
-  technical: "technical",
-  soft: "soft",
-  tool: "tools",
+const CATEGORY_COLOR: Record<Category, string> = {
+  technical: "#6366f1",
+  soft: "#22c55e",
+  tool: "#f59e0b",
 };
 
-const CONFIDENCE_WORDS: Record<number, string> = {
-  1: "shaky",
-  2: "learning",
-  3: "comfortable",
-  4: "confident",
-  5: "very confident",
+const CATEGORY_LABEL: Record<Category, string> = {
+  technical: "Technical",
+  soft: "Soft",
+  tool: "Tools",
+};
+
+const PROFICIENCY_BORDER: Record<string, string> = {
+  beginner:     "border-gray-300",
+  intermediate: "border-blue-300",
+  advanced:     "border-violet-400",
+  expert:       "border-emerald-400",
 };
 
 const DORMANT_MONTHS = 6;
-
-interface SkillInventoryProps {
-  skills: UserSkill[];
-  onChange: (skills: UserSkill[]) => void;
-}
 
 function monthsSince(date: string | Date | null): number | null {
   if (!date) return null;
@@ -40,9 +40,9 @@ function monthsSince(date: string | Date | null): number | null {
 function recencyLabel(date: string | Date | null): string {
   const months = monthsSince(date);
   if (months === null) return "";
-  if (months < 1) return "used now";
-  if (months < 12) return `${Math.round(months)}mo ago`;
-  return `${Math.floor(months / 12)}yr ago`;
+  if (months < 1) return "now";
+  if (months < 12) return `${Math.round(months)}mo`;
+  return `${Math.floor(months / 12)}yr`;
 }
 
 function isDormant(skill: UserSkill): boolean {
@@ -57,81 +57,86 @@ function toDateInputValue(date: string | Date | null): string {
   return d.toISOString().slice(0, 10);
 }
 
-const ROW_GRID = "minmax(0,1fr) 150px 88px 112px 20px";
-
-function ConfidenceControl({
-  value,
-  onSet,
-}: {
-  value: number | null;
-  onSet: (v: number) => void;
-}) {
-  const [hovered, setHovered] = useState<number | null>(null);
-  const filled = hovered ?? value ?? 0;
-  const word = value ? CONFIDENCE_WORDS[value] : "not set";
-  return (
-    <div className="flex items-center gap-2" title="How confident you feel (1–5)">
-      <div className="flex gap-0.5" onMouseLeave={() => setHovered(null)}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            aria-label={`Set confidence to ${n} of 5`}
-            onMouseEnter={() => setHovered(n)}
-            onClick={() => onSet(n)}
-            className="h-2.5 w-3.5 rounded-[2px] transition-colors"
-            style={{ background: n <= filled ? "var(--accent)" : "var(--line)" }}
-          />
-        ))}
-      </div>
-      <span
-        className="mono whitespace-nowrap"
-        style={{ fontSize: 11, color: value ? "var(--mute)" : "var(--mute-3)" }}
-      >
-        {value ? `${value}/5` : "—"}
-      </span>
-    </div>
-  );
-}
-
-function LastUsedControl({
+function SkillPill({
   skill,
-  onSet,
+  active,
+  onClick,
 }: {
   skill: UserSkill;
-  onSet: (iso: string | null) => void;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const label = recencyLabel(skill.lastUsedDate);
+  const dormant = isDormant(skill);
+  const borderClass = skill.proficiencyLevel
+    ? (PROFICIENCY_BORDER[skill.proficiencyLevel] ?? "border-[var(--line)]")
+    : "border-[var(--line)]";
+
   return (
-    <div className="flex items-center gap-1.5">
-      <input
-        type="date"
-        value={toDateInputValue(skill.lastUsedDate)}
-        max={new Date().toISOString().slice(0, 10)}
-        onChange={(e) =>
-          onSet(e.target.value ? new Date(e.target.value).toISOString() : null)
-        }
-        className="mono rounded-md border border-[var(--line)] bg-[var(--surface)] px-1 py-0.5 text-[11px] text-[var(--mute)]"
-        title="When did you last use this skill?"
+    <button
+      type="button"
+      onClick={onClick}
+      title={skill.name}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-all ${borderClass} ${
+        active
+          ? "bg-[var(--ink)] text-[var(--bg)] border-[var(--ink)]"
+          : "bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--mute-3)]"
+      }`}
+      style={{ opacity: dormant && !active ? 0.45 : 1 }}
+    >
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{
+          background: active
+            ? "currentColor"
+            : CATEGORY_COLOR[(skill.category as Category) ?? "technical"],
+        }}
       />
-      <span className="mono text-[11px]" style={{ color: "var(--mute-3)" }}>
-        {label}
+      <span
+        style={{
+          fontStyle: dormant ? "italic" : "normal",
+          maxWidth: 120,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {skill.name}
       </span>
-    </div>
+      {/* Confidence dots */}
+      <span className="flex gap-px opacity-70">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span
+            key={n}
+            className="inline-block h-1 w-1 rounded-full"
+            style={{
+              background:
+                n <= (skill.confidenceRating ?? 0)
+                  ? active
+                    ? "currentColor"
+                    : "var(--accent)"
+                  : active
+                    ? "rgba(255,255,255,0.3)"
+                    : "var(--line)",
+            }}
+          />
+        ))}
+      </span>
+    </button>
   );
 }
 
-function SkillRow({
+function SkillDrawer({
   skill,
   onSave,
   onDelete,
+  onClose,
 }: {
   skill: UserSkill;
   onSave: (patch: SkillUpdateInput) => Promise<boolean>;
   onDelete: () => void;
+  onClose: () => void;
 }) {
   const [saved, setSaved] = useState(false);
-  const dormant = isDormant(skill);
 
   async function save(patch: SkillUpdateInput) {
     const ok = await onSave(patch);
@@ -142,58 +147,106 @@ function SkillRow({
   }
 
   return (
-    <div
-      className="grid items-center gap-2 py-1"
-      style={{ gridTemplateColumns: ROW_GRID }}
-    >
-      <span
-        className="flex items-center gap-1.5 truncate text-sm"
-        style={{ color: dormant ? "var(--mute-3)" : "var(--ink)" }}
-        title={dormant ? `${skill.name} — dormant (not used in 6+ months)` : skill.name}
-      >
-        <span className="truncate">{skill.name}</span>
-        {saved && (
-          <span className="mono" style={{ fontSize: 9, color: "var(--accent)" }}>
-            ✓ saved
-          </span>
-        )}
-      </span>
+    <div className="mt-2 rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-[var(--ink)]">
+          {skill.name}
+          {saved && (
+            <span className="mono ml-2 text-[9px]" style={{ color: "var(--accent)" }}>
+              ✓ saved
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mono text-[11px] text-[var(--mute-3)] hover:text-red-500 transition-colors"
+          >
+            remove
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[var(--mute-3)] hover:text-[var(--ink)]"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      </div>
 
-      <ConfidenceControl
-        value={skill.confidenceRating}
-        onSet={(v) => save({ confidenceRating: v })}
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Confidence */}
+        <div className="flex items-center gap-1.5">
+          <span className="mono text-[10px] text-[var(--mute-3)]">confidence</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                title={`Set confidence to ${n}`}
+                onClick={() => save({ confidenceRating: n })}
+                className="h-2 w-2 rounded-full transition-colors"
+                style={{
+                  background:
+                    n <= (skill.confidenceRating ?? 0)
+                      ? "var(--accent)"
+                      : "var(--line)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
-      <select
-        value={skill.proficiencyLevel ?? ""}
-        onChange={(e) => save({ proficiencyLevel: (e.target.value || null) as Proficiency | null })}
-        className="rounded-md border border-[var(--line)] bg-transparent px-1.5 py-0.5"
-        style={{ fontSize: 11, color: skill.proficiencyLevel ? "var(--mute)" : "var(--mute-3)" }}
-        title="Your actual mastery level"
-      >
-        <option value="">— set level</option>
-        {skillProficiencyValues.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
+        {/* Level */}
+        <div className="flex items-center gap-1.5">
+          <span className="mono text-[10px] text-[var(--mute-3)]">level</span>
+          <select
+            value={skill.proficiencyLevel ?? ""}
+            onChange={(e) =>
+              save({ proficiencyLevel: (e.target.value || null) as Proficiency | null })
+            }
+            className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-0.5 text-xs text-[var(--mute)]"
+          >
+            <option value="">— not set</option>
+            {skillProficiencyValues.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <LastUsedControl skill={skill} onSet={(iso) => save({ lastUsedDate: iso })} />
-
-      <button
-        type="button"
-        onClick={onDelete}
-        aria-label={`Remove ${skill.name}`}
-        className="text-[var(--mute-3)] hover:text-[var(--ink)]"
-      >
-        ×
-      </button>
+        {/* Last used */}
+        <div className="flex items-center gap-1.5">
+          <span className="mono text-[10px] text-[var(--mute-3)]">last used</span>
+          <input
+            type="date"
+            value={toDateInputValue(skill.lastUsedDate)}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={(e) =>
+              save({
+                lastUsedDate: e.target.value
+                  ? new Date(e.target.value).toISOString()
+                  : null,
+              })
+            }
+            className="mono rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-0.5 text-[11px] text-[var(--mute)]"
+          />
+          {skill.lastUsedDate && (
+            <span className="mono text-[10px] text-[var(--mute-3)]">
+              ({recencyLabel(skill.lastUsedDate)})
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<Category>("technical");
   const [confidenceRating, setConfidenceRating] = useState(3);
@@ -202,7 +255,10 @@ function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
 
   async function submit() {
     const trimmed = name.trim();
-    if (!trimmed) { toast.error("Enter a skill name first"); return; }
+    if (!trimmed) {
+      toast.error("Enter a skill name first");
+      return;
+    }
     if (busy) return;
     setBusy(true);
     try {
@@ -216,6 +272,7 @@ function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
       setName("");
       setConfidenceRating(3);
       setProficiencyLevel("");
+      setOpen(false);
       toast.success(`Added ${skill.name}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add skill");
@@ -224,75 +281,111 @@ function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
     }
   }
 
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mono w-full rounded-lg border border-dashed border-[var(--line)] py-2.5 text-xs text-[var(--mute)] transition-colors hover:border-[var(--mute-3)] hover:text-[var(--ink)]"
+      >
+        + add skill
+      </button>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-2 border-t border-[var(--line)] pt-3">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        placeholder="Skill name…"
-        className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm"
-      />
-      <div className="flex items-center gap-2">
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value as Category)}
-          className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
-          title="Category"
-        >
-          {skillCategoryValues.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          value={confidenceRating}
-          onChange={(e) => setConfidenceRating(Number(e.target.value))}
-          className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
-          title="Confidence (1–5)"
-        >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              conf {n}
-            </option>
-          ))}
-        </select>
-        <select
-          value={proficiencyLevel}
-          onChange={(e) => setProficiencyLevel(e.target.value as Proficiency | "")}
-          className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
-          title="Level (optional)"
-        >
-          <option value="">— level</option>
-          {skillProficiencyValues.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={submit}
-          disabled={busy}
-          className="ml-auto rounded-md bg-[var(--accent)] px-4 py-1.5 text-sm text-white disabled:opacity-50"
-        >
-          Add
-        </button>
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3">
+      <div className="flex flex-col gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder="Skill name…"
+          autoFocus
+          className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm"
+        />
+        <div className="flex items-center gap-2">
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as Category)}
+            className="flex-1 rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
+          >
+            {skillCategoryValues.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABEL[c]}
+              </option>
+            ))}
+          </select>
+          <select
+            value={proficiencyLevel}
+            onChange={(e) => setProficiencyLevel(e.target.value as Proficiency | "")}
+            className="flex-1 rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
+          >
+            <option value="">— level</option>
+            {skillProficiencyValues.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            value={confidenceRating}
+            onChange={(e) => setConfidenceRating(Number(e.target.value))}
+            className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 text-xs"
+          >
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                conf {n}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex-1 rounded-md border border-[var(--line)] py-1.5 text-xs text-[var(--mute)] hover:text-[var(--ink)]"
+          >
+            cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={busy}
+            className="flex-1 rounded-md bg-[var(--accent)] py-1.5 text-xs text-white disabled:opacity-50"
+          >
+            {busy ? "adding…" : "Add skill"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+interface SkillInventoryProps {
+  skills: UserSkill[];
+  onChange: (skills: UserSkill[]) => void;
+}
+
 export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
+  const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
+
   const grouped = useMemo(() => {
-    const map: Record<Category, UserSkill[]> = { technical: [], soft: [], tool: [] };
+    const map: Record<Category, UserSkill[]> = {
+      technical: [],
+      soft: [],
+      tool: [],
+    };
     for (const s of skills) {
       const cat = (s.category as Category) ?? "technical";
       (map[cat] ?? map.technical).push(s);
     }
     return map;
   }, [skills]);
+
+  function toggleSkill(id: string) {
+    setActiveSkillId((prev) => (prev === id ? null : id));
+  }
 
   async function saveSkill(id: string, patch: SkillUpdateInput): Promise<boolean> {
     const prev = skills;
@@ -311,6 +404,7 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
     const prev = skills;
     const removed = skills.find((s) => s.id === id);
     onChange(skills.filter((s) => s.id !== id));
+    if (activeSkillId === id) setActiveSkillId(null);
     try {
       await api.deleteSkill(id);
       if (removed) toast.success(`Removed ${removed.name}`);
@@ -322,55 +416,68 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
 
   return (
     <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-      <h2 className="text-sm font-semibold text-[var(--ink)]">Your skills</h2>
-      <p className="mb-3 text-xs text-[var(--mute)]">
-        <span className="font-medium">Confidence</span> is how sure you feel (1–5).{" "}
-        <span className="font-medium">Level</span> is your actual mastery.{" "}
-        <span className="font-medium">Last used</span> tracks recency — skills idle 6+
-        months fade.
+      {/* Header */}
+      <div className="mb-1">
+        <h2 className="text-sm font-semibold text-[var(--ink)]">Your skills</h2>
+      </div>
+      <p className="mb-4 text-xs text-[var(--mute)]">
+        Everything you know how to do, grouped by type. Click a skill to edit its details —
+        the <span className="text-[var(--ink)]">dots</span> inside each pill are your confidence (1–5).
+        Faded italic skills haven&apos;t been used in 6+ months.
       </p>
 
-      {skills.length === 0 ? (
-        <p className="text-sm text-[var(--mute)]">
-          No skills yet — add your first one below.
-        </p>
-      ) : (
-        <>
-          {/* Column header */}
-          <div
-            className="mono mb-1 grid items-center gap-2 border-b border-[var(--line)] pb-1 text-[11px]"
-            style={{ gridTemplateColumns: ROW_GRID, color: "var(--mute-3)" }}
-          >
-            <span>skill</span>
-            <span>confidence</span>
-            <span>level</span>
-            <span>last used</span>
-            <span />
-          </div>
+      {/* Category sections */}
+      <div className="mb-4 flex flex-col gap-5">
+        {skillCategoryValues.map((cat) => {
+          const catSkills = grouped[cat];
+          const activeInSection = catSkills.find((s) => s.id === activeSkillId) ?? null;
 
-          {skillCategoryValues.map((cat) =>
-            grouped[cat].length === 0 ? null : (
-              <div key={cat} className="mb-4">
-                <div
-                  className="mono mb-1 flex items-center justify-between pt-1"
-                  style={{ fontSize: 9.5, color: "var(--mute)" }}
-                >
-                  <span>{CATEGORY_LABEL[cat]}</span>
-                  <span>{grouped[cat].length}</span>
-                </div>
-                {grouped[cat].map((skill) => (
-                  <SkillRow
-                    key={skill.id}
-                    skill={skill}
-                    onSave={(patch) => saveSkill(skill.id, patch)}
-                    onDelete={() => deleteSkill(skill.id)}
-                  />
-                ))}
+          return (
+            <div key={cat}>
+              {/* Section header */}
+              <div className="mb-2 flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full shrink-0"
+                  style={{ background: CATEGORY_COLOR[cat] }}
+                />
+                <span className="mono text-[11px] text-[var(--mute)]">
+                  {CATEGORY_LABEL[cat]}
+                </span>
+                <span className="mono text-[10px] text-[var(--mute-3)]">
+                  {catSkills.length}
+                </span>
               </div>
-            ),
-          )}
-        </>
-      )}
+
+              {catSkills.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[var(--line)] px-3 py-2 text-center">
+                  <span className="mono text-[10px] text-[var(--mute-3)]">none yet</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {catSkills.map((skill) => (
+                    <SkillPill
+                      key={skill.id}
+                      skill={skill}
+                      active={activeSkillId === skill.id}
+                      onClick={() => toggleSkill(skill.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Inline drawer — only shown for the active skill in this section */}
+              {activeInSection && (
+                <SkillDrawer
+                  skill={activeInSection}
+                  onSave={(patch) => saveSkill(activeInSection.id, patch)}
+                  onDelete={() => deleteSkill(activeInSection.id)}
+                  onClose={() => setActiveSkillId(null)}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       <AddSkillForm onAdd={(skill) => onChange([...skills, skill])} />
     </div>
