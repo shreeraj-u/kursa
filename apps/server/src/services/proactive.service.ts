@@ -18,9 +18,9 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
       id: "path-regen",
       type: "path_regen",
       title: "Profile shifted",
-      message: "Your recent activity suggests your career path may need updating.",
-      actionLabel: "Regenerate paths",
-      actionHref: "/dashboard/career-path",
+      message: "Your recent activity suggests your career journey may need updating.",
+      actionLabel: "Regenerate journey",
+      actionHref: "/dashboard/career-journey",
       priority: "high",
     });
   }

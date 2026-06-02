@@ -1,5 +1,5 @@
 import type { ProfileInput, ProfileSignals } from "./insights";
-import type { CareerPath } from "./paths";
+import type { CareerJourney } from "./journey";
 import type { CareerEventSummary } from "./events";
 
 export interface UserMemorySummary {
@@ -63,7 +63,7 @@ export interface AdvisorContext {
   signals: AdvisorSignals;
   recentEvents: CareerEventSummary[];
   memories: UserMemorySummary[];
-  activePath: CareerPath | null;
+  activePath: CareerJourney | null;
   materialChangeDetected: boolean;
 }
 

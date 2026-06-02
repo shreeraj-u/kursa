@@ -61,11 +61,11 @@ export function JournalRelevance({ data, loading }: Props) {
           )}
           {data.materialChangeDetected && (
             <Link
-              href={"/dashboard/career-path" as Route}
+              href={"/dashboard/career-journey" as Route}
               className="mono block mt-1"
               style={{ fontSize: 8, color: "var(--accent)" }}
             >
-              Consider regenerating paths →
+              Consider regenerating your journey →
             </Link>
           )}
         </div>

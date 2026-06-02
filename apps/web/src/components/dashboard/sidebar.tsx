@@ -9,10 +9,10 @@ import {
     MapPin,
     BarChart2,
     Sparkles,
-    Route as RouteIcon,
     FileText,
     Bookmark,
     BookOpen,
+    Briefcase,
     Pencil,
     Settings,
     ChevronRight,
@@ -31,15 +31,15 @@ interface SidebarProps {
 
 const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
     { href: "/dashboard" as Route, label: "Home", Icon: House, key: "home" },
-    { href: "/dashboard/career-path" as Route, label: "Career path", Icon: MapPin, key: "career" },
+    { href: "/dashboard/career-journey" as Route, label: "Career journey", Icon: MapPin, key: "career" },
     { href: "/dashboard/skills" as Route, label: "Skills", Icon: BarChart2, key: "skills" },
     { href: "/dashboard/aria" as Route, label: "Aria", Icon: Sparkles, key: "aria" },
 ];
 
 const JOB_SEARCH_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
-    { href: "/dashboard/roadmap" as Route, label: "Roadmap", Icon: RouteIcon, key: "roadmap" },
     { href: "/dashboard/resume" as Route, label: "Resume studio", Icon: FileText, key: "resume" },
     { href: "/dashboard/shortlist" as Route, label: "Shortlist", Icon: Bookmark, key: "shortlist" },
+    { href: "/dashboard/applications" as Route, label: "Applications", Icon: Briefcase, key: "applications" },
     { href: "/dashboard/journal" as Route, label: "Journal", Icon: BookOpen, key: "journal" },
 ];
 
@@ -238,7 +238,7 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                             Icon={Icon}
                             isActive={isActive(href)}
                             badge={
-                                key === "shortlist" &&
+                                key === "applications" &&
                                     applicationCount !== undefined &&
                                     applicationCount > 0 ? (
                                     <Badge>{applicationCount}</Badge>

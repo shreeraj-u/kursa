@@ -2,7 +2,8 @@
 
 import { env } from "@kursa/env/web";
 import type {
-  CareerPath,
+  CareerJourney,
+  CareerJourneyResponse,
   Resume,
   ResumeContent,
   ResumeImproveAtsResponse,
@@ -114,15 +115,23 @@ export const api = {
       method: "DELETE",
     }),
 
-  paths: {
+  journey: {
+    get: () => request<CareerJourneyResponse>("/api/v1/profile/me/journey"),
+
     generate: () =>
-      request<{ paths: CareerPath[] }>("/api/v1/profile/me/paths/generate", {
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/generate", {
         method: "POST",
       }),
 
-    activate: (id: string) =>
-      request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
-        method: "PUT",
+    updateMilestone: (order: number, status: import("@kursa/types").MilestoneStatus | null) =>
+      request<{ journey: CareerJourney }>(`/api/v1/profile/me/journey/milestones/${order}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
+
+    extend: () =>
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/extend", {
+        method: "POST",
       }),
   },
 
@@ -324,6 +333,28 @@ export const api = {
       request<{ message: string; conversationId: string }>(`/api/v1/chat/${conversationId}/messages`, {
         method: "POST",
         body: JSON.stringify({ content }),
+      }),
+  },
+
+  applications: {
+    list: () =>
+      request<import("@kursa/types").ApplicationListResponse>("/api/v1/profile/me/applications"),
+
+    create: (body: import("@kursa/types").ApplicationCreateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>("/api/v1/profile/me/applications", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: import("@kursa/types").ApplicationUpdateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "DELETE",
       }),
   },
 

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import type { CareerPath, CareerPathSkillGap, UserSkill, UserLearningGoal } from "@kursa/types";
+import type { CareerJourney, CareerJourneySkillGap, UserSkill, UserLearningGoal } from "@kursa/types";
 import { api } from "@/lib/api";
 
 type GapStatus = "covered" | "in_progress" | "missing";
 
 function classifyGap(
-  gap: CareerPathSkillGap,
+  gap: CareerJourneySkillGap,
   skills: UserSkill[],
   goals: UserLearningGoal[],
 ): GapStatus {
@@ -36,7 +36,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 interface SkillGapProps {
-  activePath: CareerPath | null;
+  activePath: CareerJourney | null;
   skills: UserSkill[];
   goals: UserLearningGoal[];
   onGoalAdded: (goal: UserLearningGoal) => void;
@@ -47,7 +47,7 @@ function GapCard({
   status,
   onTrack,
 }: {
-  gap: CareerPathSkillGap;
+  gap: CareerJourneySkillGap;
   status: GapStatus;
   onTrack: () => Promise<void>;
 }) {
@@ -105,15 +105,15 @@ export function SkillGap({ activePath, skills, goals, onGoalAdded }: SkillGapPro
   if (!activePath) {
     return (
       <div className="rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] p-4">
-        <div className="mb-1 text-sm font-semibold text-[var(--ink)]">Gap to chosen path</div>
+        <div className="mb-1 text-sm font-semibold text-[var(--ink)]">Gap to your journey</div>
         <p className="text-sm text-[var(--mute)] mb-3">
-          Set an active career path to see your skill gaps here.
+          Generate a career journey to see your skill gaps here.
         </p>
         <Link
-          href="/dashboard/career-path"
+          href="/dashboard/career-journey"
           className="mono text-2xs border border-[var(--line)] rounded px-2 py-1 text-[var(--mute)] hover:text-[var(--ink)] transition-colors"
         >
-          choose a path →
+          start your journey →
         </Link>
       </div>
     );
@@ -132,7 +132,7 @@ export function SkillGap({ activePath, skills, goals, onGoalAdded }: SkillGapPro
     );
   }
 
-  async function track(gap: CareerPathSkillGap) {
+  async function track(gap: CareerJourneySkillGap) {
     try {
       const { learningGoal } = await api.createLearningGoal({
         skillName: gap.skill,

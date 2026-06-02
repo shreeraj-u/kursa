@@ -1,6 +1,6 @@
 import prisma from "@kursa/db";
 import type { CareerEventType, EventEnrichment } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone as Milestone } from "@kursa/types";
 
 import { buildRuleEnrichment } from "../compute/enrichment.rules.js";
 import { extractEnrichmentWithLlm } from "../lib/ai/enrichment.extract.js";

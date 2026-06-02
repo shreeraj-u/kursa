@@ -10,7 +10,7 @@ import { JournalEngagementChart } from "@/components/dashboard/journal/journal-e
 
 type RelevanceData = Awaited<ReturnType<typeof api.journal.relevance>>;
 
-export default function PathPulsePanel() {
+export default function JourneyPulsePanel() {
   const [data, setData] = useState<RelevanceData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +28,7 @@ export default function PathPulsePanel() {
         className="rounded-lg p-4"
         style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
       >
-        <p className="mono text-2xs text-mute-2">Loading path pulse…</p>
+        <p className="mono text-2xs text-mute-2">Loading journey pulse…</p>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function PathPulsePanel() {
         className="rounded-lg p-4"
         style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
       >
-        <p className="mono text-2xs text-mute-2">Could not load path pulse.</p>
+        <p className="mono text-2xs text-mute-2">Could not load journey pulse.</p>
       </div>
     );
   }
@@ -49,10 +49,10 @@ export default function PathPulsePanel() {
       className="rounded-lg p-4 flex flex-col gap-4"
       style={{ border: "1px solid var(--line)", background: "var(--surface)" }}
     >
-      <div className="mono text-2xs text-mute-2">path pulse</div>
+      <div className="mono text-2xs text-mute-2">journey pulse</div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <MetricCard label="path alignment">
+        <MetricCard label="journey alignment">
           {data.pathAlignmentScore !== null ? (
             <div className="flex items-center gap-3">
               <AlignmentRing score={data.pathAlignmentScore} />
@@ -64,7 +64,7 @@ export default function PathPulsePanel() {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-mute">Generate a career path to see alignment.</p>
+            <p className="text-xs text-mute">Generate a career journey to see alignment.</p>
           )}
         </MetricCard>
 
@@ -106,7 +106,7 @@ export default function PathPulsePanel() {
           )}
           {data.materialChangeDetected && (
             <p className="mono text-2xs text-accent">
-              Profile changed materially — use regenerate paths above.
+              Profile changed materially — use regenerate journey above.
             </p>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function PathPulsePanel() {
       )}
 
       <Link href={"/dashboard/docs" as Route} className="mono text-2xs text-mute-2 underline">
-        Learn how path pulse works →
+        Learn how journey pulse works →
       </Link>
     </div>
   );
