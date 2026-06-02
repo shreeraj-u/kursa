@@ -5,40 +5,20 @@ const COLS = [
   {
     title: "product",
     links: [
-      { label: "Career map", href: "#features" },
-      { label: "Skills profile", href: "#features" },
-      { label: "Resume studio", href: "#features" },
-      { label: "Role shortlist", href: "#features" },
-      { label: "Journal", href: "#features" },
-    ],
-  },
-  {
-    title: "platforms",
-    links: [
-      { label: "macOS", href: "#" },
-      { label: "Windows", href: "#" },
-      { label: "iOS", href: "#" },
-      { label: "Android", href: "#" },
-      { label: "Web", href: "#" },
-    ],
-  },
-  {
-    title: "company",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Manifesto", href: "#" },
-      { label: "Journal", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "Career map", href: "/#features" },
+      { label: "Skills profile", href: "/#features" },
+      { label: "Resume studio", href: "/#features" },
+      { label: "Role shortlist", href: "/#features" },
+      { label: "Journal", href: "/#features" },
     ],
   },
   {
     title: "legal",
     links: [
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
-      { label: "Data policy", href: "#" },
-      { label: "Security", href: "#" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Data policy", href: "/data-policy" },
+      { label: "Security", href: "/security" },
     ],
   },
 ];
@@ -48,7 +28,7 @@ export default function LandingFooter() {
     <footer className="pt-16 pb-10 bg-[var(--bg)]">
       <FadeUp className="mx-auto max-w-6xl px-6">
         {/* Top grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-10 mb-14">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
             <a href="/" className="inline-block mb-4 text-[var(--ink)]">
@@ -92,7 +72,7 @@ export default function LandingFooter() {
         {/* Copyright row */}
         <div className="flex items-center justify-between pt-8 border-t border-[var(--line)] flex-wrap gap-4">
           <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
-            © 2026 Kursa Labs · San Francisco
+            © 2026 Kursa Labs · Singapore
           </span>
           <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}>
             v 2.4 · last shipped 4 days ago
