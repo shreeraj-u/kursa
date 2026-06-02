@@ -8,8 +8,8 @@ const EMPTY: ApplicationCreateInput = {
   roleTitle: "",
   stage: "shortlisted",
   status: "active",
-  url: "",
-  notes: "",
+  url: null,
+  notes: null,
 };
 
 export interface ApplicationFormProps {

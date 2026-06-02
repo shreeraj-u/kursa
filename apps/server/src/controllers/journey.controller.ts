@@ -28,7 +28,7 @@ export async function generateJourney(req: Request, res: Response): Promise<void
 
 /**
  * PATCH /api/v1/profile/me/journey/milestones/:order
- * Body: { status: MilestoneStatus | null }  (null = reset to AI-inferred)
+ * Body: { status: MilestoneStatus | null }  (null = clear manual override; status may be re-inferred later)
  * Completing the final milestone auto-extends the journey.
  */
 export async function updateMilestoneStatus(req: Request, res: Response): Promise<void> {

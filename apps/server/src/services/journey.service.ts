@@ -168,6 +168,9 @@ export async function autoExtend(userId: string): Promise<CareerJourney | null> 
   if (!journeyRow) return null;
 
   const existing = (journeyRow.milestones as unknown as JourneyMilestone[]) ?? [];
+  if (existing.length === 0 || !existing.every((m) => m.status === "completed")) {
+    return toCareerJourney(journeyRow);
+  }
   const snapshot = toSnapshot(profile);
 
   let newMilestones: GeneratedMilestone[];
