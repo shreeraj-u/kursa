@@ -1,12 +1,13 @@
 import prisma, { Prisma } from "@kursa/db";
-import type { Resume, ResumeContent } from "@kursa/types";
+import type { AtsIssue, Resume, ResumeContent, ResumeImproveAtsResponse } from "@kursa/types";
 
-import { generateResume as aiGenerateResume, scoreAts } from "../lib/ai/resume.generate.js";
+import { generateResume as aiGenerateResume, improveResumeForAts, scoreAts } from "../lib/ai/resume.generate.js";
 import { resumeContentSchema } from "../validators/resume.validator.js";
 import * as mapper from "./resume.mapper.js";
 
 // --- constants & guardrails ---
 export const RESUME_DAILY_LIMIT = 10;
+export const IMPROVE_ATS_DAILY_LIMIT = 1;
 // Only the 3 most recent versions are kept and accessible; older ones are pruned
 // on generation and never returned to the client.
 const MAX_STORED_VERSIONS = 3;
@@ -19,6 +20,25 @@ const IN_ACHIEVEMENTS = 15;
 const IN_LANGS = 8;
 
 const inFlight = new Set<string>();
+
+// In-memory daily quota for ATS improvements (lightweight guardrail; resets on server restart)
+const improveAtsUsage = new Map<string, { date: string; count: number }>();
+
+function improvesUsedToday(profileId: string): number {
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = improveAtsUsage.get(profileId);
+  return entry?.date === today ? entry.count : 0;
+}
+
+function recordImproveUsed(profileId: string): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = improveAtsUsage.get(profileId);
+  if (entry?.date === today) {
+    entry.count++;
+  } else {
+    improveAtsUsage.set(profileId, { date: today, count: 1 });
+  }
+}
 
 // --- custom errors ---
 export class QuotaExceededError extends Error {
@@ -116,9 +136,11 @@ export async function generateResume(userId: string): Promise<Resume | null> {
   const used = await usedToday(profile.id);
   if (used >= RESUME_DAILY_LIMIT) throw new QuotaExceededError(used, RESUME_DAILY_LIMIT);
 
+  if (!profile.careerPaths[0]) return null;
+
   return acquireLock(userId, async () => {
     const snapshot = mapper.toSnapshot(user.name, user.email, profile);
-    const target = mapper.toTarget(profile.careerPaths[0]);
+    const target = mapper.toTarget(profile.careerPaths[0]!);
 
     const content = await aiGenerateResume(snapshot, target);
     const { atsScore, atsIssues } = await scoreAts(content, target);
@@ -188,10 +210,11 @@ export async function analyzeResume(userId: string, id: string): Promise<Resume 
     where: { id, profileId: profile.id },
   });
   if (!row) return null;
+  if (!profile.careerPaths[0]) return null;
 
   return acquireLock(userId, async () => {
     const content = row.content as unknown as ResumeContent;
-    const target = mapper.toTarget(profile.careerPaths[0]);
+    const target = mapper.toTarget(profile.careerPaths[0]!);
     const { atsScore, atsIssues } = await scoreAts(content, target);
 
     const updated = await prisma.resume.update({
@@ -202,6 +225,36 @@ export async function analyzeResume(userId: string, id: string): Promise<Resume 
       },
     });
     return mapper.toResume(updated);
+  });
+}
+
+
+export async function improveResumeAts(userId: string, id: string): Promise<ResumeImproveAtsResponse | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true, profile: { include: PROFILE_INCLUDE } },
+  });
+  if (!user?.profile) return null;
+  const profile = user.profile;
+
+  const row = await prisma.resume.findFirst({
+    where: { id, profileId: profile.id },
+  });
+  if (!row) return null;
+  if (!profile.careerPaths[0]) return null;
+
+  const used = improvesUsedToday(profile.id);
+  if (used >= IMPROVE_ATS_DAILY_LIMIT) throw new QuotaExceededError(used, IMPROVE_ATS_DAILY_LIMIT);
+
+  return acquireLock(userId, async () => {
+    const content = row.content as unknown as ResumeContent;
+    const atsIssues = (row.atsIssues as unknown as AtsIssue[]) ?? [];
+    const snapshot = mapper.toSnapshot(user.name, user.email, profile);
+    const target = mapper.toTarget(profile.careerPaths[0]!);
+    const draft = await improveResumeForAts(content, atsIssues, target, snapshot);
+
+    recordImproveUsed(profile.id);
+    return { draft, changedPaths: diffResumePaths(content, draft) };
   });
 }
 
@@ -249,4 +302,32 @@ async function pruneOldVersions(profileId: string): Promise<void> {
       id: { notIn: keep.map((r) => r.id) },
     },
   });
+}
+
+function diffResumePaths(before: unknown, after: unknown, prefix = ""): string[] {
+  if (Object.is(before, after)) return [];
+
+  if (!isRecord(before) || !isRecord(after)) {
+    return [prefix || "resume"];
+  }
+
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  const paths: string[] = [];
+  for (const key of keys) {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    const beforeValue = before[key];
+    const afterValue = after[key];
+
+    if (JSON.stringify(beforeValue) === JSON.stringify(afterValue)) continue;
+    if (isRecord(beforeValue) && isRecord(afterValue)) {
+      paths.push(...diffResumePaths(beforeValue, afterValue, nextPrefix));
+    } else {
+      paths.push(nextPrefix);
+    }
+  }
+  return paths;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

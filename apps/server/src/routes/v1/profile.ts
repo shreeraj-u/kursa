@@ -24,6 +24,7 @@ meRouter.get("/resumes", resumeController.listResumes);
 meRouter.post("/resumes/generate", resumeController.generateResume);
 meRouter.put("/resumes/:id", resumeController.updateResume);
 meRouter.post("/resumes/:id/analyze", resumeController.analyzeResume);
+meRouter.post("/resumes/:id/improve-ats", resumeController.improveResumeAts);
 meRouter.get("/resumes/:id", resumeController.getResume);
 meRouter.post("/social-links", profileController.createSocialLink);
 meRouter.put("/social-links/:id", profileController.updateSocialLink);

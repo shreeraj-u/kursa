@@ -17,9 +17,11 @@ import {
 } from "../../validators/resume.validator.js";
 import {
   CORRECT_RESUME_PROMPT,
+  CORRECT_IMPROVE_ATS_PROMPT,
   GENERATE_RESUME_PROMPT,
   Models,
   SCORE_ATS_PROMPT,
+  IMPROVE_RESUME_ATS_PROMPT,
 } from "./prompts.js";
 
 
@@ -93,6 +95,129 @@ async function attemptResume(
     achievements: data.achievements?.slice(0, MAX_ACHIEVEMENTS),
     sectionOrder: data.sectionOrder ?? ["summary", "skills", "experience", "projects", "others", "education", "certifications"],
   };
+}
+
+/**
+ * Produces a reviewable, truth-preserving draft that applies the current ATS
+ * issues. The caller persists only after the user reviews and saves it.
+ */
+export async function improveResumeForAts(
+  content: ResumeContent,
+  atsIssues: AtsIssue[],
+  target: ResumeTargetContext,
+  snapshot: ResumeProfileSnapshot,
+): Promise<ResumeContent> {
+  const userContent = JSON.stringify({ resume: content, atsIssues, target, profile: snapshot });
+
+  let draft = await attemptImprovedResume(userContent);
+  if (!draft) draft = await attemptImprovedResume(userContent, true);
+  if (!draft) throw new Error("ATS improvement failed validation after retry");
+
+  return draft;
+}
+
+async function attemptImprovedResume(
+  userContent: string,
+  correction = false,
+): Promise<ResumeContent | null> {
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model: Models.smart,
+      messages: [
+        { role: "system", content: IMPROVE_RESUME_ATS_PROMPT },
+        { role: "user", content: userContent },
+        ...(correction
+          ? [{ role: "system" as const, content: CORRECT_IMPROVE_ATS_PROMPT }]
+          : []),
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.25,
+      max_tokens: 4000,
+    });
+  } catch (err) {
+    console.error("[improveAts] OpenAI call threw:", err);
+    return null;
+  }
+
+  const raw = response.choices[0]?.message?.content ?? "{}";
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  const raw_candidate =
+    parsed && typeof parsed === "object" && "resume" in parsed
+      ? (parsed as { resume?: unknown }).resume
+      : parsed;
+  const candidate = sanitizeResumeCandidate(raw_candidate);
+  const result = resumeContentSchema.safeParse(candidate);
+  if (!result.success) return null;
+
+  const data = result.data;
+  return {
+    ...data,
+    experience: data.experience
+      .slice(0, MAX_ROLES)
+      .map((e) => ({ ...e, bullets: e.bullets.slice(0, MAX_BULLETS) })),
+    skills: data.skills.slice(0, MAX_SKILLS),
+    projects: data.projects
+      ?.filter((p) => p.description.trim().length > 0 || (p.bullets?.length ?? 0) > 0)
+      .slice(0, MAX_PROJECTS)
+      .map((p) => ({ ...p, bullets: p.bullets?.slice(0, 3) })),
+    achievements: data.achievements?.slice(0, MAX_ACHIEVEMENTS),
+    sectionOrder: data.sectionOrder ?? ["summary", "skills", "experience", "projects", "others", "education", "certifications"],
+  };
+}
+
+const VALID_SECTION_KEYS = new Set([
+  "summary", "experience", "skills", "education", "certifications", "projects", "others",
+]);
+
+function sanitizeResumeCandidate(candidate: unknown): unknown {
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return candidate;
+  const c = { ...(candidate as Record<string, unknown>) };
+
+  // Trim skills to schema cap (AI frequently returns more than MAX_SKILLS)
+  if (Array.isArray(c.skills)) {
+    c.skills = c.skills.slice(0, MAX_SKILLS);
+  }
+
+  // Fix sectionOrder: replace "achievements" -> "others", drop unknown keys
+  if (Array.isArray(c.sectionOrder)) {
+    c.sectionOrder = c.sectionOrder
+      .map((k: unknown) => (k === "achievements" ? "others" : k))
+      .filter((k: unknown) => typeof k === "string" && VALID_SECTION_KEYS.has(k));
+  }
+
+  // Filter empty bullets from experience entries
+  if (Array.isArray(c.experience)) {
+    c.experience = c.experience.map((entry: unknown) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) return entry;
+      const e = { ...(entry as Record<string, unknown>) };
+      if (Array.isArray(e.bullets)) {
+        e.bullets = e.bullets.filter((b: unknown) => typeof b === "string" && b.trim().length > 0);
+      }
+      return e;
+    });
+  }
+
+  // Filter empty bullets from project entries
+  if (Array.isArray(c.projects)) {
+    c.projects = c.projects.map((proj: unknown) => {
+      if (!proj || typeof proj !== "object" || Array.isArray(proj)) return proj;
+      const p = { ...(proj as Record<string, unknown>) };
+      if (Array.isArray(p.bullets)) {
+        p.bullets = p.bullets.filter((b: unknown) => typeof b === "string" && b.trim().length > 0);
+      }
+      return p;
+    });
+  }
+
+  return c;
 }
 
 /**
