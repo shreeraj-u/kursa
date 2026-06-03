@@ -39,7 +39,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data;
 }
 
-export type ResumeUploadResult = {
+type ResumeUploadResult = {
   importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
   importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; startDate: string | null; endDate: string | null; isCurrent: boolean }>;
   importedProjects: ProjectInput[];

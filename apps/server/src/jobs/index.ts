@@ -81,9 +81,3 @@ export function startJobWorkers(redisUrl: string): void {
   console.info("[jobs] BullMQ intelligence workers started");
 }
 
-export async function stopJobWorkers(): Promise<void> {
-  await worker?.close();
-  await queue?.close();
-  worker = null;
-  queue = null;
-}

@@ -97,13 +97,9 @@ export async function getAdvisorEventWindow(userId: string): Promise<Date> {
 
 export { eventToTag };
 export type { CreateCareerEventInput };
+// fallow-ignore-next-line unused-export
 export {
   createCareerEventIntelligence,
-  explicitSkillNames,
   getAdvisorEventWindowStart,
-  isAdvisorSignalEvent,
   selectAdvisorSignalEvents,
-  shouldApplyProfileDelta,
-  shouldResolveInitialLinks,
-  shouldScheduleUserEnrichment,
 } from "./core.js";

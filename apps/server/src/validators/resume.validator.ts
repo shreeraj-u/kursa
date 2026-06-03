@@ -14,13 +14,11 @@ export {
   MAX_ROLES,
   MAX_BULLETS,
   MAX_SKILLS,
-  MAX_EDUCATION,
-  MAX_CERTIFICATIONS,
   MAX_PROJECTS,
   MAX_ACHIEVEMENTS,
 };
 
-export const sectionKeySchema = z.enum([
+const sectionKeySchema = z.enum([
   "summary",
   "experience",
   "skills",
@@ -31,7 +29,7 @@ export const sectionKeySchema = z.enum([
 ]);
 
 
-export const experienceSchema = z.object({
+const experienceSchema = z.object({
   company: z.string().min(1),
   roleTitle: z.string().min(1),
   period: z.string().min(1),
@@ -95,7 +93,7 @@ export const resumeContentSchema = z.object({
   sectionOrder: z.array(sectionKeySchema).optional(),
 });
 
-export const atsIssueSchema = z.object({
+const atsIssueSchema = z.object({
   severity: z.enum(["high", "medium", "low"]),
   message: z.string().min(1),
   fix: z.string().min(1),

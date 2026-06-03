@@ -68,7 +68,7 @@ const SKIP_GRAPH_LINK_TYPES = new Set<CareerEventType>([
   "system",
 ]);
 
-export function explicitSkillNames(type: CareerEventType, structured: unknown): string[] {
+function explicitSkillNames(type: CareerEventType, structured: unknown): string[] {
   const s = structured as Record<string, unknown>;
   if (type === "win" && Array.isArray(s.skillNames)) {
     return (s.skillNames as string[]).filter(Boolean);
@@ -82,7 +82,7 @@ export function explicitSkillNames(type: CareerEventType, structured: unknown): 
   return [];
 }
 
-export function shouldResolveInitialLinks(input: CreateCareerEventInput): boolean {
+function shouldResolveInitialLinks(input: CreateCareerEventInput): boolean {
   return (
     input.linkedSkillIds == null &&
     input.linkedPathId == null &&
@@ -92,15 +92,15 @@ export function shouldResolveInitialLinks(input: CreateCareerEventInput): boolea
   );
 }
 
-export function shouldApplyProfileDelta(input: CreateCareerEventInput): boolean {
+function shouldApplyProfileDelta(input: CreateCareerEventInput): boolean {
   return !input.skipDelta;
 }
 
-export function shouldScheduleUserEnrichment(input: CreateCareerEventInput): boolean {
+function shouldScheduleUserEnrichment(input: CreateCareerEventInput): boolean {
   return !input.skipEnrich && input.source === "user";
 }
 
-export function isAdvisorSignalEvent(event: { type: CareerEventType; source?: CareerEventSource }): boolean {
+function isAdvisorSignalEvent(event: { type: CareerEventType; source?: CareerEventSource }): boolean {
   return event.type !== "aria_observation";
 }
 

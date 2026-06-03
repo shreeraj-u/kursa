@@ -8,7 +8,7 @@ export type CompleteOnboardingInput = import("@kursa/types").OnboardingPayload;
 
 // Loose schema for AI onboarding review.
 // Coerces possible non-standard responses from LLMs (e.g. status: "blocked" which maps to "needs_user_review")
-export const looseReviewIssueSchema = z.object({
+const looseReviewIssueSchema = z.object({
   id: z.string().trim().min(1).max(120),
   severity: z.enum(["critical", "warning", "suggestion"]),
   category: z.enum(["validation", "safety", "consistency", "completeness", "quality"]),

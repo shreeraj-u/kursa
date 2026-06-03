@@ -35,7 +35,7 @@ export async function resolveInitialLinks(
   };
 }
 
-export async function enrichEventAsync(
+async function enrichEventAsync(
   userId: string,
   profileId: string,
   eventId: string,

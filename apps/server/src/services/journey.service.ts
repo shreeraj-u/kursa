@@ -460,7 +460,7 @@ function toCareerJourney(row: {
  * Rule-based cold-start journey so the UI is never empty when AI output fails
  * validation or the profile is too sparse to reason over.
  */
-export function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourney {
+function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourney {
   const current = snapshot.workHistories.find((w) => w.endYear === "present");
   const startRole = current?.roleTitle ?? "your current role";
   const target = snapshot.targetRole ?? "a senior role in your field";

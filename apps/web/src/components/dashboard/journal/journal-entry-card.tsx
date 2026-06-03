@@ -21,7 +21,7 @@ type Props = {
   onSourceClick?: (eventId: string) => void;
 };
 
-export function JournalEntryCard({ entry, variant = "timeline", highlight }: Props) {
+function JournalEntryCard({ entry, variant = "timeline", highlight }: Props) {
   const accent = TAG_ACCENT[entry.tag] ?? "var(--line)";
   const win = entry.tag === "win" ? parseWinStructured(entry.structured) : null;
   const feedback = entry.tag === "feedback" ? parseFeedbackStructured(entry.structured) : null;

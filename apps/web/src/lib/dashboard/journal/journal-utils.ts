@@ -1,4 +1,4 @@
-import type { FeedbackStructured, RelevanceSummary, WinStructured } from "@kursa/types";
+import type { FeedbackStructured, WinStructured } from "@kursa/types";
 
 export type JournalTab = "timeline" | "review";
 
@@ -28,10 +28,8 @@ export type JournalContext = {
 
 export type TrendPoint = { weekLabel: string; value: number; summary?: string };
 
-export type RelevanceData = RelevanceSummary;
-
 /** User-facing labels for backend tags / compose types */
-export const TAG_DISPLAY_LABEL: Record<string, string> = {
+const TAG_DISPLAY_LABEL: Record<string, string> = {
   win: "accomplishment",
   note: "note",
   feedback: "feedback",
@@ -77,7 +75,7 @@ export function parseFeedbackStructured(structured: unknown): FeedbackStructured
   return s;
 }
 
-export function formatDayGroup(iso: string): string {
+function formatDayGroup(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

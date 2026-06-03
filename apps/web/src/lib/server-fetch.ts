@@ -40,9 +40,3 @@ export async function serverFetch<T>(
 
   return { ok: false, status: 0 };
 }
-
-/** @deprecated Prefer serverFetch and check result.ok */
-export async function serverFetchOrNull<T>(path: string): Promise<T | null> {
-  const result = await serverFetch<T>(path);
-  return result.ok ? result.data : null;
-}

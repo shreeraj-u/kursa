@@ -117,24 +117,6 @@ export async function createLearning(userId: string, input: CreateLearningInput)
   });
 }
 
-export async function createApplicationUpdate(
-  userId: string,
-  input: {
-    applicationId: string;
-    company: string;
-    roleTitle: string;
-    previousStage?: string;
-    newStage: string;
-  },
-) {
-  return ingestEvent(userId, {
-    type: "application_update",
-    source: "system",
-    body: `${input.company} · ${input.roleTitle}: ${input.previousStage ?? "unknown"} → ${input.newStage}`,
-    structured: input,
-    skipDelta: true,
-  });
-}
 
 export async function getJournalContext(userId: string): Promise<JournalContext | null> {
   const profile = await prisma.profile.findUnique({
@@ -234,12 +216,8 @@ export async function getCompositeEngagementTrend(userId: string): Promise<Senti
   return points;
 }
 
-/** @deprecated Use getCompositeEngagementTrend — kept for backward compatibility */
-export async function getSentimentTrend(userId: string): Promise<SentimentTrendPoint[]> {
-  return getCompositeEngagementTrend(userId);
-}
 
-export function computeTrendLabel(points: SentimentTrendPoint[]): string {
+function computeTrendLabel(points: SentimentTrendPoint[]): string {
   if (points.length < 4) return "building baseline";
   const first = points.slice(0, 4).reduce((s, p) => s + p.value, 0) / 4;
   const last = points.slice(-4).reduce((s, p) => s + p.value, 0) / 4;

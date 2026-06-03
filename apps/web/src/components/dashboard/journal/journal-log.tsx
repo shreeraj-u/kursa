@@ -145,4 +145,4 @@ export function JournalTimelineTab({
 }
 
 /** @deprecated use JournalTimelineTab */
-export const JournalLogTab = JournalTimelineTab;
+const JournalLogTab = JournalTimelineTab;

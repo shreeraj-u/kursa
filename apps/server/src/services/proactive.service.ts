@@ -89,7 +89,7 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
   return nudges;
 }
 
-export async function recordProactiveNudgeDelivered(
+async function recordProactiveNudgeDelivered(
   userId: string,
   nudge: ProactiveNudge,
 ): Promise<void> {

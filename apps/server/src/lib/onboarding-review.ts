@@ -101,6 +101,7 @@ function setPathValue(target: unknown, path: string, value: unknown): boolean {
   return true;
 }
 
+// fallow-ignore-next-line unused-export
 export function sanitizeReviewProposedValue(payload: OnboardingPayload, path: string, proposedValue: unknown): unknown | undefined {
   const pathAllowed = onboardingReviewIssueSchema.safeParse({
     id: "proposal-check",
@@ -140,7 +141,7 @@ function sanitizeReview(payload: OnboardingPayload, review: OnboardingReviewResp
   });
 }
 
-export function deterministicOnboardingReview(input: unknown): OnboardingReviewResponse {
+function deterministicOnboardingReview(input: unknown): OnboardingReviewResponse {
   const parsed = onboardingPayloadSchema.safeParse(input);
   if (!parsed.success) {
     const warnings = parsed.error.issues.map((issue) => makeIssue({

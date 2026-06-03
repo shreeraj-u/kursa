@@ -98,4 +98,4 @@ export async function parseResumeText(rawText: string): Promise<ResumeParseResul
   };
 }
 
-export type { ParsedSkill, ResumeParseResult };
+export type { ResumeParseResult };

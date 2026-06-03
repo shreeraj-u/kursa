@@ -20,15 +20,8 @@ export async function resolveSkillIds(
   return [...new Set(ids)];
 }
 
-export async function getActivePathId(userId: string): Promise<string | null> {
-  const path = await prisma.careerPath.findFirst({
-    where: { profile: { userId }, isActive: true },
-    select: { id: true },
-  });
-  return path?.id ?? null;
-}
 
-export async function getCurrentWorkHistoryId(profileId: string): Promise<string | null> {
+async function getCurrentWorkHistoryId(profileId: string): Promise<string | null> {
   const wh = await prisma.workHistory.findFirst({
     where: { profileId, isCurrent: true },
     select: { id: true },

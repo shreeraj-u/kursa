@@ -18,6 +18,7 @@ const FALLBACK_PATTERNS = [
   /You haven't applied to any .* roles yet/,
 ] as const;
 
+// fallow-ignore-next-line unused-export
 export function isFallbackObservationText(text: string): boolean {
   return FALLBACK_PATTERNS.some((pattern) => pattern.test(text));
 }
@@ -251,7 +252,3 @@ function paginateObservations(
   };
 }
 
-export async function getMaterialChangeFlag(userId: string): Promise<boolean> {
-  const context = await assembleAdvisorContext(userId, "paths");
-  return context?.materialChangeDetected ?? false;
-}
