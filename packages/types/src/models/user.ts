@@ -9,6 +9,7 @@ export interface UserSkill {
   proficiencyLevel: string | null;
   confidenceRating: number | null;
   lastUsedDate: Date | null;
+  source: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -100,6 +101,7 @@ export interface UserLearningGoal {
   targetProficiency: string | null;
   deadline: string | null;
   status: string;
+  position: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -21,7 +21,7 @@ async function getProfileId(userId: string): Promise<string> {
   return profile.id;
 }
 
-const PROFILE_INCLUDE = {
+const PROFILE_INCLUDE: Prisma.ProfileInclude = {
   skills: true,
   workHistories: true,
   educations: true,
@@ -30,15 +30,15 @@ const PROFILE_INCLUDE = {
   languages: true,
   workAuthorizations: true,
   constraints: true,
-  learningGoals: true,
+  learningGoals: { orderBy: [{ status: "asc" }, { position: "asc" }, { createdAt: "asc" }] },
   socialLinks: true,
   jobApplications: true,
-} as const;
+};
 
 /**
  * Returns the full profile for a given user, or null if none exists yet.
  */
-export async function getProfile(userId: string): Promise<Prisma.ProfileGetPayload<{ include: typeof PROFILE_INCLUDE }> | null> {
+export async function getProfile(userId: string) {
   return prisma.profile.findUnique({
     where: { userId },
     include: PROFILE_INCLUDE,
@@ -135,13 +135,30 @@ export async function deleteSkill(userId: string, skillId: string) {
 
 export async function createLearningGoal(userId: string, data: LearningGoalCreateInput) {
   const profileId = await getProfileId(userId);
+  const status = data.status ?? "PLANNED";
+  const existing = await prisma.learningGoal.findFirst({
+    where: {
+      profileId,
+      skillName: { equals: data.skillName, mode: "insensitive" },
+    },
+  });
+
+  if (existing) return existing;
+
+  const position =
+    data.position ??
+    (await prisma.learningGoal.count({
+      where: { profileId, status },
+    }));
+
   return prisma.learningGoal.create({
     data: {
       profileId,
       skillName: data.skillName,
       targetProficiency: data.targetProficiency ?? null,
       deadline: data.deadline ? new Date(data.deadline) : null,
-      status: data.status ?? "PLANNED",
+      status,
+      position,
     },
   });
 }

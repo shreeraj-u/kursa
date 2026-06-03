@@ -173,6 +173,8 @@ export function SkillGap({
     try {
       const { learningGoal } = await api.createLearningGoal({
         skillName: gap.skill,
+        status: "PLANNED",
+        position: goals.filter((goal) => goal.status === "PLANNED").length,
         gapPriority: gap.priority,
         pathTitle: activePath?.title,
         whyItMatters: gap.whyItMatters,
