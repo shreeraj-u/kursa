@@ -4,6 +4,8 @@
 // rather than being replaced. Milestone `status` is AI-inferred at generation time
 // but can also be set manually by the user (user wins).
 
+import { z } from "zod";
+
 export type MilestoneStatus = "not_started" | "in_progress" | "completed";
 
 export type JourneyDetailPriority = "high" | "medium" | "low";
@@ -26,17 +28,25 @@ export interface CareerJourneyRisk {
 }
 
 export interface CareerJourneyDetails {
+  strategySummary?: string;
   fitReasons: string[];
   skillGaps: CareerJourneySkillGap[];
   nextActions: CareerJourneyNextAction[];
   risks: CareerJourneyRisk[];
   evidence: string[];
+  assumptions?: string[];
+  tradeoffs?: string[];
+  confidenceFactors?: string[];
 }
 
 export interface JourneyMilestone {
   order: number;
   title: string;
   description: string;
+  whyItMatters?: string;
+  successCriteria?: string[];
+  proofArtifacts?: string[];
+  firstStep?: string;
   status: MilestoneStatus;
   manuallySet?: boolean;
   estimatedMonthsFromNow: number;
@@ -59,6 +69,36 @@ export interface CareerJourney {
   milestones: JourneyMilestone[];
 }
 
+const optionalPreferenceText = (max: number) =>
+  z.string().trim().max(max, `Keep this under ${max} characters`).default("");
+
+export const journeyGrowthPaceSchema = z.enum(["steady", "accelerated", "exploratory"]).or(z.literal(""));
+
+export const journeyPrioritySchema = z.enum([
+  "salary",
+  "stability",
+  "leadership",
+  "autonomy",
+  "learning",
+  "location",
+  "remote",
+  "impact",
+]);
+
+export const journeyPreferencesSchema = z.object({
+  preferredDirection: optionalPreferenceText(800),
+  leanToward: optionalPreferenceText(800),
+  avoid: optionalPreferenceText(800),
+  growthPace: journeyGrowthPaceSchema.default(""),
+  priorities: z.array(journeyPrioritySchema).max(5, "Choose up to 5 priorities").default([]),
+  hardConstraints: optionalPreferenceText(1_000),
+  notes: optionalPreferenceText(1_500),
+});
+
+export type JourneyGrowthPace = z.infer<typeof journeyGrowthPaceSchema>;
+export type JourneyPriority = z.infer<typeof journeyPrioritySchema>;
+export type JourneyPreferences = z.infer<typeof journeyPreferencesSchema>;
+
 export type JourneyDomain = "path" | "skill" | "application";
 export type JourneyUrgency = "urgent" | "important" | "later";
 
@@ -75,4 +115,5 @@ export interface CareerJourneyResponse {
   journey: CareerJourney | null;
   timeline: JourneyMilestone[];
   actionQueue: JourneyActionItem[];
+  journeyPreferences?: JourneyPreferences;
 }

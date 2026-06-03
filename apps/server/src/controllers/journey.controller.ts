@@ -1,11 +1,15 @@
 import type { Request, Response } from "express";
 
 import { z } from "zod";
+import { journeyPreferencesSchema } from "@kursa/types";
 import { Errors } from "../errors/http-error.js";
 import { ok } from "../lib/respond.js";
 import * as journeyService from "../services/journey.service.js";
 
 const milestoneStatusSchema = z.enum(["not_started", "in_progress", "completed"]).nullable();
+const generateJourneySchema = z.object({
+  journeyPreferences: journeyPreferencesSchema.optional(),
+});
 
 /**
  * GET /api/v1/profile/me/journey
@@ -21,7 +25,12 @@ export async function getJourney(req: Request, res: Response): Promise<void> {
  * Generates the user's single best-fit career journey (replaces any existing one).
  */
 export async function generateJourney(req: Request, res: Response): Promise<void> {
-  const journey = await journeyService.generateJourney(req.user!.id);
+  const parsed = generateJourneySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    throw Errors.badRequest("Invalid journey preferences", z.flattenError(parsed.error));
+  }
+
+  const journey = await journeyService.generateJourney(req.user!.id, parsed.data.journeyPreferences);
   if (journey === null) throw Errors.notFound("Profile");
   ok(res, { journey });
 }

@@ -1,4 +1,5 @@
 import type { JobApplication } from './job';
+import type { JourneyPreferences } from '../api/journey';
 
 export interface UserSkill {
   id: string;
@@ -130,6 +131,7 @@ export interface ProfileValues {
   maxSalary?: number;
   currency?: string;
   geographicConstraints?: string[];
+  journeyPreferences?: JourneyPreferences;
 }
 
 export interface UserProfile {

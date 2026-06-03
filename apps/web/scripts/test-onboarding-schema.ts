@@ -1,4 +1,8 @@
-import { onboardingPayloadSchema, onboardingReviewIssueSchema } from "@kursa/types";
+import {
+  journeyPreferencesSchema,
+  onboardingPayloadSchema,
+  onboardingReviewIssueSchema,
+} from "@kursa/types";
 
 type TestCase = {
   name: string;
@@ -193,6 +197,41 @@ const tests: TestCase[] = [
         proposedValue: "secret",
       });
       assert(!result.success, "expected invalid proposedValue path");
+    },
+  },
+  {
+    name: "journey preferences are optional and default empty",
+    run: () => {
+      const result = journeyPreferencesSchema.safeParse({});
+      assert(result.success, "expected empty journey preferences to be valid");
+      if (result.success) {
+        assert(result.data.preferredDirection === "", "preferredDirection should default");
+        assert(result.data.priorities.length === 0, "priorities should default");
+      }
+    },
+  },
+  {
+    name: "journey preferences accept populated optional guidance",
+    run: () => {
+      const result = journeyPreferencesSchema.safeParse({
+        preferredDirection: "Staff AI Engineer",
+        leanToward: "Developer tools and applied AI",
+        avoid: "Pure people management",
+        growthPace: "accelerated",
+        priorities: ["learning", "impact", "salary"],
+        hardConstraints: "Remote-friendly roles only",
+        notes: "Prefer a path that keeps hands-on technical work.",
+      });
+      assert(result.success, "expected populated journey preferences to be valid");
+    },
+  },
+  {
+    name: "journey preferences reject overlong text",
+    run: () => {
+      const result = journeyPreferencesSchema.safeParse({
+        notes: "x".repeat(1_501),
+      });
+      assert(!result.success, "expected overlong journey preference notes to fail");
     },
   },
 ];

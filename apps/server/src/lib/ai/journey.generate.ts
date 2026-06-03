@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { CareerJourney, CareerJourneyDetails, JourneyMilestone } from "@kursa/types";
+import type {
+  CareerJourney,
+  CareerJourneyDetails,
+  JourneyMilestone,
+  JourneyPreferences,
+} from "@kursa/types";
 
 import { openai } from "../openai.js";
 import {
@@ -18,6 +23,10 @@ export type GeneratedMilestone = {
   order: number;
   title: string;
   description: string;
+  whyItMatters?: string;
+  successCriteria?: string[];
+  proofArtifacts?: string[];
+  firstStep?: string;
   estimatedMonthsFromNow: number;
   salaryBand: { min: number; max: number; currency: "USD" };
   requiredSkills: string[];
@@ -33,6 +42,8 @@ export type JourneyProfileSnapshot = {
   yearsOfExperience: number | null;
   careerTrajectory: string | null;
   aspirations: unknown;
+  values: unknown;
+  journeyPreferences: JourneyPreferences | null;
   skills: Array<{ name: string; confidenceRating: number | null }>;
   workHistories: Array<{
     roleTitle: string;
@@ -48,6 +59,10 @@ const milestoneSchema = z.object({
   order: z.number().int(),
   title: z.string().min(1),
   description: z.string().min(1),
+  whyItMatters: z.string().min(1).optional().default(""),
+  successCriteria: z.array(z.string().min(1)).optional().default([]),
+  proofArtifacts: z.array(z.string().min(1)).optional().default([]),
+  firstStep: z.string().min(1).optional().default(""),
   estimatedMonthsFromNow: z.number().int().nonnegative(),
   salaryBand: z.object({
     min: z.number().nonnegative(),
@@ -59,6 +74,7 @@ const milestoneSchema = z.object({
 });
 
 const journeyDetailsSchema = z.object({
+  strategySummary: z.string().min(1).optional().default(""),
   fitReasons: z.array(z.string().min(1)).default([]),
   skillGaps: z
     .array(
@@ -87,6 +103,9 @@ const journeyDetailsSchema = z.object({
     )
     .default([]),
   evidence: z.array(z.string().min(1)).default([]),
+  assumptions: z.array(z.string().min(1)).optional().default([]),
+  tradeoffs: z.array(z.string().min(1)).optional().default([]),
+  confidenceFactors: z.array(z.string().min(1)).optional().default([]),
 });
 
 const generatedJourneySchema = z.object({
@@ -238,7 +257,14 @@ async function callJson(
 function normaliseJourney(journey: GeneratedJourney): GeneratedJourney {
   const milestones = [...journey.milestones]
     .sort((a, b) => a.estimatedMonthsFromNow - b.estimatedMonthsFromNow)
-    .map((m, i) => ({ ...m, order: i + 1 }));
+    .map((m, i) => ({
+      ...m,
+      order: i + 1,
+      whyItMatters: m.whyItMatters ?? "",
+      successCriteria: m.successCriteria ?? [],
+      proofArtifacts: m.proofArtifacts ?? [],
+      firstStep: m.firstStep ?? "",
+    }));
   return { ...journey, details: normaliseDetails(journey.details), milestones };
 }
 
@@ -246,10 +272,14 @@ function normaliseDetails(
   details: CareerJourneyDetails | null | undefined,
 ): CareerJourneyDetails {
   return {
+    strategySummary: details?.strategySummary ?? "",
     fitReasons: details?.fitReasons ?? [],
     skillGaps: details?.skillGaps ?? [],
     nextActions: details?.nextActions ?? [],
     risks: details?.risks ?? [],
     evidence: details?.evidence ?? [],
+    assumptions: details?.assumptions ?? [],
+    tradeoffs: details?.tradeoffs ?? [],
+    confidenceFactors: details?.confidenceFactors ?? [],
   };
 }

@@ -2,11 +2,13 @@ import prisma, { Prisma } from "@kursa/db";
 import type {
   CareerJourney,
   CareerJourneyResponse,
+  JourneyPreferences,
   JourneyActionItem,
   JourneyMilestone,
   JourneyUrgency,
   MilestoneStatus,
 } from "@kursa/types";
+import { journeyPreferencesSchema } from "@kursa/types";
 
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import {
@@ -26,6 +28,7 @@ const PROFILE_SELECT = {
   location: true,
   yearsOfExperience: true,
   careerTrajectory: true,
+  values: true,
   aspirations: true,
   skills: {
     select: { name: true, confidenceRating: true },
@@ -69,12 +72,21 @@ async function loadJourneyRow(profileId: string) {
  * Replaces any existing journey. On AI failure after retry, persists a
  * rule-based fallback journey instead.
  */
-export async function generateJourney(userId: string): Promise<CareerJourney | null> {
+export async function generateJourney(
+  userId: string,
+  journeyPreferences?: JourneyPreferences,
+): Promise<CareerJourney | null> {
   const context = await assembleAdvisorContext(userId, "paths");
   if (!context) return null;
 
-  const profile = await loadProfile(userId);
+  let profile = await loadProfile(userId);
   if (!profile) return null;
+
+  if (journeyPreferences !== undefined) {
+    await saveJourneyPreferences(profile.id, profile.values, journeyPreferences);
+    profile = await loadProfile(userId);
+    if (!profile) return null;
+  }
 
   const snapshot = toSnapshot(profile);
   const enrichedSnapshot = {
@@ -196,6 +208,10 @@ export async function autoExtend(userId: string): Promise<CareerJourney | null> 
       order: existing.length + i + 1,
       title: m.title,
       description: m.description,
+      whyItMatters: m.whyItMatters,
+      successCriteria: m.successCriteria ?? [],
+      proofArtifacts: m.proofArtifacts ?? [],
+      firstStep: m.firstStep,
       estimatedMonthsFromNow: Math.max(m.estimatedMonthsFromNow, lastMonths + 1),
       salaryBand: m.salaryBand,
       requiredSkills: m.requiredSkills,
@@ -228,6 +244,7 @@ export async function getJourney(userId: string): Promise<CareerJourneyResponse>
     where: { userId },
     select: {
       id: true,
+      values: true,
       careerPaths: {
         where: { isActive: true },
         orderBy: { createdAt: "desc" },
@@ -244,12 +261,14 @@ export async function getJourney(userId: string): Promise<CareerJourneyResponse>
   });
 
   if (!profile) {
-    return { journey: null, timeline: [], actionQueue: [] };
+    return { journey: null, timeline: [], actionQueue: [], journeyPreferences: emptyJourneyPreferences() };
   }
+
+  const journeyPreferences = extractJourneyPreferences(profile.values);
 
   const journeyRow = profile.careerPaths[0] ?? null;
   if (!journeyRow) {
-    return { journey: null, timeline: [], actionQueue: [] };
+    return { journey: null, timeline: [], actionQueue: [], journeyPreferences };
   }
 
   const journey = toCareerJourney(journeyRow);
@@ -261,7 +280,7 @@ export async function getJourney(userId: string): Promise<CareerJourneyResponse>
     jobApplications: profile.jobApplications,
   });
 
-  return { journey, timeline, actionQueue };
+  return { journey, timeline, actionQueue, journeyPreferences };
 }
 
 // --- timeline + action queue ---
@@ -405,6 +424,7 @@ function sortQueue(items: JourneyActionItem[]): JourneyActionItem[] {
 // --- helpers ---
 
 function toSnapshot(profile: ProfileRow): JourneyProfileSnapshot {
+  const journeyPreferences = extractJourneyPreferences(profile.values);
   return {
     bio: profile.bio,
     targetRole: profile.targetRole,
@@ -412,6 +432,8 @@ function toSnapshot(profile: ProfileRow): JourneyProfileSnapshot {
     yearsOfExperience: profile.yearsOfExperience,
     careerTrajectory: profile.careerTrajectory,
     aspirations: profile.aspirations,
+    values: profile.values,
+    journeyPreferences,
     skills: profile.skills.map((s) => ({
       name: s.name,
       confidenceRating: s.confidenceRating,
@@ -432,6 +454,41 @@ function toSnapshot(profile: ProfileRow): JourneyProfileSnapshot {
       status: g.status,
     })),
   };
+}
+
+function emptyJourneyPreferences(): JourneyPreferences {
+  return journeyPreferencesSchema.parse({});
+}
+
+function extractJourneyPreferences(values: unknown): JourneyPreferences {
+  if (!values || typeof values !== "object" || Array.isArray(values)) {
+    return emptyJourneyPreferences();
+  }
+
+  const raw = (values as Record<string, unknown>).journeyPreferences;
+  const parsed = journeyPreferencesSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : emptyJourneyPreferences();
+}
+
+async function saveJourneyPreferences(
+  profileId: string,
+  currentValues: unknown,
+  journeyPreferences: JourneyPreferences,
+) {
+  const base =
+    currentValues && typeof currentValues === "object" && !Array.isArray(currentValues)
+      ? (currentValues as Record<string, unknown>)
+      : {};
+
+  await prisma.profile.update({
+    where: { id: profileId },
+    data: {
+      values: {
+        ...base,
+        journeyPreferences,
+      } as Prisma.InputJsonObject,
+    },
+  });
 }
 
 function toCareerJourney(row: {
@@ -470,6 +527,13 @@ function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourne
       order: 1,
       title: "Deepen your core strengths",
       description: `Build on what you already do in ${startRole} — take ownership of a project end-to-end.`,
+      whyItMatters: "This creates the clearest evidence that you can turn your current strengths into larger-scope outcomes.",
+      successCriteria: [
+        "Own one project from definition through delivery",
+        "Capture the decision points, collaborators, and outcome",
+      ],
+      proofArtifacts: ["Project case study", "Resume-ready impact bullet"],
+      firstStep: "Choose one current or recent project and write the outcome it should prove.",
       estimatedMonthsFromNow: 3,
       salaryBand: { min: 0, max: 0, currency: "USD" },
       requiredSkills: snapshot.skills.slice(0, 3).map((s) => s.name),
@@ -479,6 +543,13 @@ function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourne
       order: 2,
       title: "Broaden your scope",
       description: "Take on responsibility beyond your current remit to demonstrate range.",
+      whyItMatters: "Broader scope shows that your next move is not only a title change, but an expansion of judgment and influence.",
+      successCriteria: [
+        "Lead or influence work that crosses at least one team or function boundary",
+        "Document the new responsibility and what changed because of your involvement",
+      ],
+      proofArtifacts: ["Cross-functional work summary", "Stakeholder feedback"],
+      firstStep: "Identify one adjacent team, stakeholder, or workflow where your current skills could remove friction.",
       estimatedMonthsFromNow: 9,
       salaryBand: { min: 0, max: 0, currency: "USD" },
       requiredSkills: [],
@@ -488,6 +559,13 @@ function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourne
       order: 3,
       title: `Move toward ${target}`,
       description: `Position yourself for ${target} by closing the gaps that role requires.`,
+      whyItMatters: "This converts the journey from general growth into direct evidence for the target role.",
+      successCriteria: [
+        `Map the top requirements for ${target}`,
+        "Close or actively work on the highest-priority gaps",
+      ],
+      proofArtifacts: ["Target-role gap map", "Updated resume or portfolio narrative"],
+      firstStep: `Compare your current profile against three real ${target} descriptions and list repeated requirements.`,
       estimatedMonthsFromNow: 18,
       salaryBand: { min: 0, max: 0, currency: "USD" },
       requiredSkills: [],
@@ -502,6 +580,8 @@ function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourne
     confidenceScore: 0.5,
     projectedTimelineMonths: 18,
     details: {
+      strategySummary:
+        "This is a starter journey: first make your current strengths visible, then expand your scope, then translate that evidence toward the target role. It is intentionally conservative until Kursa has richer profile data to reason from.",
       fitReasons: [
         `Your current profile already points toward ${target}.`,
         "The journey starts with broad, profile-safe steps until richer career data is available.",
@@ -543,6 +623,20 @@ function buildFallbackJourney(snapshot: JourneyProfileSnapshot): GeneratedJourne
         snapshot.location
           ? `Location: ${snapshot.location}`
           : "No location preference captured yet",
+      ],
+      assumptions: [
+        "Your profile may not yet include every relevant project, skill, or constraint.",
+        "The safest first move is to deepen existing strengths before making a sharper pivot.",
+      ],
+      tradeoffs: [
+        "This path favors reliable evidence-building over aggressive speculation.",
+        "Recommendations may feel broad until you add more work outcomes and preferences.",
+      ],
+      confidenceFactors: [
+        "Confidence is limited by sparse profile evidence.",
+        snapshot.targetRole
+          ? "A target role is available, which helps orient the journey."
+          : "No explicit target role is available yet, so the target remains broad.",
       ],
     },
     milestones,

@@ -4,6 +4,7 @@ import { env } from "@kursa/env/web";
 import type {
   CareerJourney,
   CareerJourneyResponse,
+  JourneyPreferences,
   Resume,
   ResumeContent,
   ResumeImproveAtsResponse,
@@ -118,9 +119,10 @@ export const api = {
   journey: {
     get: () => request<CareerJourneyResponse>("/api/v1/profile/me/journey"),
 
-    generate: () =>
+    generate: (journeyPreferences?: JourneyPreferences) =>
       request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/generate", {
         method: "POST",
+        body: JSON.stringify(journeyPreferences ? { journeyPreferences } : {}),
       }),
 
     updateMilestone: (order: number, status: import("@kursa/types").MilestoneStatus | null) =>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  journeyPreferencesSchema,
   skillCategorySchema,
   skillProficiencySchema,
   learningGoalStatusSchema,
@@ -64,6 +65,7 @@ const valuesSchemaShape = z.object({
   maxSalary: z.number().optional(),
   currency: z.string().optional(),
   geographicConstraints: z.array(z.string()).optional(),
+  journeyPreferences: journeyPreferencesSchema.optional(),
 });
 
 const valuesSchema = z.preprocess(
@@ -80,6 +82,7 @@ const valuesSchema = z.preprocess(
       maxSalary: raw.maxSalary ?? raw.salary_max,
       currency: raw.currency ?? raw.salary_currency,
       geographicConstraints: raw.geographicConstraints ?? raw.geographic_constraints,
+      journeyPreferences: raw.journeyPreferences ?? raw.journey_preferences,
     };
   },
   valuesSchemaShape.optional().nullable()

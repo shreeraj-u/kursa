@@ -41,14 +41,22 @@ The journey has:
 - confidenceScore: 0–1, how achievable this path is given the user's ACTUAL current profile (be honest; a stretch pivot is lower)
 - projectedTimelineMonths: integer months to reach the final milestone
 - details: structured explanation for an interactive detail view:
+  - strategySummary: 2–3 plain-language sentences explaining the recommended strategy, who it is for, and how to read the journey
   - fitReasons: 2–4 concrete reasons this path fits the user's profile
   - skillGaps: 2–5 objects { skill, whyItMatters, priority: "high"|"medium"|"low" }
   - nextActions: 2–4 objects { title, description, timeframe } for what to do next
   - risks: 1–3 objects { risk, mitigation } describing tradeoffs or blockers
   - evidence: 2–5 short profile-backed facts used to justify the path
+  - assumptions: 2–4 explicit assumptions you are making because the profile is incomplete
+  - tradeoffs: 2–4 tradeoffs the user accepts by following this path
+  - confidenceFactors: 2–4 short factors that explain the confidence score
 - milestones: 4–5 ordered steps. Each milestone has:
   - order: 1-based sequence
   - title, description: specific and actionable
+  - whyItMatters: one sentence explaining why this milestone moves the user toward the target
+  - successCriteria: 2–4 concrete signs the milestone is complete
+  - proofArtifacts: 1–3 tangible outputs the user could show (project, metric, case study, endorsement, resume bullet, portfolio item)
+  - firstStep: one concrete action the user can take this week
   - estimatedMonthsFromNow: integer, strictly increasing across milestones
   - salaryBand: { min, max, currency: "USD" } — a CONSERVATIVE estimate from role + seniority + the user's location if present. These are estimates, not benchmarked data.
   - requiredSkills: array of skill names this milestone demands
@@ -56,13 +64,16 @@ The journey has:
 
 Rules:
 - Only reference facts present in the profile snapshot — never invent the user's history, skills, or employers.
+- Use journeyPreferences, values, and aspirations to shape direction, pace, tradeoffs, and constraints when present. Treat them as user guidance for the single best-fit journey, not as permission to invent missing experience.
+- If journeyPreferences conflict with the user's actual profile evidence, produce a realistic bridge path and call out the gap/risk instead of pretending the preference is already true.
 - Every details.evidence item must be traceable to the profile snapshot.
+- Every assumption, tradeoff, confidence factor, milestone success criterion, proof artifact, and first step must be grounded in the profile snapshot or clearly framed as a planning assumption.
 - Be specific to this user. A path that could appear unchanged on another user's screen is a failure.
 - All salary figures are USD estimates.
 
 Respond with JSON only: {"journey": { ... }}`;
 
-export const CORRECT_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"journey": { "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "details": { "fitReasons": string[], "skillGaps": [{ "skill": string, "whyItMatters": string, "priority": "high"|"medium"|"low" }], "nextActions": [{ "title": string, "description": string, "timeframe": string }], "risks": [{ "risk": string, "mitigation": string }], "evidence": string[] }, "milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }}. Produce exactly one journey with 4 to 5 milestones. No prose, JSON only.`;
+export const CORRECT_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"journey": { "title": string, "description": string, "confidenceScore": number 0-1, "projectedTimelineMonths": integer, "details": { "strategySummary": string, "fitReasons": string[], "skillGaps": [{ "skill": string, "whyItMatters": string, "priority": "high"|"medium"|"low" }], "nextActions": [{ "title": string, "description": string, "timeframe": string }], "risks": [{ "risk": string, "mitigation": string }], "evidence": string[], "assumptions": string[], "tradeoffs": string[], "confidenceFactors": string[] }, "milestones": [{ "order": integer, "title": string, "description": string, "whyItMatters": string, "successCriteria": string[], "proofArtifacts": string[], "firstStep": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started"|"in_progress"|"completed" }] }}. Produce exactly one journey with 4 to 5 milestones. No prose, JSON only.`;
 
 export const EXTEND_JOURNEY_PROMPT = `You are Kursa's AI career strategist. The user has COMPLETED every milestone on their current career journey. You receive a JSON object with the user's profile snapshot and their completed journey (title, description, and the milestones they finished).
 
@@ -71,6 +82,10 @@ Generate 3 to 5 NEW milestones that continue the journey BEYOND the completed on
 Each milestone has:
 - order: 1-based sequence (you will be re-numbered, but keep them ordered)
 - title, description: specific and actionable, building on the completed trajectory
+- whyItMatters: one sentence explaining why this continuation matters
+- successCriteria: 2–4 concrete signs the milestone is complete
+- proofArtifacts: 1–3 tangible outputs the user could show
+- firstStep: one concrete action the user can take this week
 - estimatedMonthsFromNow: integer months from NOW (today), strictly increasing across the new milestones
 - salaryBand: { min, max, currency: "USD" } — a CONSERVATIVE estimate; these later milestones should reflect higher seniority/scope than the completed ones
 - requiredSkills: array of skill names this milestone demands
@@ -83,7 +98,7 @@ Rules:
 
 Respond with JSON only: {"milestones": [ ... ]}`;
 
-export const CORRECT_EXTEND_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"milestones": [{ "order": integer, "title": string, "description": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started" }]}. Produce 3 to 5 new milestones. No prose, JSON only.`;
+export const CORRECT_EXTEND_JOURNEY_PROMPT = `Your previous response did not match the required schema. Re-emit ONLY valid JSON of the form {"milestones": [{ "order": integer, "title": string, "description": string, "whyItMatters": string, "successCriteria": string[], "proofArtifacts": string[], "firstStep": string, "estimatedMonthsFromNow": integer, "salaryBand": { "min": number, "max": number, "currency": "USD" }, "requiredSkills": string[], "status": "not_started" }]}. Produce 3 to 5 new milestones. No prose, JSON only.`;
 
 export const GENERATE_RESUME_PROMPT = `You are Kursa's resume engine. You receive a JSON snapshot of a user's career profile and, optionally, the career path they are working toward. Produce a single, complete, ATS-friendly resume tailored to THIS user.
 

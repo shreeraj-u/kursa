@@ -49,6 +49,13 @@ given the current Profile), projected timeline, and an ordered list of
 **Milestones**. Downstream features (skill gaps, job matching, resume) align to
 the Career Journey.
 
+### Journey Preferences
+Optional user-provided guidance collected immediately before generating a
+[[Career Journey]], such as preferred direction, pace, priorities, constraints,
+and paths to avoid. Journey Preferences shape the single AI-committed Career
+Journey but are not the journey itself and do not allow the AI to invent Profile
+evidence.
+
 ### Milestone
 An ordered step within a Career Journey: title, description, estimated months from
 now, salary band, and the skills it requires. A Milestone carries a **status**
