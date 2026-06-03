@@ -58,7 +58,7 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
     nudges.push({
       id: "checkin-reminder",
       type: "checkin_reminder",
-      title: checkIn.type === "checkin_monthly" ? "Monthly review due" : "Weekly pulse due",
+      title: "Weekly pulse due",
       message: "A quick check-in helps Aria track your momentum.",
       actionLabel: "Complete check-in",
       priority: "medium",

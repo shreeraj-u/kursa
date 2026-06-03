@@ -6,6 +6,8 @@ import { Download, Pencil, Sparkles } from "lucide-react";
 import type { AtsIssue, Resume, ResumeContent, ResumeQuota } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import { Button } from "@kursa/ui/components/button";
 import { api } from "@/lib/api";
 
@@ -127,7 +129,12 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
     return (
       <div className="flex flex-col min-h-full">
         <PageHeader pageTitle="Resume studio" />
-        <div className="px-8 pt-6 pb-8 flex flex-1 items-center justify-center">
+        <div className="px-8 pt-6 pb-8 flex flex-1 flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tighter text-ink">Resume studio</h1>
+            <PageHelpButton help={DASHBOARD_PAGE_HELP.resume} label="Resume studio" />
+          </div>
+          <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4 max-w-sm text-center">
             <div className="text-sm text-ink font-medium">No résumé yet</div>
             <div className="text-xs text-mute-2">
@@ -150,6 +157,7 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
             )}
             {error && <div className="mono text-2xs text-warn">{error}</div>}
           </div>
+          </div>
         </div>
       </div>
     );
@@ -161,9 +169,15 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
       <div className="px-8 pt-6 pb-8 flex flex-col gap-4 flex-1">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="mono text-xs text-mute">
-            {selected.targetRole ? `tailored · ${selected.targetRole}` : "general résumé"}
-            {editing && " · editing"}
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tighter text-ink">Resume studio</h1>
+              <PageHelpButton help={DASHBOARD_PAGE_HELP.resume} label="Resume studio" />
+            </div>
+            <div className="mono mt-1 text-xs text-mute">
+              {selected.targetRole ? `tailored · ${selected.targetRole}` : "general résumé"}
+              {editing && " · editing"}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="mono text-2xs text-mute-3">

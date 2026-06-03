@@ -13,6 +13,8 @@ import type {
 } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import { Button } from "@kursa/ui/components/button";
 import { api } from "@/lib/api";
 
@@ -135,7 +137,12 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
     return (
       <div className="flex flex-col min-h-full">
         <PageHeader pageTitle="Career journey" />
-        <div className="px-8 pt-6 pb-8 flex flex-1 items-center justify-center">
+        <div className="px-8 pt-6 pb-8 flex flex-1 flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tighter text-ink">Career journey</h1>
+            <PageHelpButton help={DASHBOARD_PAGE_HELP.careerJourney} label="Career journey" />
+          </div>
+          <div className="flex flex-1 items-center justify-center">
           {showSetup ? (
             <JourneySetupForm
               preferences={setupPreferences}
@@ -148,6 +155,7 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
           ) : (
             <EmptyJourneyIntro onGenerate={requestGenerate} generating={generating} error={error} />
           )}
+          </div>
         </div>
       </div>
     );
@@ -157,8 +165,14 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
     <div className="flex flex-col min-h-full">
       <PageHeader pageTitle="Career journey" />
       <div className="px-8 pt-6 pb-8 flex flex-col gap-5 flex-1">
-        <div className="flex items-center justify-between gap-4">
-          <div className="mono text-xs text-mute">active journey · {journey.title}</div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tighter text-ink">Career journey</h1>
+              <PageHelpButton help={DASHBOARD_PAGE_HELP.careerJourney} label="Career journey" />
+            </div>
+            <div className="mono mt-1 text-xs text-mute">active journey · {journey.title}</div>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setShowSetup((value) => !value)}

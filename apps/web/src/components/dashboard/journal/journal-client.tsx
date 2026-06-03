@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import { api } from "@/lib/api";
 
 import { JournalCompose, type JournalComposeData } from "./journal-compose";
@@ -161,7 +163,7 @@ export default function JournalClient() {
             type: checkIn.type!,
             responses,
           });
-          toast.success(checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved");
+          toast.success("Weekly pulse saved");
           setCheckIn(await api.checkins.next());
           refreshAfterSave();
           resolve(true);
@@ -195,7 +197,10 @@ export default function JournalClient() {
       <div className="flex flex-col gap-5 px-8 pb-8 pt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tighter text-ink">Journal</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tighter text-ink">Journal</h1>
+              <PageHelpButton help={DASHBOARD_PAGE_HELP.journal} label="Journal" />
+            </div>
             <p className="mt-1.5 text-sm leading-relaxed text-mute">
               Capture what happened — notes, accomplishments, feedback — so Kursa can help.
             </p>

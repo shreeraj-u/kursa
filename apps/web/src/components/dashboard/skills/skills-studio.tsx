@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import type { CareerJourney, UserSkill, UserLearningGoal } from "@kursa/types";
 
+import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
+
 import { SkillInventory } from "./skill-inventory";
 import { LearningGoals } from "./learning-goals";
 import { SkillGap } from "./skill-gap";
@@ -128,10 +132,15 @@ export function SkillsStudio({
   }, [skills, goals, activePath]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="flex min-h-full flex-col">
+      <PageHeader pageTitle="Skills" />
+      <div className="flex flex-col gap-6 px-8 pb-8 pt-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--ink)]">Skills</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-[var(--ink)]">Skills</h1>
+            <PageHelpButton help={DASHBOARD_PAGE_HELP.skills} label="Skills" />
+          </div>
           <p className="max-w-2xl text-sm leading-relaxed text-[var(--mute)]">
             Keep your Profile accurate, decide what you&apos;re building next, and understand which skills matter for your current journey.
           </p>
@@ -164,6 +173,7 @@ export function SkillsStudio({
             onSkillAdded={(skill) => setSkills((prev) => [...prev, skill])}
           />
         </div>
+      </div>
       </div>
     </div>
   );

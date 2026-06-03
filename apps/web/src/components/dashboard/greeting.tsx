@@ -1,10 +1,13 @@
 "use client";
 
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import type { DashboardPageHelp } from "@/components/dashboard/page-help";
 import type { DashboardMetrics } from "@/types/profile";
 
 interface GreetingProps {
     user: { name: string; createdAt: string };
     metrics: DashboardMetrics | null;
+    help?: DashboardPageHelp;
 }
 
 function getGreeting(): string {
@@ -31,15 +34,18 @@ function getSubtext(metrics: DashboardMetrics | null): string {
     return "Your profile is up to date.";
 }
 
-export default function Greeting({ user, metrics }: GreetingProps) {
+export default function Greeting({ user, metrics, help }: GreetingProps) {
     const firstName = user.name.split(" ")[0];
     const greeting = getGreeting();
 
     return (
         <div>
-            <h1 className="text-2xl font-bold tracking-tighter text-ink">
-                {greeting}, {firstName}.
-            </h1>
+            <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tighter text-ink">
+                    {greeting}, {firstName}.
+                </h1>
+                {help && <PageHelpButton help={help} label="Home" />}
+            </div>
             <p className="text-sm text-mute leading-relaxed mt-1.5">
                 {getSubtext(metrics)}
             </p>

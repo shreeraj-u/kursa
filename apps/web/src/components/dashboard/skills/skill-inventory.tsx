@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 type Category = (typeof skillCategoryValues)[number];
 type Proficiency = (typeof skillProficiencyValues)[number];
 type Filter = "all" | "missing_level" | "dormant";
+type SortMode = "needs_review" | "az" | "level" | "confidence";
 
 const CATEGORY_COLOR: Record<Category, string> = {
   technical: "#6366f1",
@@ -51,6 +52,12 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 const DORMANT_MONTHS = 6;
+const PROFICIENCY_RANK: Record<Proficiency, number> = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+  expert: 4,
+};
 
 function monthsSince(date: string | Date | null): number | null {
   if (!date) return null;
@@ -70,6 +77,33 @@ function recencyLabel(date: string | Date | null): string {
 function isDormant(skill: UserSkill): boolean {
   const months = monthsSince(skill.lastUsedDate);
   return months !== null && months >= DORMANT_MONTHS;
+}
+
+function needsReviewScore(skill: UserSkill): number {
+  if (!skill.proficiencyLevel) return 0;
+  if (isDormant(skill)) return 1;
+  if (!skill.confidenceRating) return 2;
+  return 3;
+}
+
+function sortSkillList(skills: UserSkill[], mode: SortMode) {
+  return [...skills].sort((a, b) => {
+    if (mode === "needs_review") {
+      const review = needsReviewScore(a) - needsReviewScore(b);
+      if (review !== 0) return review;
+    }
+    if (mode === "level") {
+      const level =
+        (PROFICIENCY_RANK[b.proficiencyLevel as Proficiency] ?? 0) -
+        (PROFICIENCY_RANK[a.proficiencyLevel as Proficiency] ?? 0);
+      if (level !== 0) return level;
+    }
+    if (mode === "confidence") {
+      const confidence = (b.confidenceRating ?? 0) - (a.confidenceRating ?? 0);
+      if (confidence !== 0) return confidence;
+    }
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  });
 }
 
 function sourceLabel(skill: UserSkill): string {
@@ -108,7 +142,7 @@ function SkillCard({
 
   return (
     <div
-      className="rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3 transition-colors"
+      className={`rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3 transition-colors ${expanded ? "xl:col-span-2" : ""}`}
       style={{ opacity: dormant && !expanded ? 0.7 : 1 }}
     >
       <button
@@ -356,6 +390,7 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("needs_review");
 
   const visibleSkills = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -375,8 +410,11 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
       const cat = (s.category as Category) ?? "technical";
       (map[cat] ?? map.technical).push(s);
     }
+    for (const cat of skillCategoryValues) {
+      map[cat] = sortSkillList(map[cat], sortMode);
+    }
     return map;
-  }, [visibleSkills]);
+  }, [visibleSkills, sortMode]);
 
   async function saveSkill(id: string, patch: SkillUpdateInput): Promise<boolean> {
     const prev = skills;
@@ -424,7 +462,7 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-2 md:grid-cols-[1fr_auto]">
+      <div className="mb-4 grid gap-2 lg:grid-cols-[1fr_auto_auto]">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -447,6 +485,19 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--bg-sub)] px-2">
+          <span className="mono text-[10px] text-[var(--mute-3)]">sort</span>
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
+            className="bg-transparent py-2 text-xs text-[var(--mute)] outline-none"
+          >
+            <option value="needs_review">Needs review</option>
+            <option value="az">A–Z</option>
+            <option value="level">Highest level</option>
+            <option value="confidence">Most confident</option>
+          </select>
+        </label>
       </div>
 
       <div className="mb-4 rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg-sub)] p-3 text-xs leading-relaxed text-[var(--mute)]">
@@ -456,12 +507,28 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
       <div className="mb-4 flex flex-col gap-5">
         {skillCategoryValues.map((cat) => {
           const catSkills = grouped[cat];
+          const catMissing = catSkills.filter((skill) => !skill.proficiencyLevel).length;
+          const catDormant = catSkills.filter(isDormant).length;
           return (
             <section key={cat}>
-              <div className="mb-2 flex items-center gap-2">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: CATEGORY_COLOR[cat] }} />
-                <span className="mono text-[11px] text-[var(--mute)]">{CATEGORY_LABEL[cat]}</span>
-                <span className="mono text-[10px] text-[var(--mute-3)]">{catSkills.length}</span>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: CATEGORY_COLOR[cat] }} />
+                  <span className="mono text-[11px] text-[var(--mute)]">{CATEGORY_LABEL[cat]}</span>
+                  <span className="mono rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] text-[var(--mute-3)]">{catSkills.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {catMissing > 0 && (
+                    <span className="mono rounded-full bg-amber-50 px-2 py-0.5 text-[9px] text-amber-700">
+                      {catMissing} need level
+                    </span>
+                  )}
+                  {catDormant > 0 && (
+                    <span className="mono rounded-full bg-[var(--surface)] px-2 py-0.5 text-[9px] text-[var(--mute-3)]">
+                      {catDormant} dormant
+                    </span>
+                  )}
+                </div>
               </div>
 
               {catSkills.length === 0 ? (
@@ -469,7 +536,7 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
                   <span className="mono text-[10px] text-[var(--mute-3)]">No matching skills</span>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="grid gap-2 xl:grid-cols-2">
                   {catSkills.map((skill) => (
                     <SkillCard
                       key={skill.id}

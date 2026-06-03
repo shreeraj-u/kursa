@@ -48,7 +48,6 @@ export function JournalSidebar({
   pulseSaving,
 }: Props) {
   const due = checkIn?.due ?? false;
-  const isMonthly = checkIn?.type === "checkin_monthly";
   const [pulseExpanded, setPulseExpanded] = useState(due);
   const [pulseResponses, setPulseResponses] = useState<Record<string, string | number>>({});
 
@@ -90,7 +89,7 @@ export function JournalSidebar({
           <div className="flex items-center gap-2">
             {due && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-accent" />}
             <span className="mono text-2xs text-mute-2">
-              {isMonthly ? "monthly review" : "weekly pulse"}
+              weekly pulse
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -131,7 +130,7 @@ export function JournalSidebar({
                             className="mt-1.5 w-full cursor-pointer accent-accent"
                           />
                         </label>
-                      ) : q.id === "rememberThis" || q.id === "blockers" || q.id === "winsSinceLast" ? (
+                      ) : q.id === "rememberThis" ? (
                         <input
                           key={q.id}
                           value={String(pulseResponses[q.id] ?? "")}
@@ -160,7 +159,7 @@ export function JournalSidebar({
                       disabled={pulseSaving}
                       className="mono rounded px-3 py-1 w-full bg-accent text-white border-none text-2xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                     >
-                      {pulseSaving ? "submitting…" : isMonthly ? "submit review" : "submit pulse"}
+                      {pulseSaving ? "submitting…" : "submit pulse"}
                     </button>
                   </>
                 ) : (

@@ -7,6 +7,10 @@ import type { JobApplication, JobApplicationStage, JobApplicationStatus } from "
 import { api } from "@/lib/api";
 import { STAGE_ORDER, STAGE_LABEL, STAGE_IDX } from "./constants";
 import { stageChipClass, formatDate } from "./utils";
+import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
+
 import { ApplicationForm } from "./application-form";
 
 interface Props {
@@ -74,13 +78,18 @@ export default function ApplicationsClient({ initialApplications }: Props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <div className="flex min-h-full flex-col">
+      <PageHeader pageTitle="Applications" />
+      <div className="mx-auto w-full max-w-3xl px-8 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-sm font-medium text-ink">
-            Applications
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-medium text-ink">
+              Applications
+            </h1>
+            <PageHelpButton help={DASHBOARD_PAGE_HELP.applications} label="Applications" />
+          </div>
           <p className="mono text-2xs mt-0.5 text-mute-2">
             {activeCount} active · {closedCount} closed
           </p>
@@ -244,6 +253,7 @@ export default function ApplicationsClient({ initialApplications }: Props) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

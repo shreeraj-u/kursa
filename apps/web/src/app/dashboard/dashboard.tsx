@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/dashboard/page-header";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import Greeting from "@/components/dashboard/greeting";
 import CareerPulse from "@/components/dashboard/career-pulse";
 import AriaNoticed from "@/components/dashboard/aria-noticed";
@@ -113,7 +114,7 @@ export default function Dashboard({ profile, user, initialObservations, observat
 
             {/* Greeting row */}
             <div className="px-8 pt-6 pb-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <Greeting user={user} metrics={metrics} />
+                <Greeting user={user} metrics={metrics} help={DASHBOARD_PAGE_HELP.home} />
                 <div className="flex items-center gap-2 mt-1.5 self-start sm:self-auto flex-shrink-0">
                     <Link
                         href="/dashboard/journal"
