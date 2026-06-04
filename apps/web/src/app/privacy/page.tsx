@@ -2,7 +2,7 @@ import LegalLayout from "@/components/landing/legal-layout";
 
 export const metadata = {
   title: "Privacy Policy — Kursa",
-  description: "Simple and transparent privacy policy for Kursa, an AI career operating system.",
+  description: "Simple and transparent privacy policy for Kursa, an AI career advisor with persistent memory.",
 };
 
 export default function PrivacyPage() {
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       <section className="space-y-4">
         <h2 className="text-base font-semibold tracking-tight text-[var(--ink)]">2. What We Collect</h2>
         <p className="text-[var(--mute)] leading-relaxed">
-          We collect only the information that is strictly required to run our career operating system:
+          We collect only the information that is strictly required to run our AI career advisor:
         </p>
         <ul className="list-disc pl-5 space-y-2 text-[var(--mute)]">
           <li><strong>Account Data:</strong> Email address and authentication details provided during login.</li>

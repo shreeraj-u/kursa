@@ -12,12 +12,12 @@ const GUIDE = "/dashboard/docs" as Route;
 export const DASHBOARD_PAGE_HELP = {
   home: {
     title: "How to use Home",
-    description: "Use Home as your career command center: it summarizes what Kursa knows, what changed recently, and what needs attention next.",
+    description: "Use Home as your career command center: it summarizes memory, reasoning, execution signals, and what needs attention next.",
     tips: [
       "Start with the top action when one appears; it is the most urgent step from your journey-wide action queue.",
       "Review Career pulse and Journey pulse together: pulse shows current signals, while journey pulse shows alignment and engagement over time.",
-      "Use Aria noticed for system observations grounded in your journal, check-ins, and profile data.",
-      "Export the weekly digest when you want a portable summary of recent progress.",
+      "Use Aria noticed for observations grounded in your profile, journal, applications, and journey context.",
+      "Export the career digest when you want portable proof of journey alignment, skills, applications, and recent activity.",
     ],
     guideHref: GUIDE,
   },
@@ -34,7 +34,7 @@ export const DASHBOARD_PAGE_HELP = {
   },
   skills: {
     title: "How to use Skills",
-    description: "Use Skills to keep your Profile accurate, decide what you are building next, and understand skill gaps for your journey.",
+    description: "Use Skills as the evidence layer behind journeys, résumé tailoring, learning goals, and Aria's advice.",
     tips: [
       "Review imported skills first; skill accuracy directly affects journeys, résumés, and Aria guidance.",
       "Set proficiency and confidence separately: confidence is how sure you feel, proficiency is actual mastery.",
@@ -45,7 +45,7 @@ export const DASHBOARD_PAGE_HELP = {
   },
   resume: {
     title: "How to use Resume studio",
-    description: "Use Resume studio to generate, edit, score, and download résumé versions grounded in your Profile and career journey.",
+    description: "Use Resume studio to move from profile memory to generated résumé, manual control, ATS scoring, and PDF export.",
     tips: [
       "Generate a résumé when your Profile and journey are current; generation creates a new version.",
       "Manual edits change only the selected résumé version and do not write back to your Profile.",
@@ -56,7 +56,7 @@ export const DASHBOARD_PAGE_HELP = {
   },
   applications: {
     title: "How to use Applications",
-    description: "Use Applications to track roles from interest through offer so your job-search activity stays visible to Kursa.",
+    description: "Use Applications to track roles from interest through offer so stage movement and outcomes stay visible to Kursa.",
     tips: [
       "Add each role with company, title, stage, and any next action you need to remember.",
       "Update the stage inline as the process moves; active applications count toward dashboard and sidebar signals.",
@@ -67,7 +67,7 @@ export const DASHBOARD_PAGE_HELP = {
   },
   journal: {
     title: "How to use Journal",
-    description: "Use Journal to capture notes, accomplishments, and feedback so Kursa can learn from what actually happened.",
+    description: "Use Journal to capture wins, feedback, notes, and check-ins so Kursa can learn from what actually happened.",
     tips: [
       "Log wins and feedback close to when they happen; they become evidence for Aria, reviews, and journey alignment.",
       "Use accomplishments for concrete outcomes and feedback for praise or constructive input.",

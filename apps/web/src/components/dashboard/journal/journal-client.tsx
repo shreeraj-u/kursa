@@ -142,7 +142,13 @@ export default function JournalClient() {
             newId = (res.event as { id?: string })?.id;
           }
           if (newId) setHighlightId(newId);
-          toast.success("Entry saved");
+          const successCopy = {
+            win: "Saved as résumé/review evidence",
+            feedback: "Saved for review prep",
+            note: "Saved to Aria memory context",
+            learning: "Saved as skill growth signal",
+          } satisfies Record<JournalComposeData["type"], string>;
+          toast.success(successCopy[data.type]);
           refreshAfterSave();
           resolve(true);
         } catch {
@@ -202,8 +208,15 @@ export default function JournalClient() {
               <PageHelpButton help={DASHBOARD_PAGE_HELP.journal} label="Journal" />
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-mute">
-              Capture what happened — notes, accomplishments, feedback — so Kursa can help.
+              Capture what happened at work so Kursa has evidence: wins for résumé proof, feedback for review prep, and notes for Aria&apos;s memory.
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["win → evidence", "feedback → review prep", "note → memory", "check-in → momentum"].map((item) => (
+                <span key={item} className="mono rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] text-mute">
+                  {item}
+                </span>
+              ))}
+            </div>
             <Link
               href={"/dashboard/docs" as Route}
               className="mono mt-2 inline-block"

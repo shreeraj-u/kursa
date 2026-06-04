@@ -52,7 +52,7 @@ export default function LandingNav() {
             Log in
           </Link>
           <Button size="sm" render={<a href="/login" />} nativeButton={false}>
-            Get started
+            Enter demo
           </Button>
         </div>
       </div>

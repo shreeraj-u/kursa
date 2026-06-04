@@ -75,6 +75,7 @@ export interface ApplicationUpdateStructured {
   roleTitle: string;
   previousStage?: string;
   newStage: string;
+  status?: string;
 }
 
 export interface CareerEventSummary {

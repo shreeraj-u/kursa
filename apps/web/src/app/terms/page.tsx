@@ -2,7 +2,7 @@ import LegalLayout from "@/components/landing/legal-layout";
 
 export const metadata = {
   title: "Terms of Service — Kursa",
-  description: "Simple and transparent terms of service for Kursa, an AI career operating system.",
+  description: "Simple and transparent terms of service for Kursa, an AI career advisor with persistent memory.",
 };
 
 export default function TermsPage() {
@@ -22,7 +22,7 @@ export default function TermsPage() {
       <section className="space-y-4">
         <h2 className="text-base font-semibold tracking-tight text-[var(--ink)]">2. Description of Service</h2>
         <p className="text-[var(--mute)] leading-relaxed">
-          Kursa is an AI-powered career operating system designed to assist individuals in managing their professional trajectories, resume building, skill mapping, and career planning. We constantly iterate and update features to deliver the best experience.
+          Kursa is an AI-powered career advisor with persistent memory, designed to assist individuals in managing professional trajectories, resume building, skill mapping, and career planning. We constantly iterate and update features to deliver the best experience.
         </p>
       </section>
 

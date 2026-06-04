@@ -18,6 +18,7 @@ import { downloadResumePdf } from "./resume-pdf";
 interface ResumeStudioProps {
   initialResumes: Resume[];
   quota: ResumeQuota;
+  activeJourneyTitle?: string | null;
 }
 
 const SEVERITY_BG: Record<AtsIssue["severity"], string> = {
@@ -26,8 +27,15 @@ const SEVERITY_BG: Record<AtsIssue["severity"], string> = {
   low: "bg-mute-3",
 };
 
+const RESUME_FLOW = [
+  "generate from profile",
+  "edit with control",
+  "score ATS",
+  "download PDF",
+];
 
-export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProps) {
+
+export default function ResumeStudio({ initialResumes, quota, activeJourneyTitle = null }: ResumeStudioProps) {
   const router = useRouter();
   const resumes = initialResumes;
   const [generating, setGenerating] = useState(false);
@@ -141,6 +149,11 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
               Generate an ATS-scored résumé from your profile, shaped toward your active
               career path. You can edit it, re-analyze it, and download any version as a PDF.
             </div>
+            <div className="mono text-2xs text-mute-3">
+              {activeJourneyTitle
+                ? `Shaped by active journey: ${activeJourneyTitle}`
+                : "General résumé — generate a journey for sharper targeting."}
+            </div>
             <Button
               onClick={generate}
               disabled={generating || quotaReached}
@@ -178,6 +191,9 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
               {selected.targetRole ? `tailored · ${selected.targetRole}` : "general résumé"}
               {editing && " · editing"}
             </div>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">
+              A résumé version is generated from the same profile memory that powers your journey. Improve it, re-score it, and export without losing control of the truth.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="mono text-2xs text-mute-3">
@@ -245,6 +261,21 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
               </>
             )}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-line bg-surface px-3 py-2 mono text-2xs text-mute">
+          {activeJourneyTitle
+            ? `Shaped by active journey: ${activeJourneyTitle}`
+            : "General résumé — generate a journey for sharper targeting."}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {RESUME_FLOW.map((step, index) => (
+            <div key={step} className="rounded-lg border border-line bg-surface px-3 py-2">
+              <div className="mono text-2xs text-mute-3">step {index + 1}</div>
+              <div className="mt-0.5 text-xs font-medium text-ink">{step}</div>
+            </div>
+          ))}
         </div>
 
         {/* Version bar */}

@@ -20,7 +20,7 @@ const TIERS = [
       "10 messages / day with Aria",
       "1 résumé version",
     ],
-    cta: "Get started",
+    cta: "Enter demo",
   },
   {
     tag: "standard", pop: true,
@@ -35,7 +35,7 @@ const TIERS = [
       "Unlimited résumé versions + tailoring",
       "Career journal · post-placement",
     ],
-    cta: "Start 14-day trial",
+    cta: "Preview Member",
   },
   {
     tag: "intensive", pop: false,
@@ -50,7 +50,7 @@ const TIERS = [
       "Practice interviews with Aria",
       "Priority human review on flagged drafts",
     ],
-    cta: "Start In-search",
+    cta: "Preview In-search",
   },
 ];
 
@@ -168,8 +168,8 @@ export default function Pricing() {
             Pay for the relationship. Not the form fields.
           </h2>
           <p className="lede mb-14 max-w-2xl">
-            Three tiers. One free. The middle one is what most people use. Nothing here is priced
-            per résumé generated or per message sent — the agent gets weirder if you meter it.
+            For the hackathon preview, the important part is not checkout — it is the relationship:
+            persistent memory, sharper advice, and career context that compounds over time.
           </p>
         </FadeUp>
 

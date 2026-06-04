@@ -23,15 +23,15 @@ function getSubtext(metrics: DashboardMetrics | null): string {
     const activeCount = metrics?.inFlight.activeCount ?? 0;
 
     if (attentionCount > 0) {
-        return `You have ${attentionCount} item${attentionCount === 1 ? "" : "s"} needing attention.`;
+        return `Kursa found ${attentionCount} career signal${attentionCount === 1 ? "" : "s"} that need attention.`;
     }
     if (activeCount > 0) {
-        return `You have ${activeCount} application${activeCount === 1 ? "" : "s"} in motion.`;
+        return `${activeCount} application${activeCount === 1 ? " is" : "s are"} in motion — keep the evidence loop warm.`;
     }
     if (dayN < 7) {
-        return `Day ${dayN}. Keep building your profile.`;
+        return `Day ${dayN}. Every profile update, win, and note makes Aria more specific.`;
     }
-    return "Your profile is up to date.";
+    return "Your profile memory is current. Review what changed and pick the next action.";
 }
 
 export default function Greeting({ user, metrics, help }: GreetingProps) {

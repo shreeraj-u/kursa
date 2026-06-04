@@ -120,6 +120,14 @@ export function JournalReviewTab({ onScrollToEntry }: Props) {
         )}
       </div>
 
+      <div className="mb-4 rounded-lg border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-mute">
+        <div className="font-medium text-ink">How review prep is built</div>
+        <ul className="mt-1.5 list-disc space-y-1 pl-4">
+          <li>Bullets are generated from wins and feedback in the selected date range.</li>
+          <li>Use “source” to jump back to the original journal event.</li>
+        </ul>
+      </div>
+
       <AnimatePresence mode="wait">
         {loading ? (
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

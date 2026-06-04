@@ -14,7 +14,7 @@ import TopAction from "@/components/dashboard/top-action";
 import JourneyPulsePanel from "@/components/dashboard/career-journey/journey-pulse-panel";
 import { api } from "@/lib/api";
 import type { UserProfile, ObservationsResponse, DashboardMetrics } from "@/types/profile";
-import type { JourneyActionItem } from "@kursa/types";
+import type { CareerJourney, JourneyActionItem } from "@kursa/types";
 
 interface DashboardProps {
     profile: UserProfile | null;
@@ -23,20 +23,27 @@ interface DashboardProps {
     observationsError?: string | null;
     metrics: DashboardMetrics | null;
     topAction: JourneyActionItem | null;
+    activeJourney: CareerJourney | null;
 }
 
 function buildDigest(
     user: DashboardProps["user"],
     metrics: DashboardMetrics | null,
     topAction: JourneyActionItem | null,
-    pulse: { pathAlignmentScore: number | null; winsThisQuarter: number; checkInStreak: number; staleSkills: string[]; activePathTitle: string | null } | null,
+    pulse: { pathAlignmentScore: number | null; winsThisQuarter: number; checkInStreak: number; staleSkills: string[]; activePathTitle: string | null; recentMemoryFacts?: string[]; memories?: Array<{ id: string }> } | null,
+    activeJourney: CareerJourney | null,
+    observations: ObservationsResponse | null,
 ): string {
     const week = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    const lines: string[] = [`# Weekly Career Digest`, `Week of ${week}`, ``, `---`, ``];
+    const lines: string[] = [`# Career Digest`, `Exported ${week}`, ``, `---`, ``];
 
-    if (pulse?.pathAlignmentScore !== null && pulse?.pathAlignmentScore !== undefined) {
-        lines.push(`## Journey Alignment`);
-        lines.push(`${pulse.pathAlignmentScore}% aligned${pulse.activePathTitle ? ` to ${pulse.activePathTitle}` : ""}`);
+    if (activeJourney || pulse?.pathAlignmentScore !== null && pulse?.pathAlignmentScore !== undefined) {
+        lines.push(`## Active Journey`);
+        lines.push(activeJourney ? `- ${activeJourney.title}` : `- ${pulse?.activePathTitle ?? "No active journey"}`);
+        if (pulse?.pathAlignmentScore !== null && pulse?.pathAlignmentScore !== undefined) {
+            lines.push(`- Alignment: ${pulse.pathAlignmentScore}%`);
+        }
+        if (activeJourney?.description) lines.push(`- ${activeJourney.description}`);
         lines.push(``);
     }
 
@@ -57,9 +64,23 @@ function buildDigest(
 
     if (topAction) {
         lines.push(`## Top Action`);
-        lines.push(`[${topAction.urgency}] ${topAction.title}`);
+        lines.push(`- [${topAction.urgency}] ${topAction.title}`);
         if (topAction.subtitle) lines.push(topAction.subtitle);
         if (topAction.daysRemaining !== null) lines.push(`Due in ${topAction.daysRemaining} day${topAction.daysRemaining !== 1 ? "s" : ""}`);
+        lines.push(``);
+    }
+
+    const skillGaps = activeJourney?.details?.skillGaps ?? [];
+    if (skillGaps.length > 0 || (pulse && pulse.staleSkills.length > 0)) {
+        lines.push(`## Skills`);
+        if (skillGaps.length > 0) {
+            lines.push(`### Journey gaps`);
+            skillGaps.slice(0, 8).forEach((gap) => lines.push(`- ${gap.skill} (${gap.priority}) — ${gap.whyItMatters}`));
+        }
+        if (pulse && pulse.staleSkills.length > 0) {
+            lines.push(`### Stale skills`);
+            pulse.staleSkills.forEach((skill) => lines.push(`- ${skill}`));
+        }
         lines.push(``);
     }
 
@@ -71,15 +92,23 @@ function buildDigest(
         lines.push(``);
     }
 
-    if (pulse && pulse.staleSkills.length > 0) {
-        lines.push(`## Skills to Refresh`);
-        lines.push(pulse.staleSkills.join(", "));
-        lines.push(``);
-    }
-
     if (metrics?.recentActivity && metrics.recentActivity.length > 0) {
         lines.push(`## Recent Activity`);
         metrics.recentActivity.forEach((e) => lines.push(`- ${e.label} (${e.timeAgo})`));
+        lines.push(``);
+    }
+
+    if (observations) {
+        lines.push(`## Aria Observations`);
+        lines.push(`- Count: ${observations.pagination.total}`);
+        lines.push(`- Source: ${observations.generationSource}`);
+        observations.data.slice(0, 4).forEach((obs) => lines.push(`- ${obs.text}`));
+        lines.push(``);
+    }
+
+    if (pulse?.recentMemoryFacts?.length) {
+        lines.push(`## Memory Facts`);
+        pulse.recentMemoryFacts.slice(0, 5).forEach((fact) => lines.push(`- ${fact}`));
         lines.push(``);
     }
 
@@ -88,14 +117,20 @@ function buildDigest(
     return lines.join("\n");
 }
 
-export default function Dashboard({ profile, user, initialObservations, observationsError, metrics, topAction }: DashboardProps) {
+const DEMO_SIGNALS = [
+    { label: "memory", value: "profile + journal", help: "durable career context" },
+    { label: "reasoning", value: "journey + gaps", help: "why this path fits" },
+    { label: "execution", value: "resume + apps", help: "turn advice into action" },
+];
+
+export default function Dashboard({ profile, user, initialObservations, observationsError, metrics, topAction, activeJourney }: DashboardProps) {
     const [exporting, setExporting] = useState(false);
 
     async function handleExport() {
         setExporting(true);
         try {
             const pulse = await api.journal.relevance().catch(() => null);
-            const digest = buildDigest(user, metrics, topAction, pulse);
+            const digest = buildDigest(user, metrics, topAction, pulse, activeJourney, initialObservations);
             const blob = new Blob([digest], { type: "text/markdown" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -127,9 +162,19 @@ export default function Dashboard({ profile, user, initialObservations, observat
                         disabled={exporting}
                         className="rounded-md px-3 py-1.5 mono transition-colors text-xs text-mute border border-line bg-bg cursor-pointer disabled:opacity-50"
                     >
-                        {exporting ? "exporting…" : "export weekly digest"}
+                        {exporting ? "exporting…" : "export career digest"}
                     </button>
                 </div>
+            </div>
+
+            <div className="px-8 pb-5 grid grid-cols-1 gap-2 md:grid-cols-3">
+                {DEMO_SIGNALS.map((signal) => (
+                    <div key={signal.label} className="rounded-lg border border-line bg-surface px-4 py-3">
+                        <div className="mono text-2xs uppercase tracking-mono text-mute-2">{signal.label}</div>
+                        <div className="mt-1 text-sm font-medium text-ink">{signal.value}</div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-mute">{signal.help}</div>
+                    </div>
+                ))}
             </div>
 
             {/* Main grid */}

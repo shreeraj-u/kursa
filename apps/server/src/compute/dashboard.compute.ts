@@ -20,6 +20,7 @@ export interface DashboardData {
     checkInStreak: number;
     journalActivityScore: number;
     recentWins: Array<{ id: string; body: string; occurredAt: string }>;
+    recentEvents: Array<{ id: string; type: string; body: string | null; occurredAt: string }>;
   } | null;
   profile: {
     bio: string | null;
@@ -205,6 +206,20 @@ export function computeDashboardMetrics(data: DashboardData) {
         });
       }
     });
+
+    data.intelligence.recentEvents
+      .filter((event) => ["application_update", "github_sync"].includes(event.type))
+      .forEach((event) => {
+        const ts = new Date(event.occurredAt).getTime();
+        if (ts > cutoff && event.body) {
+          events.push({
+            label: event.body,
+            timeAgo: timeAgo(new Date(event.occurredAt)),
+            category: event.type === "application_update" ? "application" : "profile",
+            ts,
+          });
+        }
+      });
   }
 
   const recentActivity = events.sort((a, b) => b.ts - a.ts).slice(0, 6);

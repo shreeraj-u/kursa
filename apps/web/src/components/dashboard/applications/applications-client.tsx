@@ -26,6 +26,8 @@ export default function ApplicationsClient({ initialApplications }: Props) {
 
   const activeCount = apps.filter((a) => a.status === "active").length;
   const closedCount = apps.filter((a) => a.status !== "active").length;
+  const withNextAction = apps.filter((a) => a.nextAction && a.status === "active").length;
+  const offerCount = apps.filter((a) => a.stage === "offer").length;
 
   async function handleCreate(data: any) {
     setSaving(true);
@@ -33,7 +35,7 @@ export default function ApplicationsClient({ initialApplications }: Props) {
       const { application } = await api.applications.create(data);
       setApps((prev) => [application, ...prev]);
       setAdding(false);
-      toast.success("Application added");
+      toast.success("Application added — dashboard activity refreshed.");
     } catch {
       toast.error("Failed to add application");
     } finally {
@@ -47,7 +49,10 @@ export default function ApplicationsClient({ initialApplications }: Props) {
       const { application } = await api.applications.update(id, data);
       setApps((prev) => prev.map((a) => (a.id === id ? application : a)));
       setEditId(null);
-      toast.success("Application updated");
+      const activityChanged =
+        (data.stage !== undefined && data.stage !== apps.find((a) => a.id === id)?.stage) ||
+        (data.status !== undefined && data.status !== apps.find((a) => a.id === id)?.status);
+      toast.success(activityChanged ? "Application updated — dashboard activity refreshed." : "Application updated");
     } catch {
       toast.error("Failed to update application");
     } finally {
@@ -72,6 +77,7 @@ export default function ApplicationsClient({ initialApplications }: Props) {
     try {
       const { application } = await api.applications.update(app.id, { stage });
       setApps((prev) => prev.map((a) => (a.id === app.id ? application : a)));
+      toast.success("Stage updated — dashboard activity refreshed.");
     } catch {
       toast.error("Failed to update stage");
     }
@@ -93,6 +99,9 @@ export default function ApplicationsClient({ initialApplications }: Props) {
           <p className="mono text-2xs mt-0.5 text-mute-2">
             {activeCount} active · {closedCount} closed
           </p>
+          <p className="mt-2 max-w-xl text-xs leading-relaxed text-mute">
+            Track roles like career evidence: stage, next action, and outcome all feed the dashboard&apos;s view of what is moving.
+          </p>
         </div>
         {!adding && (
           <button
@@ -103,6 +112,20 @@ export default function ApplicationsClient({ initialApplications }: Props) {
             Add application
           </button>
         )}
+      </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {[
+          ["active", activeCount, "roles in motion"],
+          ["next actions", withNextAction, "follow-ups captured"],
+          ["offers", offerCount, "late-stage wins"],
+        ].map(([label, value, help]) => (
+          <div key={label} className="rounded-lg border border-line bg-surface px-4 py-3">
+            <div className="mono text-2xs uppercase tracking-mono text-mute-2">{label}</div>
+            <div className="mt-1 text-xl font-semibold leading-none text-ink">{value}</div>
+            <div className="mt-1 text-xs text-mute">{help}</div>
+          </div>
+        ))}
       </div>
 
       {/* Add form */}
@@ -121,9 +144,12 @@ export default function ApplicationsClient({ initialApplications }: Props) {
 
       {/* Empty state */}
       {apps.length === 0 && !adding && (
-        <div className="py-16 text-center">
-          <p className="text-xs text-mute-3">
-            No applications yet. Add a role to start tracking.
+        <div className="rounded-xl border border-line bg-surface px-6 py-12 text-center">
+          <p className="text-sm font-medium text-ink">
+            No applications yet
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-mute">
+            Add a role when it becomes real. Kursa will use stage movement and outcomes to make future guidance sharper.
           </p>
         </div>
       )}

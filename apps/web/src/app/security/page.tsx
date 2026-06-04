@@ -2,7 +2,7 @@ import LegalLayout from "@/components/landing/legal-layout";
 
 export const metadata = {
   title: "Security — Kursa",
-  description: "Simple and transparent security practices for Kursa, an AI career operating system.",
+  description: "Simple and transparent security practices for Kursa, an AI career advisor with persistent memory.",
 };
 
 export default function SecurityPage() {

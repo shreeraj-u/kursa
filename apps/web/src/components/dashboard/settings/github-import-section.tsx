@@ -9,7 +9,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@kursa/ui/components/button";
 import { Skeleton } from "@kursa/ui/components/skeleton";
-import type { GitHubRepoPreview, GitHubSyncConfirmRequest } from "@kursa/types";
+import type { GitHubRepoPreview, GitHubSyncConfirmRequest, GitHubSyncSummaryResponse } from "@kursa/types";
 
 // Language → colour dot mapping (best-effort subset)
 const LANG_COLORS: Record<string, string> = {
@@ -38,7 +38,7 @@ type Phase =
   | { name: "disconnected" }
   | { name: "review"; repos: GitHubRepoPreview[] }
   | { name: "syncing" }
-  | { name: "done"; imported: number; merged: number };
+  | ({ name: "done" } & GitHubSyncSummaryResponse);
 
 export default function GitHubImportSection() {
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
@@ -96,9 +96,9 @@ export default function GitHubImportSection() {
     setPhase({ name: "syncing" });
     try {
       const result = await api.github.sync(body);
-      setPhase({ name: "done", imported: result.imported, merged: result.merged });
+      setPhase({ name: "done", ...result });
       toast.success(
-        `Imported ${result.imported} project${result.imported !== 1 ? "s" : ""}` +
+        `Profile updated — imported ${result.imported} project${result.imported !== 1 ? "s" : ""}` +
           (result.merged > 0 ? `, updated ${result.merged}` : "")
       );
     } catch (err: unknown) {
@@ -373,22 +373,27 @@ export default function GitHubImportSection() {
 
         {/* ── Done ── */}
         {phase.name === "done" && (
-          <div className="flex items-center justify-between px-6 py-5">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-4 px-6 py-5">
+            <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-lg bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-center justify-center shrink-0">
                 <Check className="w-4 h-4 text-green-600 dark:text-green-400" strokeWidth={2.5} />
               </div>
               <div>
                 <p className="font-medium text-ink-2" style={{ fontSize: "var(--text-sm)" }}>
-                  {phase.imported} project{phase.imported !== 1 ? "s" : ""} imported
-                  {phase.merged > 0 ? `, ${phase.merged} updated` : ""}
+                  Profile updated
                 </p>
-                <p className="text-mute-2 mt-0.5" style={{ fontSize: "var(--text-xs)" }}>
-                  Skills have been tagged from repo languages and topics.
-                </p>
+                <div className="mt-2 grid gap-1 text-mute-2" style={{ fontSize: "var(--text-xs)" }}>
+                  <p>Imported {phase.imported} project{phase.imported !== 1 ? "s" : ""}</p>
+                  <p>Updated {phase.merged} project{phase.merged !== 1 ? "s" : ""}</p>
+                  {phase.skills.length > 0 && (
+                    <p>Added skills: {phase.skills.slice(0, 8).join(", ")}{phase.skills.length > 8 ? ` +${phase.skills.length - 8}` : ""}</p>
+                  )}
+                  {phase.githubUrl && <p>GitHub profile: {phase.githubUrl}</p>}
+                  <p>Saved as career activity</p>
+                </div>
               </div>
             </div>
-            <Button size="sm" variant="ghost" onClick={fetchRepos} className="shrink-0 ml-4 text-mute-2">
+            <Button size="sm" variant="ghost" onClick={fetchRepos} className="shrink-0 text-mute-2">
               Sync again
             </Button>
           </div>

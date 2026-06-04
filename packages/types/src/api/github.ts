@@ -29,3 +29,11 @@ export interface GitHubSyncConfirmRequest {
   selectedRepoIds: number[];
   mergeRepoIds: { repoId: number; projectId: string }[];
 }
+
+export interface GitHubSyncSummaryResponse {
+  imported: number;
+  merged: number;
+  skills: string[];
+  projects: string[];
+  githubUrl?: string;
+}

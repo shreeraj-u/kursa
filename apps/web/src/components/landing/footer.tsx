@@ -38,8 +38,8 @@ export default function LandingFooter() {
               className="leading-relaxed max-w-[180px]"
               style={{ fontSize: "var(--text-xs)", color: "var(--mute)" }}
             >
-              An AI career operating system. Built for the people who think about work for more
-              than a weekend at a time.
+              An AI career advisor with persistent memory. Built for people whose careers compound
+              over years, not weekends.
             </p>
           </div>
 

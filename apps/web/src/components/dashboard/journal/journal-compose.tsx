@@ -37,12 +37,12 @@ export function JournalCompose({
 
   const defaultPlaceholder =
     composeType === "win"
-      ? "First line = short title, rest = details…"
+      ? "Shipped onboarding cleanup\nReduced manual fixes by 40% and unblocked demo data quality…"
       : composeType === "feedback"
-        ? "Feedback you received — from a manager, peer, or yourself…"
+        ? "Feedback you received — e.g. “Your stakeholder updates made the launch calmer”…"
         : composeType === "learning"
-          ? "What skill are you learning?"
-          : "What do you want Kursa to know?";
+          ? "What skill are you learning? e.g. system design, Prisma, product analytics"
+          : "What should Aria remember about this week?";
 
   const toggleSkill = (skill: string) => {
     if (skillNames.includes(skill)) {
@@ -198,7 +198,7 @@ export function JournalCompose({
           <input
             value={impactMetric}
             onChange={(e) => setImpactMetric(e.target.value)}
-            placeholder="Impact metric (optional): e.g. 20% faster, $50k saved"
+            placeholder="Impact metric (optional): e.g. 20% faster, 3 users unblocked, $50k saved"
             className="w-full mt-2 rounded px-2 py-1.5 outline-none border border-line bg-bg text-ink text-xs"
           />
         )}

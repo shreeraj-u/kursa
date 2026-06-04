@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kursa — AI Career Operating System",
+  title: "Kursa — AI Career Advisor with Persistent Memory",
   description:
-    "Kursa is an AI career operating system. It thinks alongside you between roles, during reviews, and across the years in between.",
+    "Kursa turns your profile, journal, applications, and wins into persistent career memory, then uses it for journeys, résumés, and next actions.",
 };
 
 export default function RootLayout({

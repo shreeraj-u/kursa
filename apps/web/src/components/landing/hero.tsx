@@ -7,7 +7,7 @@ import { AnimatedWord } from "@/components/motion/animated-word";
 import HeroDashboardMock from "@/components/mocks/hero-dashboard";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const SIGNALS = ["career map", "role shortlist", "review prep", "memory over time"];
+const SIGNALS = ["profile memory", "journey reasoning", "resume tailoring", "journal intelligence"];
 
 function FadeChild({
   children,
@@ -61,7 +61,7 @@ export default function Hero() {
             <FadeChild delay={0} reduced={reduced}>
               <span className="chip live inline-flex">
                 <span className="dot" />
-                Beta Test
+                Hackathon preview
               </span>
             </FadeChild>
 
@@ -101,8 +101,8 @@ export default function Hero() {
 
             <FadeChild delay={0.42} reduced={reduced}>
               <p className="lede max-w-[760px]">
-                Kursa is an AI career operating system. It thinks alongside you between roles,
-                during reviews, and across the years in between. One advisor. Your whole career.
+                Kursa is an AI career advisor with persistent memory. It turns your profile,
+                journal, applications, and wins into specific next steps across the whole career.
               </p>
             </FadeChild>
 
@@ -110,14 +110,14 @@ export default function Hero() {
               <div className="flex flex-col items-center gap-5">
                 <div className="flex items-center justify-center gap-5 flex-wrap">
                   <Button size="lg" render={<a href="/login" />} nativeButton={false}>
-                    Get started — free
+                    Enter Kursa
                   </Button>
                   <a
                     href="#how"
                     className="flex items-center gap-1.5 text-[var(--mute)] hover:text-[var(--ink)] transition-colors"
                     style={{ fontSize: "var(--text-base)" }}
                   >
-                    See how it works <span aria-hidden>→</span>
+                    See the demo flow <span aria-hidden>→</span>
                   </a>
                 </div>
                 <div className="grid max-w-xl grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center">

@@ -2,7 +2,7 @@ import LegalLayout from "@/components/landing/legal-layout";
 
 export const metadata = {
   title: "Data Policy — Kursa",
-  description: "Simple and transparent data policy for Kursa, an AI career operating system.",
+  description: "Simple and transparent data policy for Kursa, an AI career advisor with persistent memory.",
 };
 
 export default function DataPolicyPage() {

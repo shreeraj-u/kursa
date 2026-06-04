@@ -102,6 +102,13 @@ function SetupChecklist({
   );
 }
 
+const SKILL_FLOW = [
+  "inventory",
+  "gap analysis",
+  "learning goals",
+  "journey signal",
+];
+
 export function SkillsStudio({
   initialSkills,
   initialGoals,
@@ -142,8 +149,15 @@ export function SkillsStudio({
             <PageHelpButton help={DASHBOARD_PAGE_HELP.skills} label="Skills" />
           </div>
           <p className="max-w-2xl text-sm leading-relaxed text-[var(--mute)]">
-            Keep your Profile accurate, decide what you&apos;re building next, and understand which skills matter for your current journey.
+            Skills are the evidence layer behind journeys, résumé tailoring, and Aria&apos;s advice. Keep them current so recommendations stay specific.
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {SKILL_FLOW.map((step, index) => (
+              <span key={step} className="mono rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] text-mute">
+                {index + 1}. {step}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-stretch gap-2">

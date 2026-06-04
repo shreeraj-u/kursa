@@ -85,11 +85,16 @@ function GapCard({
         <span className="text-sm font-medium leading-snug text-[var(--ink)]">
           {gap.skill}
         </span>
-        <span
-          className={`mono shrink-0 rounded-full px-2 py-px text-[10px] ${sc.className}`}
-        >
-          {sc.label}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span
+            className={`mono rounded-full px-2 py-px text-[10px] ${sc.className}`}
+          >
+            {sc.label}
+          </span>
+          <span className="mono rounded-full border border-line bg-bg-sub px-2 py-px text-[9px] text-mute-2">
+            from active journey
+          </span>
+        </div>
       </div>
 
       <p className="mb-2.5 text-xs leading-relaxed text-[var(--mute)]">

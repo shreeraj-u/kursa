@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type {
   CareerJourney,
@@ -222,6 +224,7 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
 
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
           <JourneyHero journey={journey} />
+          <JourneyUseStrip />
 
           <section className="grid grid-cols-[minmax(0,1fr)_300px] gap-4 max-lg:grid-cols-1">
             <JourneyRoadmap
@@ -302,6 +305,32 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function JourneyUseStrip() {
+  const actions = [
+    { href: "/dashboard/skills", label: "Skills", copy: "prioritize these gaps" },
+    { href: "/dashboard/resume", label: "Resume Studio", copy: "tailor résumé to this path" },
+    { href: "/dashboard/journal", label: "Journal", copy: "log milestone evidence" },
+  ];
+
+  return (
+    <div className="rounded-xl border border-line bg-surface px-4 py-3">
+      <div className="mb-2 mono text-2xs uppercase tracking-mono text-mute-2">use this journey</div>
+      <div className="grid gap-2 md:grid-cols-3">
+        {actions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href as Route}
+            className="rounded-lg border border-line bg-bg-sub px-3 py-2 transition-colors hover:border-line-2 hover:bg-bg-sub-2"
+          >
+            <div className="text-xs font-medium text-ink">{action.label}</div>
+            <div className="mt-0.5 text-[11px] text-mute">{action.copy} →</div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

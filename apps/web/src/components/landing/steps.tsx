@@ -5,27 +5,27 @@ import { Stagger, StaggerItem } from "@/components/motion/stagger";
 const STEPS = [
   {
     n: "01",
-    k: "map",
-    t: "Know where you are.",
-    d: "A real read of your current position — skills, signals, gaps. Not a quiz. A conversation that builds a working model of you over time.",
+    k: "remember",
+    t: "Build career memory.",
+    d: "Your profile, résumé import, journal entries, applications, and check-ins become one durable model — not scattered form fields.",
   },
   {
     n: "02",
-    k: "plan",
-    t: "See the territory.",
-    d: "Three to five paths plotted forward from where you stand. Each milestone, each decision point, anchored in real time.",
+    k: "reason",
+    t: "Commit to a path.",
+    d: "Kursa turns that model into a reasoned journey with milestones, risks, skill gaps, and concrete actions.",
   },
   {
     n: "03",
-    k: "move",
-    t: "Apply with intent.",
-    d: "A shortlist of roles chosen for the path, not the algorithm. Resumes tailored from your stored history, not a template.",
+    k: "package",
+    t: "Apply with evidence.",
+    d: "Résumé versions and application tracking stay tied to the path, so every move compounds the same career strategy.",
   },
   {
     n: "04",
-    k: "grow",
-    t: "Stay sharp, in role.",
-    d: "Once you're employed, Kursa keeps reading. It logs wins, watches for drift, and tells you when it's time to think about what's next.",
+    k: "compound",
+    t: "Keep learning from work.",
+    d: "The journal captures wins, feedback, and drift signals so Aria gets sharper after the demo, not just during onboarding.",
   },
 ];
 

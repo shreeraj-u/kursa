@@ -7,7 +7,7 @@ const SECTIONS = [
   {
     id: "home",
     title: "Home",
-    body: `Your dashboard at a glance. Career pulse tracks growth, visibility, and progression signals from your profile and activity. Aria noticed surfaces observations generated from your journal, check-ins, and career data — not generic tips. Recent activity and in-flight items show what you've been working on.`,
+    body: `Your dashboard at a glance. The top strip shows Kursa's loop: memory from profile and journal, reasoning from journeys and gaps, and execution from résumés and applications. Aria noticed surfaces observations generated from your profile, journal, applications, and career data — not generic tips.`,
   },
   {
     id: "career-journey",
@@ -17,7 +17,7 @@ const SECTIONS = [
   {
     id: "skills",
     title: "Skills",
-    body: `Your skills profile powers journey generation, résumé tailoring, and Aria's advice. Skills gain confidence from résumé import and stay fresh when you log accomplishments that use them. Dormant high-confidence skills appear in Journey pulse if unused for about six months.`,
+    body: `Your skills profile powers journey generation, résumé tailoring, learning goals, and Aria's advice. Skills gain confidence from résumé import and stay fresh when you log accomplishments that use them. The most important question is not “how many skills?” but “which skills move this journey forward?”`,
   },
   {
     id: "aria",
@@ -37,12 +37,12 @@ const SECTIONS = [
   {
     id: "resume",
     title: "Resume studio",
-    body: `Tailor résumé versions to roles using your Profile and Career Journey context. Generate, edit, re-score ATS, apply truth-preserving improvement drafts, and download text-based PDFs.`,
+    body: `Tailor résumé versions to roles using your Profile and Career Journey context. The flow is simple: generate from profile memory, edit with control, re-score ATS, apply truth-preserving improvement drafts, and download a PDF.`,
   },
   {
     id: "applications",
     title: "Applications",
-    body: `Track applications from interest through offer. Keep stage, status, links, notes, and next actions current so active roles appear correctly in dashboard and sidebar signals.`,
+    body: `Track applications from interest through offer. Keep stage, status, links, notes, and next actions current so active roles appear correctly in dashboard signals and future recommendations can learn from outcomes.`,
   },
 ] as const;
 

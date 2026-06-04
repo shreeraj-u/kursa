@@ -37,6 +37,7 @@ export default async function DashboardPage() {
     journeyResult.ok && journeyResult.data.actionQueue.length > 0
       ? journeyResult.data.actionQueue[0]
       : null;
+  const activeJourney = journeyResult.ok ? journeyResult.data.journey : null;
 
   const user = {
     name: session.user.name,
@@ -52,6 +53,7 @@ export default async function DashboardPage() {
       observationsError={observationsError}
       metrics={metrics}
       topAction={topAction}
+      activeJourney={activeJourney}
     />
   );
 }

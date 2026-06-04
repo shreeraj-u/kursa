@@ -378,7 +378,7 @@ export const api = {
     repos: () =>
       request<import("@kursa/types").GitHubSyncPreviewResponse>("/api/v1/github/repos"),
     sync: (body: import("@kursa/types").GitHubSyncConfirmRequest) =>
-      request<{ imported: number; merged: number }>("/api/v1/github/sync", {
+      request<import("@kursa/types").GitHubSyncSummaryResponse>("/api/v1/github/sync", {
         method: "POST",
         body: JSON.stringify(body),
       }),
