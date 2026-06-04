@@ -1,19 +1,22 @@
-# Kursa
+<div align="center">
 
-```text
+
+<pre>
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
-║   ██╗  ██╗██╗   ██╗██████╗ ███████╗ █████╗                   ║
-║   ██║ ██╔╝██║   ██║██╔══██╗██╔════╝██╔══██╗                  ║
-║   █████╔╝ ██║   ██║██████╔╝███████╗███████║                  ║
-║   ██╔═██╗ ██║   ██║██╔══██╗╚════██║██╔══██║                  ║
-║   ██║  ██╗╚██████╔╝██║  ██║███████║██║  ██║                  ║
-║   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝                  ║
+║           ██╗  ██╗██╗   ██╗██████╗ ███████╗ █████╗           ║
+║           ██║ ██╔╝██║   ██║██╔══██╗██╔════╝██╔══██╗          ║
+║           █████╔╝ ██║   ██║██████╔╝███████╗███████║          ║
+║           ██╔═██╗ ██║   ██║██╔══██╗╚════██║██╔══██║          ║
+║           ██║  ██╗╚██████╔╝██║  ██║███████║██║  ██║          ║
+║           ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝          ║
 ║                                                              ║
-║              Persistent AI career intelligence               ║
+║           Persistent AI career intelligence                  ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-```
+</pre>
+
+</div>
 
 Kursa is a persistent AI career advisor. It builds an evolving profile of a user's professional identity, then turns that profile into practical guidance: career journeys, skill gaps, résumé support, job application tracking, journal-driven insights, and proactive observations.
 
