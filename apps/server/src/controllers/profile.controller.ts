@@ -46,6 +46,18 @@ export async function updateMe(
   ok(res, { profile });
 }
 
+
+/**
+ * POST /api/v1/profile/me/dashboard-guide/dismiss
+ */
+export async function dismissDashboardGuide(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const dashboardGuideCompletedAt = await profileService.dismissDashboardGuide(req.user!.id);
+  ok(res, { dashboardGuideCompletedAt });
+}
+
 /**
  * GET /api/v1/profile/me/observations
  */

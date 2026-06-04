@@ -146,6 +146,7 @@ export interface UserProfile {
   aspirations: ProfileAspirations | null;
   values: ProfileValues | null;
   onboardingDone: boolean;
+  dashboardGuideCompletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 

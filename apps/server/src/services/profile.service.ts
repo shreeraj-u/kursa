@@ -63,6 +63,22 @@ export async function upsertProfile(userId: string, data: ProfileUpdateInput): P
   });
 }
 
+
+/**
+ * Marks the first-run dashboard guide as completed for the user's account.
+ */
+export async function dismissDashboardGuide(userId: string): Promise<Date> {
+  const profileId = await getProfileId(userId);
+  const completedAt = new Date();
+
+  await prisma.profile.update({
+    where: { id: profileId },
+    data: { dashboardGuideCompletedAt: completedAt },
+  });
+
+  return completedAt;
+}
+
 /**
  * Creates a social link for a user's profile.
  */

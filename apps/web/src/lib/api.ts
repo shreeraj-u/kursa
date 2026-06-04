@@ -63,6 +63,11 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  dismissDashboardGuide: () =>
+    request<{ dashboardGuideCompletedAt: string }>("/api/v1/profile/me/dashboard-guide/dismiss", {
+      method: "POST",
+    }),
+
   createSocialLink: (body: { platform: string; url: string }) =>
     request<{ socialLink: UserSocialLink }>("/api/v1/profile/me/social-links", {
       method: "POST",

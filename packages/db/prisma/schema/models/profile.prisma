@@ -15,9 +15,10 @@ model Profile {
 
   careerTrajectory CareerTrajectory? // "linear" | "accelerating" | "stagnating" | "pivoting"
 
-  onboardingDone Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  onboardingDone            Boolean   @default(false)
+  dashboardGuideCompletedAt DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   // Relations
   skills             Skill[]

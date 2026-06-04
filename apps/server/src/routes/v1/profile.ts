@@ -17,6 +17,7 @@ const meRouter: Router = Router();
 meRouter.get("/", profileController.getMe);
 meRouter.put("/", profileController.updateMe);
 meRouter.get("/observations", profileController.getObservations);
+meRouter.post("/dashboard-guide/dismiss", profileController.dismissDashboardGuide);
 meRouter.get("/dashboard", dashboardController.getDashboardMetrics);
 meRouter.use("/journey", journeyRouter);
 meRouter.get("/resumes", resumeController.listResumes);
