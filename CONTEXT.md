@@ -95,6 +95,23 @@ path-alignment score, accomplishments this quarter, dormant skills, milestone
 evidence, engagement trend, and distilled memories. Lives on the main dashboard
 as a widget, not on the Journey page itself.
 
+### Career Graph
+An interactive node-link rendering of the **entire** [[Profile]] as a single
+connected graph, with the [[Career Journey]] as its **spine** (You → [[Milestone]]s
+→ target role). Nodes are Profile entities ([[Skill]]s, Projects, work history,
+achievements, education, milestones, the target role); edges are **only** the
+relationships actually present in the data — a milestone requiring a skill, a
+learning goal targeting a skill, a project built at a job, the milestone sequence —
+never AI-invented links (see [[Career Graph edge truthfulness]] reasoning in
+`docs/adr/`). [[Skill]]s are the connective tissue: the graph's colour/treatment
+channel encodes skill **state** — owned, [[Dormant skill]], **gap** (a skill a
+milestone requires but the Profile lacks), and **being-built** (a learning goal) —
+so it reads as advice, not decoration. Distinct from the [[Career Journey]] page,
+which lists the same trajectory as a linear roadmap; the Career Graph shows the
+whole identity as a web. Degrades gracefully: with no Career Journey it renders the
+identity nodes without the spine or gap state. Lives at `/dashboard/career-graph`.
+_Avoid_: "career map", "constellation", "graph" (unqualified — collides with charts).
+
 ### Résumé
 A generated document that starts as a live output of the system's knowledge of the
 user. AI generation is derived from the Profile and shaped toward the user's

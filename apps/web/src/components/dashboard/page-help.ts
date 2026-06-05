@@ -54,6 +54,17 @@ export const DASHBOARD_PAGE_HELP = {
     ],
     guideHref: GUIDE,
   },
+  shortlist: {
+    title: "How to use Shortlist",
+    description: "Use Shortlist to review roles matched to your current location and Career Journey before agents prepare application packets.",
+    tips: [
+      "Treat the list as strategic targeting, not a job board; fewer high-quality roles are better than volume.",
+      "Use fit and path scores together: current fit shows readiness, while path score shows long-term alignment.",
+      "Select only roles you would genuinely review, then let agents prepare materials for human approval.",
+      "Nothing is submitted automatically; queued packets still need user review before sending.",
+    ],
+    guideHref: GUIDE,
+  },
   applications: {
     title: "How to use Applications",
     description: "Use Applications to track roles from interest through offer so stage movement and outcomes stay visible to Kursa.",
