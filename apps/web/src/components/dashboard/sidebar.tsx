@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
     House,
     MapPin,
+    Waypoints,
     BarChart2,
     Sparkles,
     FileText,
@@ -32,6 +33,7 @@ interface SidebarProps {
 const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
     { href: "/dashboard" as Route, label: "Home", Icon: House, key: "home" },
     { href: "/dashboard/career-journey" as Route, label: "Career journey", Icon: MapPin, key: "career" },
+    { href: "/dashboard/career-graph" as Route, label: "Career graph", Icon: Waypoints, key: "graph" },
     { href: "/dashboard/skills" as Route, label: "Skills", Icon: BarChart2, key: "skills" },
     { href: "/dashboard/aria" as Route, label: "Aria", Icon: Sparkles, key: "aria" },
 ];
