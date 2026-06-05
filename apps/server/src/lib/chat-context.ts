@@ -105,6 +105,7 @@ export function buildSlimChatContextPayload(
       : null,
     learningGoals: context.profile.learningGoals.slice(0, 5),
     materialChangeDetected: context.materialChangeDetected,
+    github: context.githubSlice ?? null,
     skillsOverview: {
       skills: context.profile.skills.slice(0, 25).map((s) => ({
         name: s.name,

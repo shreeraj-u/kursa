@@ -253,7 +253,12 @@ export default function SkillsPageClient({ initialOverview }: Props) {
                         background: highlightId === p.id ? "var(--accent-soft)" : "var(--bg-sub)",
                       }}
                     >
-                      <p className="text-xs font-medium text-ink">{p.displayName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-ink">{p.displayName}</p>
+                        {p.source === "github" && (
+                          <span className="mono rounded border border-line px-1 py-px text-[8px] text-mute-2">github</span>
+                        )}
+                      </div>
                       <p className="mt-1 text-2xs text-mute leading-relaxed">{p.evidence}</p>
                       <div className="mt-2 flex gap-2">
                         <button

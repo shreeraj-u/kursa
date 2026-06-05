@@ -261,14 +261,32 @@ export async function getJourney(userId: string): Promise<CareerJourneyResponse>
   });
 
   if (!profile) {
-    return { journey: null, timeline: [], actionQueue: [], journeyPreferences: emptyJourneyPreferences() };
+    return {
+      journey: null,
+      timeline: [],
+      actionQueue: [],
+      journeyPreferences: emptyJourneyPreferences(),
+      activeProjects: [],
+      suggestedProjects: [],
+      githubConnected: false,
+    };
   }
 
   const journeyPreferences = extractJourneyPreferences(profile.values);
 
   const journeyRow = profile.careerPaths[0] ?? null;
   if (!journeyRow) {
-    return { journey: null, timeline: [], actionQueue: [], journeyPreferences };
+    const { buildActiveProjects } = await import("./journey-projects.service.js");
+    const { projects: activeProjects, githubConnected } = await buildActiveProjects(userId, null);
+    return {
+      journey: null,
+      timeline: [],
+      actionQueue: [],
+      journeyPreferences,
+      activeProjects,
+      suggestedProjects: [],
+      githubConnected,
+    };
   }
 
   const journey = toCareerJourney(journeyRow);
@@ -280,7 +298,21 @@ export async function getJourney(userId: string): Promise<CareerJourneyResponse>
     jobApplications: profile.jobApplications,
   });
 
-  return { journey, timeline, actionQueue, journeyPreferences };
+  const { buildActiveProjects, buildSuggestedProjects } = await import("./journey-projects.service.js");
+  const [{ projects: activeProjects, githubConnected }, suggestedProjects] = await Promise.all([
+    buildActiveProjects(userId, journey),
+    buildSuggestedProjects(userId, journey),
+  ]);
+
+  return {
+    journey,
+    timeline,
+    actionQueue,
+    journeyPreferences,
+    activeProjects,
+    suggestedProjects,
+    githubConnected,
+  };
 }
 
 // --- timeline + action queue ---

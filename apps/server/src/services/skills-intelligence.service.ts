@@ -160,6 +160,32 @@ export async function getSkillsOverview(userId: string): Promise<SkillsOverviewR
     });
   }
 
+  const { getGitHubSnapshot } = await import("./github-sync.service.js");
+  const githubSnapshot = await getGitHubSnapshot(userId).catch(() => null);
+  if (githubSnapshot) {
+    const boost = githubSnapshot.workPatterns.pushVelocity === "accelerating" ? 8 : 0;
+    for (const { language } of githubSnapshot.workPatterns.languageMix.slice(0, 6)) {
+      if (skillNames.has(language.toLowerCase())) continue;
+      recommendations.push({
+        skillName: language,
+        reason: `Active on GitHub (${githubSnapshot.workPatterns.pushVelocity} velocity)`,
+        priority: 68 + boost,
+        source: "github",
+        cta: "add_skill",
+      });
+    }
+    for (const fw of githubSnapshot.workPatterns.frameworkSignals.slice(0, 4)) {
+      if (skillNames.has(fw.toLowerCase())) continue;
+      recommendations.push({
+        skillName: fw,
+        reason: "Detected in your GitHub READMEs and repo metadata",
+        priority: 65 + boost,
+        source: "github",
+        cta: "add_skill",
+      });
+    }
+  }
+
   if (context) {
     for (const dormant of context.signals.dormantHighValueSkills.slice(0, 5)) {
       recommendations.push({

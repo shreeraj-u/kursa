@@ -71,10 +71,11 @@ function mapProposal(row: {
 }
 
 export function mapProposalSourceToSkillSource(
-  source: "chat" | "market" | "path" | "journal",
-): "inferred_chat" | "market" | "path" | "inferred_journal" {
+  source: "chat" | "market" | "path" | "journal" | "github",
+): "inferred_chat" | "market" | "path" | "inferred_journal" | "github_import" {
   if (source === "chat") return "inferred_chat";
   if (source === "journal") return "inferred_journal";
+  if (source === "github") return "github_import";
   return source;
 }
 
@@ -267,7 +268,7 @@ export type CreateSkillProposalInput = {
   proposalType: "add" | "update_confidence" | "mark_learning" | "mark_stale";
   suggestedConfidence?: number;
   suggestedProficiency?: "beginner" | "intermediate" | "advanced" | "expert";
-  source: "chat" | "market" | "path" | "journal";
+  source: "chat" | "market" | "path" | "journal" | "github";
   sourceRef?: Record<string, unknown>;
   evidence: string;
 };

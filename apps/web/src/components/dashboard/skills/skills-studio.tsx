@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type {
   CareerJourney,
   SkillProposalSummary,
+  SkillRecommendation,
   SkillsOverviewResponse,
   UserLearningGoal,
   UserSkill,
@@ -40,6 +41,7 @@ function AriaProposalsRail({
       await api.skills.acceptProposal(id);
       toast.success("Skill added to your profile");
       onChange(proposals.filter((p) => p.id !== id));
+      void api.skills.overview().then((overview) => onChange(overview.proposals)).catch(() => undefined);
     } catch {
       toast.error("Could not accept proposal");
     }
@@ -56,11 +58,16 @@ function AriaProposalsRail({
 
   return (
     <section className="rounded-xl border border-[var(--accent-line)] bg-[var(--accent-soft)] p-4">
-      <div className="mono mb-3 text-[10px] text-[var(--accent)]">pending from aria · {proposals.length}</div>
+      <div className="mono mb-3 text-[10px] text-[var(--accent)]">pending proposals · {proposals.length}</div>
       <div className="flex flex-col gap-2">
         {proposals.map((p) => (
           <div key={p.id} className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3">
-            <p className="text-xs font-medium text-[var(--ink)]">{p.displayName}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium text-[var(--ink)]">{p.displayName}</p>
+              {p.source === "github" && (
+                <span className="mono rounded border border-[var(--line)] px-1 py-px text-[8px] text-[var(--mute)]">github</span>
+              )}
+            </div>
             <p className="mt-1 text-[11px] leading-relaxed text-[var(--mute)]">{p.evidence}</p>
             <div className="mt-2 flex gap-2">
               <button
@@ -188,6 +195,19 @@ export function SkillsStudio({
   const [skills, setSkills] = useState<UserSkill[]>(initialSkills);
   const [goals, setGoals] = useState<UserLearningGoal[]>(initialGoals);
   const [proposals, setProposals] = useState<SkillProposalSummary[]>(initialOverview?.proposals ?? []);
+  const [recommendations, setRecommendations] = useState<SkillRecommendation[]>(
+    initialOverview?.recommendations ?? [],
+  );
+
+  async function refreshIntelligence() {
+    try {
+      const overview = await api.skills.overview();
+      setProposals(overview.proposals);
+      setRecommendations(overview.recommendations);
+    } catch {
+      // Keep existing proposals if refresh fails.
+    }
+  }
 
   function upsertGoal(goal: UserLearningGoal) {
     setGoals((prev) => {
@@ -246,11 +266,11 @@ export function SkillsStudio({
         <AriaProposalsRail proposals={proposals} onChange={setProposals} />
       )}
 
-      {(initialOverview?.recommendations.length ?? 0) > 0 && skills.length < 3 && (
+      {recommendations.length > 0 && skills.length < 3 && (
         <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
           <div className="mono mb-2 text-[10px] text-[var(--mute)]">suggested from profile & path</div>
           <div className="flex flex-wrap gap-2">
-            {initialOverview!.recommendations.slice(0, 8).map((rec) => (
+            {recommendations.slice(0, 8).map((rec) => (
               <button
                 key={`${rec.skillName}-${rec.source}`}
                 type="button"
@@ -263,6 +283,10 @@ export function SkillsStudio({
                     })
                     .then(({ skill }) => {
                       setSkills((prev) => [...prev, skill]);
+                      setRecommendations((prev) =>
+                        prev.filter((item) => item.skillName.toLowerCase() !== rec.skillName.toLowerCase()),
+                      );
+                      void refreshIntelligence();
                       toast.success(`Added ${rec.skillName}`);
                     })
                     .catch((e) => toast.error(e instanceof Error ? e.message : "Could not add skill"));
@@ -279,7 +303,11 @@ export function SkillsStudio({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <SkillInventory skills={skills} onChange={setSkills} />
+        <SkillInventory
+          skills={skills}
+          onChange={setSkills}
+          onSkillCreated={() => void refreshIntelligence()}
+        />
 
         <div className="flex flex-col gap-6">
           <SkillGap

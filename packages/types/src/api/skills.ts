@@ -41,7 +41,7 @@ export type SkillSourceType =
   | "github_import";
 
 export type SkillProposalType = "add" | "update_confidence" | "mark_learning" | "mark_stale";
-export type SkillProposalSource = "chat" | "market" | "path" | "journal";
+export type SkillProposalSource = "chat" | "market" | "path" | "journal" | "github";
 export type SkillProposalStatus = "pending" | "accepted" | "dismissed";
 
 export interface SkillSummary {
@@ -61,7 +61,7 @@ export interface SkillRecommendation {
   skillName: string;
   reason: string;
   priority: number;
-  source: "market" | "path" | "goal" | "memory" | "advisor";
+  source: "market" | "path" | "goal" | "memory" | "advisor" | "github";
   cta: "add_skill" | "start_learning";
 }
 

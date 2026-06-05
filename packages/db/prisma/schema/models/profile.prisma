@@ -37,6 +37,9 @@ model Profile {
   careerEvents           CareerEvent[]
   persistedObservations  PersistedObservation[]
   skillProposals         SkillProposal[]
+  projectProposals       ProjectProposal[]
+  githubProfileSnapshot  GitHubProfileSnapshot?
+  githubSyncRuns         GitHubSyncRun[]
 
   @@map("profile")
 }
@@ -273,6 +276,59 @@ model SocialLink {
   @@unique([profileId, platform])
   @@index([profileId])
   @@map("social_link")
+}
+
+model GitHubProfileSnapshot {
+  id             String    @id @default(uuid())
+  profileId      String    @unique
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  githubUsername String
+  githubUrl      String
+  status         String    // pending | complete | failed
+  normalized     Json      @default("{}")
+  lastIngestedAt DateTime?
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("github_profile_snapshot")
+}
+
+model GitHubSyncRun {
+  id           String   @id @default(uuid())
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  ranAt        DateTime @default(now())
+  status       String   // complete | failed | no_token
+  delta        Json     @default("{}")
+  workPatterns Json     @default("{}")
+
+  @@index([profileId, ranAt])
+  @@map("github_sync_run")
+}
+
+model ProjectProposal {
+  id          String              @id @default(uuid())
+  profileId   String
+  profile     Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId      String
+  title       String
+  description String?
+  url         String?
+  outcomes    Json?
+  startDate   DateTime?
+  endDate     DateTime?
+  evidence    String
+  source      String              @default("github")
+  sourceRef   Json?
+  status      ProjectProposalStatus @default(pending)
+  expiresAt   DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([profileId, status])
+  @@index([userId, status])
+  @@map("project_proposal")
 }
 
 model SkillProposal {

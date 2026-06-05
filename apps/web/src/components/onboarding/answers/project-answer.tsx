@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { ProjectInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type ProjectAnswerProps = {
   items: ProjectInput[];
   onChange: (items: ProjectInput[]) => void;
@@ -21,11 +23,15 @@ export function ProjectAnswer(props: ProjectAnswerProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const addEntry = () => {
+  const hasDraft = Boolean(
+    title.trim() || description.trim() || url.trim() || outcomes.trim() || startDate.trim() || endDate.trim(),
+  );
+
+  const addEntry = (): boolean => {
     const t = title.trim();
     if (!t) {
       toast.error("A project needs a title");
-      return;
+      return false;
     }
     props.onChange([
       ...props.items,
@@ -44,6 +50,7 @@ export function ProjectAnswer(props: ProjectAnswerProps) {
     setOutcomes("");
     setStartDate("");
     setEndDate("");
+    return true;
   };
 
   return (
@@ -91,10 +98,14 @@ export function ProjectAnswer(props: ProjectAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add project</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={props.onSubmit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="a project"
+        addLabel="Add project"
+        onAdd={addEntry}
+        onContinue={props.onSubmit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }

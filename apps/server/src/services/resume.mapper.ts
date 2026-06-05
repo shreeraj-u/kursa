@@ -76,8 +76,12 @@ export function toSnapshot(
 
 export function toTarget(
   activePath: { id: string; title: string; milestones: unknown } | undefined,
+  fallbackTargetRole?: string | null,
 ): ResumeTargetContext {
-  if (!activePath) return { targetRole: null, pathTitle: null, requiredSkills: [] };
+  if (!activePath) {
+    const role = fallbackTargetRole?.trim() || null;
+    return { targetRole: role, pathTitle: role, requiredSkills: [] };
+  }
 
   const milestones = Array.isArray(activePath.milestones)
     ? (activePath.milestones as Array<{ requiredSkills?: string[] }>)

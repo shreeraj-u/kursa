@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { AchievementInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type AchievementAnswerProps = {
   items: AchievementInput[];
   onChange: (items: AchievementInput[]) => void;
@@ -31,11 +33,15 @@ export function AchievementAnswer(props: AchievementAnswerProps) {
   const [url, setUrl] = useState("");
   const [dateAchieved, setDateAchieved] = useState("");
 
-  const addEntry = () => {
+  const hasDraft = Boolean(
+    title.trim() || issuer.trim() || description.trim() || url.trim() || dateAchieved.trim(),
+  );
+
+  const addEntry = (): boolean => {
     const t = title.trim();
     if (!t) {
       toast.error("An achievement needs a title");
-      return;
+      return false;
     }
     props.onChange([
       ...props.items,
@@ -54,6 +60,7 @@ export function AchievementAnswer(props: AchievementAnswerProps) {
     setDescription("");
     setUrl("");
     setDateAchieved("");
+    return true;
   };
 
   return (
@@ -108,10 +115,14 @@ export function AchievementAnswer(props: AchievementAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add achievement</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={props.onSubmit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="an achievement"
+        addLabel="Add achievement"
+        onAdd={addEntry}
+        onContinue={props.onSubmit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }

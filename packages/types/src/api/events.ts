@@ -13,6 +13,7 @@ export type CareerEventType =
   | "onboarding_complete"
   | "application_update"
   | "github_sync"
+  | "github_activity"
   | "system"
   | "chat_insight";
 

@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { SocialLinkInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type SocialLinksAnswerProps = {
   items: SocialLinkInput[];
   onChange: (items: SocialLinkInput[]) => void;
@@ -25,19 +27,22 @@ export function SocialLinksAnswer(props: SocialLinksAnswerProps) {
   const [platform, setPlatform] = useState("github");
   const [url, setUrl] = useState("");
 
-  const addEntry = () => {
+  const hasDraft = Boolean(url.trim());
+
+  const addEntry = (): boolean => {
     const u = url.trim();
     if (!u) {
       toast.error("Add a URL");
-      return;
+      return false;
     }
     if (props.items.some((item) => item.platform === platform && item.url.toLowerCase() === u.toLowerCase())) {
       toast.error("Already added that link");
-      return;
+      return false;
     }
     props.onChange([...props.items, { platform, url: u }]);
     setPlatform("github");
     setUrl("");
+    return true;
   };
 
   return (
@@ -84,10 +89,14 @@ export function SocialLinksAnswer(props: SocialLinksAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add link</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={props.onSubmit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="a social link"
+        addLabel="Add link"
+        onAdd={addEntry}
+        onContinue={props.onSubmit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }

@@ -438,12 +438,36 @@ export const api = {
   },
 
   github: {
+    status: () =>
+      request<import("@kursa/types").GitHubStatusResponse>("/api/v1/github/status"),
+    snapshot: () =>
+      request<{ snapshot: import("@kursa/types").GitHubNormalizedSnapshot | null }>(
+        "/api/v1/github/snapshot",
+      ),
+    ingest: () =>
+      request<{ scheduled: boolean }>("/api/v1/github/ingest", { method: "POST" }),
     repos: () =>
       request<import("@kursa/types").GitHubSyncPreviewResponse>("/api/v1/github/repos"),
     sync: (body: import("@kursa/types").GitHubSyncConfirmRequest) =>
       request<import("@kursa/types").GitHubSyncSummaryResponse>("/api/v1/github/sync", {
         method: "POST",
         body: JSON.stringify(body),
+      }),
+  },
+
+  projectProposals: {
+    list: (status: "pending" | "accepted" | "dismissed" = "pending") =>
+      request<{ data: import("@kursa/types").ProjectProposalSummary[]; total: number }>(
+        `/api/v1/profile/me/project-proposals?status=${status}`,
+      ),
+    accept: (id: string) =>
+      request<{ project: { id: string; title: string; url: string | null } }>(
+        `/api/v1/profile/me/project-proposals/${id}/accept`,
+        { method: "POST" },
+      ),
+    dismiss: (id: string) =>
+      request<{ ok: boolean }>(`/api/v1/profile/me/project-proposals/${id}/dismiss`, {
+        method: "POST",
       }),
   },
 };

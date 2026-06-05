@@ -8,6 +8,7 @@ import {
   runPathStaleFlags,
   runMarketRefresh,
   runChatConversationDigest,
+  runGitHubDailySyncJob,
 } from "./tasks.js";
 
 const QUEUE_NAME = "kursa-intelligence";
@@ -59,6 +60,11 @@ export function startJobWorkers(redisUrl: string): void {
     {},
     { repeat: { pattern: "15 * * * *" }, jobId: "chat-conversation-digest" },
   );
+  void queue.add(
+    "github-daily-sync",
+    {},
+    { repeat: { pattern: "0 6 * * *" }, jobId: "github-daily-sync" },
+  );
 
   worker = new Worker(
     QUEUE_NAME,
@@ -84,6 +90,9 @@ export function startJobWorkers(redisUrl: string): void {
           break;
         case "chat-conversation-digest":
           await runChatConversationDigest();
+          break;
+        case "github-daily-sync":
+          await runGitHubDailySyncJob();
           break;
         default:
           break;

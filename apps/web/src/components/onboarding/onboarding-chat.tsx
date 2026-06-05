@@ -24,13 +24,21 @@ import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import type { FormState, Message, Step, StepId } from "./types";
 
+function inferTargetRoleFromWorkHistory(
+  work: Array<{ roleTitle: string; isCurrent?: boolean }>,
+): string {
+  const current = work.find((entry) => entry.isCurrent)?.roleTitle?.trim();
+  if (current) return current;
+  return work[0]?.roleTitle?.trim() ?? "";
+}
+
 const STEPS: Step[] = [
   { id: "welcome", prompts: ["Hey, I'm Kursa.", "I'll ask you a few quick things so I can map your career foundation.", "Ready when you are."] },
+  { id: "imports", prompts: ["Before we get into details, want to import from a resume?", "Drop in a resume and I'll pull your skills and work history automatically. Totally optional."] },
   { id: "targetRole", prompts: ["What role are you targeting next?"] },
   { id: "location", prompts: ["Nice. Where are you based right now?"] },
   { id: "yearsOfExperience", prompts: ["How many years of professional experience do you have?"] },
   { id: "bio", prompts: ["In a sentence or two, who are you professionally?"] },
-  { id: "imports", prompts: ["Before we list your skills and experience, want to import them?", "Drop in a resume and I'll pull your skills and work history automatically. Totally optional."] },
   { id: "skills", prompts: ["Here are your skills.", "Add, edit, or remove any — these are the ones a recruiter or hiring manager should see."] },
   { id: "workHistory", prompts: ["Now your work experience.", "Review what's here and add anything missing — company, role, and a brief summary of what you did."] },
   { id: "education", prompts: ["Let's check your education and credentials next."] },
@@ -303,9 +311,18 @@ export default function OnboardingChat() {
             (l) => !existingLink.has(`${l.platform.toLowerCase()}__${l.url.toLowerCase()}`),
           );
 
+          const mergedWorkHistory = [...prev.workHistory, ...freshWork];
+          const inferredRole = inferTargetRoleFromWorkHistory(mergedWorkHistory);
+
           return {
             ...prev,
-            workHistory: [...prev.workHistory, ...freshWork],
+            basics: {
+              ...prev.basics,
+              targetRole: prev.basics.targetRole.trim() || inferredRole,
+              location: prev.basics.location.trim() || result.importedBasics.location?.trim() || "",
+              bio: prev.basics.bio.trim() || result.importedBasics.bio?.trim() || "",
+            },
+            workHistory: mergedWorkHistory,
             education: [...prev.education, ...freshEdu],
             projects: [...prev.projects, ...freshProject],
             achievements: [...prev.achievements, ...freshAchievement],
@@ -416,10 +433,24 @@ export default function OnboardingChat() {
         );
 
       case "targetRole":
-        return <TextAnswer placeholder="e.g., Senior Frontend Engineer" value={form.basics.targetRole}
-          onChange={(v) => setForm((p) => ({ ...p, basics: { ...p.basics, targetRole: v } }))}
-          onSubmit={() => { const v = form.basics.targetRole.trim(); if (!v) { toast.error("Tell me the role you're aiming for"); return; } handleTextStep(v); }}
-          onBack={goBack} />;
+        return (
+          <div className="flex flex-col gap-2">
+            {form.imports.resumeRawText && form.basics.targetRole.trim() ? (
+              <p className="text-xs text-mute">Pre-filled from your resume — edit if needed.</p>
+            ) : null}
+            <TextAnswer
+              placeholder="e.g., Senior Frontend Engineer"
+              value={form.basics.targetRole}
+              onChange={(v) => setForm((p) => ({ ...p, basics: { ...p.basics, targetRole: v } }))}
+              onSubmit={() => {
+                const v = form.basics.targetRole.trim();
+                if (!v) { toast.error("Tell me the role you're aiming for"); return; }
+                handleTextStep(v);
+              }}
+              onBack={goBack}
+            />
+          </div>
+        );
 
       case "location":
         return <TextAnswer placeholder="e.g., Singapore" value={form.basics.location}
