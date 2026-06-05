@@ -35,7 +35,7 @@ app.use(requestId);
 app.use(openAIApiKey);
 
 // ── Auth (before rate-limit and json — Better Auth handles its own body parsing) ─
-app.all("/api/auth{/*path}", toNodeHandler(auth));
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "100kb" }));
@@ -69,8 +69,10 @@ app.use("/api/v1", v1Router);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(3000, () => {
-  console.log("Server is running on http://localhost:3000");
+const port = Number(process.env.PORT ?? 3000);
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server is running on http://0.0.0.0:${port}`);
   if (process.env.REDIS_URL) {
     import("./jobs/index.js").then(({ startJobWorkers }) => {
       startJobWorkers(process.env.REDIS_URL!);
