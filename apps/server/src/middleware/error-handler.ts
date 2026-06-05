@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 
 import { HttpError } from "../errors/http-error.js";
+import { MissingOpenAIKeyError } from "../lib/openai.js";
 
 export function errorHandler(
   err: unknown,
@@ -17,6 +18,17 @@ export function errorHandler(
         code: err.code,
         message: err.message,
         ...(err.details !== undefined && { details: err.details }),
+      },
+    });
+    return;
+  }
+
+  if (err instanceof MissingOpenAIKeyError) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: "OPENAI_API_KEY_REQUIRED",
+        message: err.message,
       },
     });
     return;

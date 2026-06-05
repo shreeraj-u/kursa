@@ -29,8 +29,7 @@ This is a deliberate divergence from the PRD, not an oversight.
 
 ## Consequences
 
-- One provider, one SDK, one key (`OPENAI_API_KEY`), one prompt/response convention
-  across the whole AI layer. No mixed-provider complexity mid-build.
+- One provider, one SDK, and one prompt/response convention across the whole AI layer. Browser/API requests use a user-supplied OpenAI key for the live demo; `OPENAI_API_KEY` is optional fallback configuration for local scripts or non-browser jobs. No mixed-provider complexity mid-build.
 - Phase 2 gains nothing from Claude specifically (Anthropic prompt caching only
   matters for the always-on profile context in the Phase 5 chat).
 - The PRD's example schema and the code now disagree on provider. **A future reader

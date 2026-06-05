@@ -69,9 +69,9 @@ kursa/
 - Node.js compatible with the workspace dependencies
 - pnpm 10.12.1 or newer
 - PostgreSQL database
-- Environment variables for the web app, server, database, auth, and AI providers
+- Environment variables for the web app, server, database, and auth
 
-The app expects environment files under `apps/web/.env` and `apps/server/.env`. The exact values depend on your local database, auth secrets, and AI provider keys.
+The app expects environment files under `apps/web/.env` and `apps/server/.env`. The exact values depend on your local database and auth secrets. For the live demo, AI features are BYO key: users paste their own OpenAI API key in the app, and the browser forwards it per request. The key is stored only in that browser's local storage and is not saved to the database. `OPENAI_API_KEY` remains optional for local scripts or non-browser jobs.
 
 ## Getting started
 

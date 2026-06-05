@@ -19,7 +19,7 @@ Triggered after every `CareerEvent` write via `enrichment.service.ts`:
 - Sentiment for wins and notes (extends beyond check-ins)
 - Immediate memory candidates for significant events
 
-Rule-based fallback when OpenAI is unavailable.
+Browser/API requests use the OpenAI key supplied by the current user; local scripts or non-browser jobs may use optional `OPENAI_API_KEY`. Rule-based fallback runs when OpenAI is unavailable.
 
 ## LLM nightly batch
 

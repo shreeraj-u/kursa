@@ -76,8 +76,8 @@ Records a system event when LinkedIn URL is configured on profile.
 
 See [LLM_STRATEGY.md](./LLM_STRATEGY.md):
 - **Rules**: advisor signals, cold-start observations
-- **LLM on ingest**: async enrichment after each journal event (requires `OPENAI_API_KEY`)
+- **LLM on ingest**: async enrichment after each journal event (requires the user-supplied OpenAI key on browser/API requests, or optional `OPENAI_API_KEY` for non-browser jobs)
 - **LLM nightly**: batch memory distillation job
 - **LLM read-time**: observations, impact bullet generation, paths (existing)
 
-Without OpenAI key, rule-based enrichment still runs (skills, themes, milestone keyword matching).
+Without an OpenAI key, rule-based enrichment still runs (skills, themes, milestone keyword matching).

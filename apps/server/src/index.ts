@@ -10,6 +10,7 @@ import { rateLimit } from "express-rate-limit";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFound } from "./middleware/not-found.js";
 import { requestId } from "./middleware/request-id.js";
+import { OPENAI_API_KEY_HEADER, openAIApiKey } from "./middleware/openai-api-key.js";
 import v1Router from "./routes/v1/index.js";
 
 const app = express();
@@ -22,13 +23,16 @@ app.use(
   cors({
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", OPENAI_API_KEY_HEADER],
     credentials: true,
   }),
 );
 
 // ── Request tracing ───────────────────────────────────────────────────────────
 app.use(requestId);
+
+// ── Demo BYO OpenAI key context ───────────────────────────────────────────────
+app.use(openAIApiKey);
 
 // ── Auth (before rate-limit and json — Better Auth handles its own body parsing) ─
 app.all("/api/auth{/*path}", toNodeHandler(auth));

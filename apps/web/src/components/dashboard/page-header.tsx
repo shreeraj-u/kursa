@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ChevronDown } from "lucide-react";
 
+import OpenAIKeyControl from "./openai-key-control";
+
 interface PageHeaderProps {
     pageTitle: string;
     breadcrumb?: string;
@@ -53,6 +55,8 @@ export default function PageHeader({
                     />
                     aria · synced 2 min ago
                 </div>
+
+                <OpenAIKeyControl />
 
                 {/* Ask Aria button */}
                 <Link

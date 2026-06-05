@@ -1,6 +1,8 @@
 "use client";
 
 import { env } from "@kursa/env/web";
+
+import { getOpenAIKeyHeader } from "@/lib/openai-key";
 import type {
   AchievementCreateInput,
   AchievementInput,
@@ -58,8 +60,8 @@ const BASE = env.NEXT_PUBLIC_SERVER_URL;
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
+    headers: { "Content-Type": "application/json", ...getOpenAIKeyHeader(), ...options?.headers },
   });
 
   if (!res.ok) {
@@ -386,6 +388,7 @@ export const api = {
       const res = await fetch(`${BASE}/api/v1/onboarding/resume`, {
         method: "POST",
         credentials: "include",
+        headers: getOpenAIKeyHeader(),
         body: formData,
       });
       if (!res.ok) {

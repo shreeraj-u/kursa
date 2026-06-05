@@ -22,6 +22,7 @@ import { LanguagesAnswer } from "./answers/languages-answer";
 import { SocialLinksAnswer } from "./answers/social-links-answer";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
+import OpenAIKeyControl from "@/components/dashboard/openai-key-control";
 import type { FormState, Message, Step, StepId } from "./types";
 
 function inferTargetRoleFromWorkHistory(
@@ -607,8 +608,11 @@ export default function OnboardingChat() {
             <div className="h-2 w-2 rounded-full bg-accent" />
             <span className="mono text-xs">kursa onboarding</span>
           </div>
-          <div className="mono text-xs text-mute">
-            {String(stepIndex + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
+          <div className="flex items-center gap-3">
+            <OpenAIKeyControl />
+            <div className="mono text-xs text-mute">
+              {String(stepIndex + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
+            </div>
           </div>
         </div>
 
