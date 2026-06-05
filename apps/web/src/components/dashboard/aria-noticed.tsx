@@ -62,9 +62,12 @@ export default function AriaNoticed({ initialObservations, initialError = null }
         <div>
             <div className="flex items-center justify-between mb-3">
                 <span className="mono text-2xs text-mute-2">
-                    aria noticed · {newCount} new · 0 dismissed
+                    aria noticed · {newCount} insight{newCount === 1 ? "" : "s"}
                     {data.generationSource === "llm" && newCount > 0 && (
-                        <span className="text-accent"> · llm</span>
+                        <span className="text-accent"> · personalized</span>
+                    )}
+                    {data.generationSource === "rules" && newCount > 0 && (
+                        <span> · signals</span>
                     )}
                 </span>
             </div>
@@ -97,8 +100,8 @@ export default function AriaNoticed({ initialObservations, initialError = null }
             ) : (
                 <div className="flex flex-col gap-3">
                     <div className={`flex flex-col gap-3 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-                        {observations.map((obs) => (
-                            <div key={obs.text.slice(0, 48)} className="flex gap-2.5">
+                        {observations.map((obs, idx) => (
+                            <div key={`${obs.timeAgo}-${idx}-${obs.text.slice(0, 32)}`} className="flex gap-2.5">
                                 <span
                                     className={`mt-1.5 flex-shrink-0 rounded-full w-[5px] h-[5px] ${obs.type === "opportunity" ? "bg-accent" : "bg-warn"}`}
                                 />

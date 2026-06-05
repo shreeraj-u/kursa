@@ -12,5 +12,6 @@ router.get("/suggested-prompts", chatController.getSuggestedPrompts);
 router.post("/", chatController.createConversation);
 router.post("/:id/messages", chatController.sendMessage);
 router.post("/:id/decision", chatController.recordDecision);
+router.delete("/:id", chatController.deleteConversation);
 
 export default router;

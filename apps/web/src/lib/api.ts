@@ -14,6 +14,11 @@ import type {
   RelevanceSummary,
   Resume,
   ResumeContent,
+  SkillCreateInput,
+  SkillProposalListResponse,
+  SkillsOverviewResponse,
+  SkillSummary,
+  SkillUpdateInput,
   UserSocialLink,
 } from "@kursa/types";
 
@@ -87,7 +92,49 @@ export const api = {
       }),
   },
 
+  skills: {
+    overview: () => request<SkillsOverviewResponse>("/api/v1/profile/me/skills/overview"),
+
+    create: (body: SkillCreateInput) =>
+      request<{ skill: SkillSummary }>("/api/v1/profile/me/skills", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: SkillUpdateInput) =>
+      request<{ skill: SkillSummary }>(`/api/v1/profile/me/skills/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/api/v1/profile/me/skills/${id}`, {
+        method: "DELETE",
+      }),
+
+    proposals: (status: "pending" | "accepted" | "dismissed" = "pending") =>
+      request<SkillProposalListResponse>(
+        `/api/v1/profile/me/skill-proposals?status=${status}`,
+      ),
+
+    acceptProposal: (id: string) =>
+      request<{ skill: SkillSummary | null; accepted: boolean }>(
+        `/api/v1/profile/me/skill-proposals/${id}/accept`,
+        { method: "POST" },
+      ),
+
+    dismissProposal: (id: string) =>
+      request<{ dismissed: boolean }>(`/api/v1/profile/me/skill-proposals/${id}/dismiss`, {
+        method: "POST",
+      }),
+  },
+
   resume: {
+    list: () =>
+      request<{ resumes: Resume[]; quota: { used: number; limit: number } }>(
+        "/api/v1/profile/me/resumes",
+      ),
+
     generate: () =>
       request<{ resume: Resume }>("/api/v1/profile/me/resumes/generate", {
         method: "POST",
@@ -283,6 +330,11 @@ export const api = {
       request<{ recorded: boolean }>(`/api/v1/chat/${conversationId}/decision`, {
         method: "POST",
         body: JSON.stringify(body),
+      }),
+
+    delete: (conversationId: string) =>
+      request<{ deleted: boolean }>(`/api/v1/chat/${conversationId}`, {
+        method: "DELETE",
       }),
   },
 

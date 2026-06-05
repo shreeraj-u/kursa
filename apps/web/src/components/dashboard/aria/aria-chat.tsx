@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "motion/react";
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +15,7 @@ import type {
   ChatActionChip,
   ChatDecisionType,
   ChatMetaResponse,
+  ChatSkillProposalHint,
   ConversationListItem,
 } from "@kursa/types";
 
@@ -37,6 +39,7 @@ export default function AriaChat() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [showNewDecision, setShowNewDecision] = useState(false);
+  const [lastSkillProposals, setLastSkillProposals] = useState<ChatSkillProposalHint[]>([]);
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -125,6 +128,19 @@ export default function AriaChat() {
       setConversations(listRes.conversations);
       setActiveId(res.conversationId);
 
+      if (res.skillProposals && res.skillProposals.length > 0) {
+        setLastSkillProposals(res.skillProposals);
+        toast.success(
+          res.skillProposals.length === 1
+            ? "Aria noticed a skill — review on Skills"
+            : `Aria noticed ${res.skillProposals.length} skills — review on Skills`,
+        );
+        const metaRes = await api.chat.meta().catch(() => null);
+        if (metaRes) setMeta(metaRes);
+      } else {
+        setLastSkillProposals([]);
+      }
+
       if (typeof res.memoriesLearned === "number" && res.memoriesLearned > 0) {
         toast.success(
           res.memoriesLearned === 1
@@ -133,7 +149,7 @@ export default function AriaChat() {
         );
         const metaRes = await api.chat.meta().catch(() => null);
         if (metaRes) setMeta(metaRes);
-      } else {
+      } else if (!res.skillProposals?.length) {
         window.setTimeout(() => {
           void api.chat.meta().then((metaRes) => {
             setMeta(metaRes);
@@ -197,6 +213,26 @@ export default function AriaChat() {
     }
   }
 
+  async function deleteThread(id: string, title: string) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try {
+      await api.chat.delete(id);
+      toast.success("Thread deleted");
+      const listRes = await api.chat.list();
+      setConversations(listRes.conversations);
+      const main = listRes.conversations.find(isMainThread);
+      const nextId = main?.id ?? listRes.conversations[0]?.id ?? null;
+      setActiveId(nextId);
+      if (nextId) {
+        router.replace(`/dashboard/aria?thread=${nextId}` as Route);
+      } else {
+        router.replace("/dashboard/aria" as Route);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete thread");
+    }
+  }
+
   const contextLabel = meta
     ? `${meta.contextDays} days of context · pick up where you left off`
     : "Building your career context…";
@@ -225,6 +261,12 @@ export default function AriaChat() {
                     {meta.marketSources?.length
                       ? ` (${meta.marketSources.slice(0, 3).join(", ")})`
                       : ""}
+                  </span>
+                )}
+                {(meta.pendingSkillProposals ?? 0) > 0 && (
+                  <span style={{ color: "var(--accent)" }}>
+                    {" "}
+                    · {meta.pendingSkillProposals} skill{meta.pendingSkillProposals === 1 ? "" : "s"} pending
                   </span>
                 )}
               </span>
@@ -293,22 +335,36 @@ export default function AriaChat() {
                     {label}
                   </div>
                   {items.map((c) => (
-                    <button
+                    <div
                       key={c.id}
-                      type="button"
-                      onClick={() => selectThread(c.id)}
-                      className="w-full text-left px-3 py-2 border-b transition-colors"
+                      className="flex items-stretch border-b"
                       style={{
                         borderColor: "var(--line)",
                         background: activeId === c.id ? "var(--bg)" : "transparent",
                       }}
                     >
-                      <div className="text-xs text-ink truncate">{c.title}</div>
-                      <div className="mono text-2xs mt-0.5" style={{ color: "var(--mute-3)" }}>
-                        {formatRelativeTime(c.updatedAt)}
-                        {c.messageCount > 0 && ` · ${c.messageCount} msgs`}
-                      </div>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => selectThread(c.id)}
+                        className="flex-1 min-w-0 text-left px-3 py-2 transition-colors"
+                      >
+                        <div className="text-xs text-ink truncate">{c.title}</div>
+                        <div className="mono text-2xs mt-0.5" style={{ color: "var(--mute-3)" }}>
+                          {formatRelativeTime(c.updatedAt)}
+                          {c.messageCount > 0 && ` · ${c.messageCount} msgs`}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteThread(c.id, c.title)}
+                        className="px-2 shrink-0 transition-colors hover:text-warn"
+                        style={{ color: "var(--mute-3)", background: "transparent", border: "none", cursor: "pointer" }}
+                        title="Delete thread"
+                        aria-label={`Delete ${c.title}`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   ))}
                 </div>
               );
@@ -336,14 +392,27 @@ export default function AriaChat() {
             ) : (
               <>
                 <div
-                  className="flex items-center justify-between px-4 py-2 border-b mono text-2xs shrink-0"
+                  className="flex items-center justify-between gap-3 px-4 py-2 border-b mono text-2xs shrink-0"
                   style={{ borderColor: "var(--line)", color: "var(--mute-2)" }}
                 >
                   <span className="text-ink font-medium truncate">{active.title}</span>
-                  <span>
-                    context: full · {active.messageCount} messages
-                    {meta?.marketAvailable && " · market live"}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span>
+                      context: full · {active.messageCount} messages
+                      {meta?.marketAvailable && " · market live"}
+                    </span>
+                    {active.decisionType && (
+                      <button
+                        type="button"
+                        onClick={() => void deleteThread(active.id, active.title)}
+                        className="inline-flex items-center gap-1 rounded px-2 py-0.5 transition-colors hover:bg-bg-sub"
+                        style={{ border: "1px solid var(--line)", color: "var(--mute)", background: "transparent", cursor: "pointer" }}
+                      >
+                        <Trash2 size={11} />
+                        delete
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
@@ -356,6 +425,25 @@ export default function AriaChat() {
                     <AriaMessageBubble key={m.id} role={m.role} content={m.content} />
                   ))}
                   <AnimatePresence>{sending && <TypingIndicator avatar="a" />}</AnimatePresence>
+                  {lastSkillProposals.length > 0 && (
+                    <div className="flex flex-wrap gap-2 py-2">
+                      {lastSkillProposals.map((p) => (
+                        <Link
+                          key={p.id}
+                          href={`/dashboard/skills?highlight=${p.id}` as Route}
+                          className="mono inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-2xs border"
+                          style={{
+                            borderColor: "var(--accent-line)",
+                            background: "var(--accent-soft)",
+                            color: "var(--accent)",
+                            textDecoration: "none",
+                          }}
+                        >
+                          + Add {p.displayName} to skills
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <div ref={bottomRef} />
                 </div>
 

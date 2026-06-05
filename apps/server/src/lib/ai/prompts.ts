@@ -196,6 +196,35 @@ Rules:
 - confidence below 0.6 means do not include that memory.
 - Never invent employers, salaries, or achievements not stated by the user.`;
 
+export const LEARNING_GOAL_EXTRACT_PROMPT = `Extract a short skill/topic label from a journal "what I learned" entry.
+Return JSON only: {"skillName": "2-5 word label", "summary": "one sentence summary of what they learned"}
+
+Rules:
+- skillName is inventory-ready (e.g. "AI agent harnesses", "Python", "System design") — never the full journal paragraph.
+- skillName max 40 characters. Pick the primary topic if multiple are mentioned.
+- summary captures the learning in one readable sentence (can be longer than skillName).
+- If the text is already a short skill name, return it unchanged.`;
+
+export const CHAT_SKILL_EXTRACT_PROMPT = `Extract skills the user mentions learning, using, improving, or wanting to add.
+Return JSON only:
+{
+  "skills": [
+    {
+      "name": "canonical skill name e.g. JavaScript",
+      "category": "technical"|"soft"|"tool",
+      "action": "add"|"improve"|"learning",
+      "confidence": 0.5-0.95,
+      "evidenceQuote": "short quote from user message"
+    }
+  ]
+}
+
+Rules:
+- Only skills the USER stated about themselves — not skills Aria suggested.
+- "learning", "studying", "picking up", "want to add" → action "learning" or "add".
+- Empty array if no skill self-disclosure. Max 3 skills.
+- confidence below 0.55 → omit.`;
+
 export const CHAT_CONVERSATION_DIGEST_PROMPT = `You distill a career advisor chat thread into 1–2 durable facts about the user.
 Return JSON: {"memories": [{"category": "skill_evidence"|"achievement_theme"|"goal"|"work_context"|"sentiment_pattern", "fact": "You …", "confidence": 0.65-0.95}]}
 Max 2 memories. Only user-stated or clearly confirmed facts. Skip small talk.`;

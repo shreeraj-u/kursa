@@ -2,8 +2,7 @@ export interface Observation {
   text: string;
   timeAgo: string;
   type: "opportunity" | "warning" | "info";
-  /** Present when served from the LLM pipeline (never fallback templates). */
-  source?: "llm";
+  source?: "llm" | "rules";
 }
 
 export interface ObservationsResponse {
@@ -14,7 +13,7 @@ export interface ObservationsResponse {
     limit: number;
     totalPages: number;
   };
-  generationSource: "llm";
+  generationSource: "llm" | "rules";
   materialChangeDetected?: boolean;
 }
 

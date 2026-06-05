@@ -1,4 +1,5 @@
 import type { ChatDecisionType } from "./intelligence.js";
+import type { ChatSkillProposalHint } from "./skills.js";
 
 export type ChatActionType =
   | "log_decision"
@@ -22,6 +23,7 @@ export interface ChatSendResponse {
   suggestedActions: ChatActionChip[];
   /** Facts persisted to long-term memory from this message (0 if none). */
   memoriesLearned?: number;
+  skillProposals?: ChatSkillProposalHint[];
 }
 
 export interface ChatMetaResponse {
@@ -31,6 +33,7 @@ export interface ChatMetaResponse {
   marketAvailable: boolean;
   marketAsOf: string | null;
   marketSources?: string[];
+  pendingSkillProposals?: number;
   syncedAt: string;
 }
 

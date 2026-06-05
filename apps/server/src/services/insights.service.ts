@@ -30,7 +30,7 @@ export type ObservationsResult = {
     limit: number;
     totalPages: number;
   };
-  generationSource: "llm";
+  generationSource: "llm" | "rules";
   materialChangeDetected: boolean;
 };
 
@@ -56,8 +56,55 @@ export async function getObservations(
         ];
     return paginateObservations(ruleObservations, page, limit, {
       materialChangeDetected: context?.materialChangeDetected ?? false,
+      generationSource: "rules",
     });
   }
+}
+
+function hasRichContext(context: NonNullable<Awaited<ReturnType<typeof assembleAdvisorContext>>>): boolean {
+  return (
+    context.memories.length >= 2 ||
+    context.profile.skills.length >= 3 ||
+    Boolean(context.activePath) ||
+    context.recentEvents.some((e) => e.type === "chat_insight" || e.type === "win")
+  );
+}
+
+function supplementFromMemories(
+  observations: Observation[],
+  context: NonNullable<Awaited<ReturnType<typeof assembleAdvisorContext>>>,
+): Observation[] {
+  const seen = new Set(observations.map((o) => o.text.toLowerCase()));
+  const extra: Observation[] = [];
+
+  for (const memory of context.memories.slice(0, 3)) {
+    if (extra.length >= 2) break;
+    const text = memory.fact.trim();
+    if (text.length < 20 || seen.has(text.toLowerCase())) continue;
+    seen.add(text.toLowerCase());
+    extra.push({
+      text,
+      type: "info",
+      timeAgo: "noticed · from chat",
+      source: "llm",
+    });
+  }
+
+  for (const event of context.recentEvents) {
+    if (extra.length >= 3) break;
+    if (event.type !== "chat_insight" || !event.body) continue;
+    const text = event.body.replace(/^Aria noted:\s*/i, "").trim();
+    if (text.length < 20 || seen.has(text.toLowerCase())) continue;
+    seen.add(text.toLowerCase());
+    extra.push({
+      text,
+      type: "info",
+      timeAgo: "noticed · from journal",
+      source: "llm",
+    });
+  }
+
+  return [...observations, ...extra].slice(0, 5);
 }
 
 async function getObservationsInner(
@@ -113,40 +160,46 @@ async function getObservationsInner(
       }
     }
     if (!hasStaleFallback) {
-      const observations = persisted.map((o) => ({
+      let observations = persisted.map((o) => ({
         text: o.text,
         timeAgo: formatTimeAgo(o.createdAt),
         type: o.type as Observation["type"],
         source: "llm" as const,
       }));
 
+      if (observations.length < 4) {
+        observations = supplementFromMemories(observations, context);
+      }
+
       return paginateObservations(observations, page, limit, {
         materialChangeDetected: context.materialChangeDetected,
+        generationSource: "llm",
       });
     }
     await prisma.persistedObservation.deleteMany({ where: { profileId: profile.id } });
   }
 
   const sparseProfile =
-    context.profile.skills.length < 2 && context.profile.workHistories.length < 1;
-
-  const lowEventCount = context.recentEvents.length < 5;
+    context.profile.skills.length < 2 &&
+    context.profile.workHistories.length < 1 &&
+    context.memories.length === 0;
 
   if (sparseProfile) {
     const ruleObservations = generateRuleBasedObservations(context.signals);
     return paginateObservations(ruleObservations, page, limit, {
       materialChangeDetected: context.materialChangeDetected,
+      generationSource: "rules",
     });
   }
 
+  const lowEventCount = context.recentEvents.length < 3 && !hasRichContext(context);
   if (lowEventCount) {
     const ruleObservations = generateRuleBasedObservations(context.signals);
-    return paginateObservations(
-      ruleObservations.map((o) => ({ ...o, source: "llm" as const })),
-      page,
-      limit,
-      { materialChangeDetected: context.materialChangeDetected },
-    );
+    const supplemented = supplementFromMemories(ruleObservations, context);
+    return paginateObservations(supplemented, page, limit, {
+      materialChangeDetected: context.materialChangeDetected,
+      generationSource: supplemented.length > ruleObservations.length ? "llm" : "rules",
+    });
   }
 
   if (!profile.careerTrajectory && profile.workHistories.length > 0) {
@@ -167,24 +220,29 @@ async function getObservationsInner(
     const ruleObservations = generateRuleBasedObservations(context.signals);
     return paginateObservations(ruleObservations, page, limit, {
       materialChangeDetected: context.materialChangeDetected,
+      generationSource: "rules",
     });
   }
 
   if (observations.length === 0) {
     const ruleObservations = generateRuleBasedObservations(context.signals);
-    return paginateObservations(ruleObservations, page, limit, {
+    const supplemented = supplementFromMemories(ruleObservations, context);
+    return paginateObservations(supplemented, page, limit, {
       materialChangeDetected: context.materialChangeDetected,
+      generationSource: supplemented.length > ruleObservations.length ? "llm" : "rules",
     });
   }
 
   const validObservations = observations.filter((obs) => !isFallbackObservationText(obs.text));
   if (validObservations.length === 0) {
     const ruleObservations = generateRuleBasedObservations(context.signals);
-    return paginateObservations(ruleObservations, page, limit, {
+    const supplemented = supplementFromMemories(ruleObservations, context);
+    return paginateObservations(supplemented, page, limit, {
       materialChangeDetected: context.materialChangeDetected,
+      generationSource: supplemented.length > ruleObservations.length ? "llm" : "rules",
     });
   }
-  observations = validObservations;
+  observations = supplementFromMemories(validObservations, context);
 
   await prisma.persistedObservation.deleteMany({ where: { profileId: profile.id } });
 
@@ -219,6 +277,7 @@ async function getObservationsInner(
 
   return paginateObservations(enriched, page, limit, {
     materialChangeDetected: context.materialChangeDetected,
+    generationSource: "llm",
   });
 }
 
@@ -233,7 +292,7 @@ function paginateObservations(
   observations: Observation[],
   page: number,
   limit: number,
-  meta: { materialChangeDetected: boolean },
+  meta: { materialChangeDetected: boolean; generationSource?: "llm" | "rules" },
 ): ObservationsResult {
   const total = observations.length;
   const paginated = observations.slice((page - 1) * limit, page * limit);
@@ -246,7 +305,7 @@ function paginateObservations(
       limit,
       totalPages: Math.ceil(total / limit) || 1,
     },
-    generationSource: "llm",
+    generationSource: meta.generationSource ?? "llm",
     materialChangeDetected: meta.materialChangeDetected,
   };
 }

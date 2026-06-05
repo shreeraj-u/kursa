@@ -1,4 +1,4 @@
-import type { AdvisorContext } from "@kursa/types";
+import type { AdvisorContext, SkillRecommendation, SkillProposalSummary } from "@kursa/types";
 
 const MAX_HISTORY_MESSAGES = 16;
 const MAX_MESSAGE_CHARS = 1_500;
@@ -27,7 +27,15 @@ export function trimChatHistory(
   }));
 }
 
-export function buildSlimChatContextPayload(context: AdvisorContext) {
+const STALE_MS = 18 * 30 * 24 * 60 * 60 * 1000;
+
+export function buildSlimChatContextPayload(
+  context: AdvisorContext,
+  skillsExtras?: {
+    recommendations?: SkillRecommendation[];
+    proposals?: SkillProposalSummary[];
+  },
+) {
   const nextMilestone = context.activePath?.milestones.find(
     (m) => m.status === "in_progress" || m.status === "not_started",
   );
@@ -97,6 +105,17 @@ export function buildSlimChatContextPayload(context: AdvisorContext) {
       : null,
     learningGoals: context.profile.learningGoals.slice(0, 5),
     materialChangeDetected: context.materialChangeDetected,
+    skillsOverview: {
+      skills: context.profile.skills.slice(0, 25).map((s) => ({
+        name: s.name,
+        confidence: s.confidenceRating,
+        isStale:
+          s.lastUsedDate != null &&
+          new Date(s.lastUsedDate).getTime() < Date.now() - STALE_MS,
+      })),
+      topRecommendations: skillsExtras?.recommendations?.slice(0, 5) ?? [],
+      pendingProposals: skillsExtras?.proposals?.slice(0, 3) ?? [],
+    },
     marketContext: context.marketContext
       ? {
           available: context.marketContext.available,

@@ -11,6 +11,7 @@ import {
   fetchCareerOneStopWages,
   searchCareerOneStopJobs,
 } from "../lib/market/careeronestop.client.js";
+import { extractMarketSkillsFromTitles } from "../compute/skills-intelligence.compute.js";
 import { mergeJobResults } from "../lib/market/job-aggregator.js";
 import { onetCodeToSoc, searchOnetOccupation } from "../lib/market/onet.client.js";
 import { searchRemoteOkJobs } from "../lib/market/remoteok.client.js";
@@ -36,6 +37,9 @@ function skillFrequencyFromTitles(
   titles: string[],
   profileSkills: string[],
 ): Array<{ skill: string; frequencyPct: number }> {
+  const fromJobs = extractMarketSkillsFromTitles(titles);
+  if (fromJobs.length > 0) return fromJobs;
+
   const counts = new Map<string, number>();
   const corpus = titles.join(" ").toLowerCase();
   for (const skill of profileSkills) {

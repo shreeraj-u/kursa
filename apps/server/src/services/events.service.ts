@@ -115,7 +115,7 @@ export async function ingestEvent(userId: string, input: CreateCareerEventInput)
   return toSummary(event);
 }
 
-const JOURNAL_HIDDEN_TYPES: CareerEventType[] = ["chat_insight"];
+const JOURNAL_HIDDEN_TYPES: CareerEventType[] = [];
 
 export async function listEvents(
   userId: string,
@@ -203,7 +203,7 @@ function toSummary(event: {
 }
 
 export function eventToTag(type: CareerEventType, source: CareerEventSource): string {
-  if (source === "aria" || type === "aria_observation") return "aria";
+  if (source === "aria" || type === "aria_observation" || type === "chat_insight") return "aria";
   if (type === "win") return "win";
   if (type === "feedback") return "feedback";
   if (type.startsWith("checkin")) return "checkin";

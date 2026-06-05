@@ -116,8 +116,9 @@ export async function assembleAdvisorContext(
           ? 20
           : recentEvents.length;
 
+  // Market refresh is slow (external APIs). Only load for chat and path generation.
   const marketContext =
-    purpose === "chat" || purpose === "paths" || purpose === "observations"
+    purpose === "chat" || purpose === "paths"
       ? await getMarketContextForProfile(userId, profileInput)
       : null;
 

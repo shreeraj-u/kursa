@@ -105,6 +105,21 @@ export async function getMarketContextForUser(userId: string): Promise<MarketCon
   return getMarketSnapshotWithRefresh(userId, profile);
 }
 
+/** Read cached market snapshot only — no external API calls (for chat meta, etc.). */
+export async function getMarketContextCachedForUser(userId: string): Promise<MarketContext | null> {
+  if (MARKET_DISABLED) return null;
+  const profile = await loadProfileForMarket(userId);
+  if (!profile) return null;
+  try {
+    const row = await readCachedRow(userId, profile);
+    if (!row) return null;
+    return row.payload as unknown as MarketContext;
+  } catch (err) {
+    if (isMarketTableMissingError(err)) return null;
+    throw err;
+  }
+}
+
 /** @deprecated Use getMarketContextForProfile — kept for callers passing profile inline. */
 export async function getMarketSnapshotCached(
   userId: string,

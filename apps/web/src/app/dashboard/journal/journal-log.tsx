@@ -15,6 +15,7 @@ type Props = {
   highlightId?: string | null;
   hasMore: boolean;
   loadingMore: boolean;
+  timelineLoading?: boolean;
   timelineFilter: TimelineFilter;
   onTimelineFilterChange: (f: TimelineFilter) => void;
   onLoadMore: () => void;
@@ -26,6 +27,7 @@ export function JournalTimelineTab({
   highlightId,
   hasMore,
   loadingMore,
+  timelineLoading = false,
   timelineFilter,
   onTimelineFilterChange,
   onLoadMore,
@@ -62,7 +64,16 @@ export function JournalTimelineTab({
         ))}
       </div>
 
-      {entries.length === 0 ? (
+      {timelineLoading && entries.length === 0 ? (
+        <div
+          className="rounded-lg p-8 text-center"
+          style={{ border: "1px dashed var(--line)", background: "var(--bg-sub)" }}
+        >
+          <p className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--mute-2)" }}>
+            Loading journal…
+          </p>
+        </div>
+      ) : entries.length === 0 ? (
         <div
           className="rounded-lg p-8 text-center"
           style={{ border: "1px dashed var(--line)", background: "var(--bg-sub)" }}

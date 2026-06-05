@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import type { Route } from "next";
+
 type Memory = {
   id: string;
   category: string;
@@ -33,8 +36,17 @@ export function JournalMemoriesPanel({ memories, loading }: Props) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="mono" style={{ fontSize: 9, color: "var(--mute-2)" }}>
-        what aria knows
+      <div className="flex items-center justify-between">
+        <div className="mono" style={{ fontSize: 9, color: "var(--mute-2)" }}>
+          what aria knows
+        </div>
+        <Link
+          href={"/dashboard/skills" as Route}
+          className="mono text-2xs"
+          style={{ color: "var(--accent)", textDecoration: "underline" }}
+        >
+          manage skills →
+        </Link>
       </div>
       {memories.slice(0, 5).map((m) => (
         <div key={m.id}>

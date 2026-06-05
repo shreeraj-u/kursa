@@ -25,6 +25,30 @@ enum SkillSource {
   resume
   inferred_checkin
   inferred_journal
+  inferred_chat
+  market
+  path
+  user_edited
+}
+
+enum SkillProposalType {
+  add
+  update_confidence
+  mark_learning
+  mark_stale
+}
+
+enum SkillProposalSource {
+  chat
+  market
+  path
+  journal
+}
+
+enum SkillProposalStatus {
+  pending
+  accepted
+  dismissed
 }
 
 model CareerEvent {

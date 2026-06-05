@@ -35,6 +35,7 @@ model Profile {
   resumes                Resume[]
   careerEvents           CareerEvent[]
   persistedObservations  PersistedObservation[]
+  skillProposals         SkillProposal[]
 
   @@map("profile")
 }
@@ -269,6 +270,32 @@ model SocialLink {
 
   @@index([profileId])
   @@map("social_link")
+}
+
+model SkillProposal {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId    String
+
+  canonicalName        String
+  displayName          String
+  category             SkillCategory
+  proposalType         SkillProposalType
+  suggestedConfidence  Int?
+  suggestedProficiency SkillProficiency?
+  source               SkillProposalSource
+  sourceRef            Json?
+  evidence             String
+  status               SkillProposalStatus @default(pending)
+  expiresAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, status])
+  @@index([userId, status])
+  @@map("skill_proposal")
 }
 
 model JobApplication {

@@ -18,7 +18,9 @@ import { openai } from "../lib/openai.js";
 import { CHAT_DECISION_PROMPTS, CHAT_SYSTEM_PROMPT, Models } from "../lib/ai/prompts.js";
 import { shouldRegeneratePaths } from "../compute/advisor.compute.js";
 import { isMarketTableMissingError } from "../lib/market/safe-market-db.js";
-import { scheduleChatLearning } from "./chat-learn.service.js";
+import { runChatLearning } from "./chat-learn.service.js";
+import { countPendingProposals } from "./skills.service.js";
+import { getSkillsOverview } from "./skills-intelligence.service.js";
 import { ingestEvent } from "./events.service.js";
 
 const DECISION_LABELS: Record<ChatDecisionType, string> = {
@@ -200,7 +202,7 @@ export async function createConversation(
 export async function getChatMeta(userId: string): Promise<ChatMetaResponse> {
   await ensureMainConversation(userId);
 
-  const [memoryCount, main, firstEvent, marketContext] = await Promise.all([
+  const [memoryCount, main, firstEvent, marketContext, pendingSkillProposals] = await Promise.all([
     prisma.userMemory.count({ where: { userId, validUntil: null } }),
     prisma.conversation.findFirst({ where: { userId, decisionType: null } }),
     prisma.careerEvent.findFirst({
@@ -209,12 +211,13 @@ export async function getChatMeta(userId: string): Promise<ChatMetaResponse> {
       select: { occurredAt: true },
     }),
     import("./market.service.js")
-      .then(({ getMarketContextForUser }) => getMarketContextForUser(userId))
+      .then(({ getMarketContextCachedForUser }) => getMarketContextCachedForUser(userId))
       .catch((err) => {
         if (isMarketTableMissingError(err)) return null;
         console.error("[chat] market meta refresh", err);
         return null;
       }),
+    countPendingProposals(userId).catch(() => 0),
   ]);
 
   const contextDays = firstEvent
@@ -228,6 +231,7 @@ export async function getChatMeta(userId: string): Promise<ChatMetaResponse> {
     marketAvailable: marketContext?.available ?? false,
     marketAsOf: marketContext?.asOf ?? null,
     marketSources: marketContext?.sources,
+    pendingSkillProposals,
     syncedAt: new Date().toISOString(),
   };
 }
@@ -257,7 +261,11 @@ export async function sendChatMessage(
   const context = await assembleAdvisorContext(userId, "chat");
   if (!context) throw new Error("Profile not found");
 
-  const contextPayload = buildSlimChatContextPayload(context);
+  const skillsOverview = await getSkillsOverview(userId).catch(() => null);
+  const contextPayload = buildSlimChatContextPayload(context, {
+    recommendations: skillsOverview?.recommendations,
+    proposals: skillsOverview?.proposals,
+  });
   const decisionOverlay =
     conversation.decisionType && CHAT_DECISION_PROMPTS[conversation.decisionType]
       ? CHAT_DECISION_PROMPTS[conversation.decisionType]
@@ -310,15 +318,30 @@ export async function sendChatMessage(
     data: { updatedAt: new Date() },
   });
 
-  scheduleChatLearning({
-    userId,
-    conversationId,
-    userMessageId: userMessage.id,
-    assistantMessageId: assistantMessage.id,
-    userContent: content,
-    assistantContent,
-    decisionType: conversation.decisionType,
-  });
+  let memoriesLearned = 0;
+  let skillProposals: ChatSendResponse["skillProposals"];
+
+  try {
+    const learnResult = await Promise.race([
+      runChatLearning({
+        userId,
+        conversationId,
+        userMessageId: userMessage.id,
+        assistantMessageId: assistantMessage.id,
+        userContent: content,
+        assistantContent,
+        decisionType: conversation.decisionType,
+      }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4_000)),
+    ]);
+
+    if (learnResult) {
+      memoriesLearned = learnResult.memoriesLearned;
+      skillProposals = learnResult.skillProposals;
+    }
+  } catch (err) {
+    console.error("[chat] learning failed", conversationId, err);
+  }
 
   if (conversation.decisionType && content.length > 50) {
     await ingestEvent(userId, {
@@ -344,7 +367,23 @@ export async function sendChatMessage(
       context,
       conversation.decisionType,
     ),
+    memoriesLearned,
+    skillProposals,
   };
+}
+
+export async function deleteConversation(userId: string, conversationId: string): Promise<void> {
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: conversationId, userId },
+    select: { id: true, decisionType: true },
+  });
+
+  if (!conversation) throw new Error("Conversation not found");
+  if (!conversation.decisionType) {
+    throw new Error("The main thread cannot be deleted");
+  }
+
+  await prisma.conversation.delete({ where: { id: conversationId } });
 }
 
 export async function recordDecisionFromChat(

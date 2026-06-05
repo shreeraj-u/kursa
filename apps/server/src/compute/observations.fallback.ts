@@ -45,5 +45,5 @@ export function generateRuleBasedObservations(signals: AdvisorSignals): Observat
     });
   }
 
-  return observations.slice(0, 3);
+  return observations.slice(0, 5);
 }

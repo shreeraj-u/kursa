@@ -4,6 +4,7 @@ import * as dashboardController from "../../controllers/dashboard.controller.js"
 import * as pathsController from "../../controllers/paths.controller.js";
 import * as profileController from "../../controllers/profile.controller.js";
 import * as resumeController from "../../controllers/resume.controller.js";
+import * as skillsController from "../../controllers/skills.controller.js";
 import { requireAuth } from "../../middleware/require-auth.js";
 
 const router: Router = Router();
@@ -28,6 +29,13 @@ meRouter.get("/resumes/:id", resumeController.getResume);
 meRouter.post("/social-links", profileController.createSocialLink);
 meRouter.put("/social-links/:id", profileController.updateSocialLink);
 meRouter.delete("/social-links/:id", profileController.deleteSocialLink);
+meRouter.get("/skills/overview", skillsController.getSkillsOverview);
+meRouter.post("/skills", skillsController.createSkill);
+meRouter.put("/skills/:id", skillsController.updateSkill);
+meRouter.delete("/skills/:id", skillsController.deleteSkill);
+meRouter.get("/skill-proposals", skillsController.listSkillProposals);
+meRouter.post("/skill-proposals/:id/accept", skillsController.acceptSkillProposal);
+meRouter.post("/skill-proposals/:id/dismiss", skillsController.dismissSkillProposal);
 
 router.use("/me", meRouter);
 

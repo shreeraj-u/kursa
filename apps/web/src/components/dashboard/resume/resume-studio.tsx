@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Pencil } from "lucide-react";
 import type { AtsIssue, Resume, ResumeContent, ResumeQuota } from "@kursa/types";
@@ -25,9 +25,10 @@ const SEVERITY_BG: Record<AtsIssue["severity"], string> = {
 };
 
 
-export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProps) {
+export default function ResumeStudio({ initialResumes, quota: initialQuota }: ResumeStudioProps) {
   const router = useRouter();
-  const resumes = initialResumes;
+  const [resumes, setResumes] = useState(initialResumes);
+  const [quota, setQuota] = useState(initialQuota);
   const [generating, setGenerating] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,6 +40,27 @@ export default function ResumeStudio({ initialResumes, quota }: ResumeStudioProp
   const quotaReached = quota.used >= quota.limit;
   const editing = draft !== null;
   const busy = generating || analyzing || saving;
+
+  useEffect(() => {
+    if (initialResumes.length > 0) return;
+    let cancelled = false;
+    void api.resume
+      .list()
+      .then((data) => {
+        if (cancelled) return;
+        setResumes(data.resumes);
+        setQuota(data.quota);
+        if (data.resumes[0]) {
+          setSelectedId((id) => id ?? data.resumes[0]!.id);
+        }
+      })
+      .catch(() => {
+        /* SSR may miss session cookies when API URL differs from web origin */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialResumes.length]);
 
   async function generate() {
     setGenerating(true);
