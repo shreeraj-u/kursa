@@ -2,7 +2,15 @@ import { z } from "zod";
 
 export const createConversationSchema = z.object({
   decisionType: z
-    .enum(["offer_evaluation", "promotion_timing", "education", "negotiation", "general"])
+    .enum([
+      "offer_evaluation",
+      "promotion_timing",
+      "education",
+      "negotiation",
+      "general",
+      "journey_setup",
+      "journey_revision",
+    ])
     .optional(),
 });
 

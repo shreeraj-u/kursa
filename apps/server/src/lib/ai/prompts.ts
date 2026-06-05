@@ -313,7 +313,40 @@ export const CHAT_DECISION_PROMPTS: Record<string, string> = {
   education: `Decision mode: education or credential investment. Weigh cost, time, and path skill gaps. Prefer alternatives (projects, internal scope) when they close the same gap.`,
   negotiation: `Decision mode: compensation negotiation. Use market salary bands when available; otherwise say market data is unavailable. Suggest concrete asks and framing from the user's wins.`,
   general: `Decision mode: general career decision. Structure options, tradeoffs, and what evidence from their journal supports each path.`,
+  journey_setup: `Decision mode: career journey setup (before first journey). Reflect what you already know from their profile, then ask only what's missing: direction, pace, top priorities, and constraints. Do not re-ask for facts already in the profile snapshot. When preferences are clear, summarize in one sentence and suggest they generate their journey. Never invent employers, skills, or experience.`,
+  journey_revision: `Decision mode: change an existing career journey without starting over. Ask at most 1–2 clarifying questions before proposing edits. Never invent profile evidence. Propose concrete milestone or journey-level changes. When ready, say you've drafted changes for review. Preserve completed milestone progress unless the user explicitly wants a reset. Express uncertainty when their ask conflicts with profile evidence.`,
 };
+
+export const REVISE_JOURNEY_PROMPT = `You surgically revise an existing career journey based on a revision brief and profile snapshot.
+Return JSON: {"journey": { title, description, confidenceScore, projectedTimelineMonths, details, milestones }}
+Only change milestones explicitly allowed in the brief. Keep milestone order numbers stable unless insert/remove is requested.
+Preserve salaryBand, status, and manuallySet on untouched milestones. Ground changes in the brief and profile — do not invent experience.`;
+
+export const EXTRACT_SETUP_PREFERENCES_PROMPT = `Extract journey setup preferences from a career advisor chat about generating a new career journey.
+Return JSON matching JourneyPreferences:
+{
+  "preferredDirection": string,
+  "leanToward": string,
+  "avoid": string,
+  "growthPace": "steady" | "accelerated" | "exploratory" | "",
+  "priorities": ["salary"|"stability"|"leadership"|"autonomy"|"learning"|"location"|"remote"|"impact"] (max 5),
+  "hardConstraints": string,
+  "notes": string
+}
+Merge the user's stated preferences with any baseline preferences provided. Only include what the user confirmed or clearly implied in chat.`;
+
+export const EXTRACT_REVISION_BRIEF_PROMPT = `Extract a structured journey revision brief from a career advisor chat about changing an existing path.
+Return JSON matching:
+{
+  "summary": "user-facing explanation of planned changes",
+  "changeScope": "journey_meta" | "milestones_partial" | "full_rebuild",
+  "journeyPatches": { "title"?, "description"?, "projectedTimelineMonths"?, "details"? },
+  "milestonePatches": [{ "order": number, "action": "update"|"replace"|"insert_after"|"remove", "patch"?, "replacement"? }],
+  "preferenceUpdates": {},
+  "preserveCompleted": true,
+  "preserveManuallySet": true
+}
+Default preserveCompleted and preserveManuallySet to true unless the user explicitly asked to reset progress.`;
 
 export const PROFILE_INTAKE_REVIEW_PROMPT = `You are Kursa's Profile Intake Reviewer. Review a user's onboarding draft before it is persisted as a Profile.
 

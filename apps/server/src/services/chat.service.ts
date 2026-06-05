@@ -29,6 +29,8 @@ const DECISION_LABELS: Record<ChatDecisionType, string> = {
   education: "Education decision",
   negotiation: "Negotiation",
   general: "Career decision",
+  journey_setup: "Journey setup",
+  journey_revision: "Change the path",
 };
 
 /** gpt-4o only for these decision threads; all other chat uses gpt-4o-mini. */

@@ -11,9 +11,14 @@ import {
   CORRECT_EXTEND_JOURNEY_PROMPT,
   CORRECT_JOURNEY_PROMPT,
   EXTEND_JOURNEY_PROMPT,
+  EXTRACT_REVISION_BRIEF_PROMPT,
+  EXTRACT_SETUP_PREFERENCES_PROMPT,
   GENERATE_JOURNEY_PROMPT,
+  REVISE_JOURNEY_PROMPT,
   Models,
 } from "./prompts.js";
+import type { JourneyRevisionBrief } from "@kursa/types";
+import { journeyPreferencesSchema } from "@kursa/types";
 
 // A generated journey before persistence — no DB id, no profileId yet.
 export type GeneratedJourney = Omit<CareerJourney, "id" | "profileId">;
@@ -53,6 +58,18 @@ export type JourneyProfileSnapshot = {
     outcomes: unknown;
   }>;
   learningGoals: Array<{ skillName: string; status: string }>;
+  advisorSignals?: {
+    winsThisQuarter: number;
+    sentimentTrend12w: number | null;
+    intentionActionGap: boolean;
+    memoryFacts: string[];
+  };
+  githubSignals?: {
+    frameworkSignals: string[];
+    activeRepoNames: string[];
+    primaryLanguages: string[];
+  } | null;
+  marketGapSkills?: string[];
 };
 
 const milestoneSchema = z.object({
@@ -282,4 +299,98 @@ function normaliseDetails(
     tradeoffs: details?.tradeoffs ?? [],
     confidenceFactors: details?.confidenceFactors ?? [],
   };
+}
+
+export function buildWelcomeSummary(journey: GeneratedJourney & { id?: string }): string {
+  const current =
+    journey.milestones.find((m) => m.status === "in_progress") ??
+    journey.milestones.find((m) => m.status !== "completed") ??
+    journey.milestones[0];
+  const strategy = journey.details?.strategySummary || journey.description;
+  const firstStep = current?.firstStep || current?.description;
+  const parts = [
+    `Your path focuses on ${journey.title}.`,
+    strategy.length > 220 ? `${strategy.slice(0, 217)}…` : strategy,
+  ];
+  if (current && firstStep) {
+    parts.push(`Start with ${current.title}: ${firstStep}`);
+  }
+  return parts.join(" ");
+}
+
+const revisionBriefSchema = z.object({
+  summary: z.string().min(1),
+  changeScope: z.enum(["journey_meta", "milestones_partial", "full_rebuild"]),
+  journeyPatches: z
+    .object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      projectedTimelineMonths: z.number().int().positive().optional(),
+      details: z.record(z.string(), z.unknown()).optional(),
+    })
+    .optional(),
+  milestonePatches: z
+    .array(
+      z.object({
+        order: z.number().int(),
+        action: z.enum(["update", "replace", "insert_after", "remove"]),
+        patch: z.record(z.string(), z.unknown()).optional(),
+        replacement: milestoneSchema.partial().optional(),
+      }),
+    )
+    .optional(),
+  preferenceUpdates: z.record(z.string(), z.unknown()).optional(),
+  preserveCompleted: z.boolean().default(true),
+  preserveManuallySet: z.boolean().default(true),
+});
+
+export async function extractSetupPreferences(
+  messages: Array<{ role: string; content: string }>,
+  baseline?: JourneyPreferences,
+): Promise<JourneyPreferences | null> {
+  const payload = JSON.stringify({ baseline: baseline ?? null, messages: messages.slice(-16) });
+  const parsed = await callJson([
+    { role: "system", content: EXTRACT_SETUP_PREFERENCES_PROMPT },
+    { role: "user", content: payload },
+  ]);
+  if (!parsed) return null;
+  const merged = {
+    ...(baseline ?? journeyPreferencesSchema.parse({})),
+    ...(typeof parsed === "object" && parsed !== null ? parsed : {}),
+  };
+  const result = journeyPreferencesSchema.safeParse(merged);
+  return result.success ? result.data : null;
+}
+
+export async function extractRevisionBrief(
+  messages: Array<{ role: string; content: string }>,
+  journey: CareerJourney,
+): Promise<JourneyRevisionBrief | null> {
+  const payload = JSON.stringify({ journey, messages: messages.slice(-12) });
+  const parsed = await callJson([
+    { role: "system", content: EXTRACT_REVISION_BRIEF_PROMPT },
+    { role: "user", content: payload },
+  ]);
+  if (!parsed) return null;
+  const result = revisionBriefSchema.safeParse(parsed);
+  return result.success ? (result.data as JourneyRevisionBrief) : null;
+}
+
+export async function reviseCareerJourney(
+  snapshot: JourneyProfileSnapshot,
+  current: CareerJourney,
+  brief: JourneyRevisionBrief,
+): Promise<GeneratedJourney | null> {
+  const payload = JSON.stringify({ profile: snapshot, currentJourney: current, brief });
+  const parsed = await callJson([
+    { role: "system", content: REVISE_JOURNEY_PROMPT },
+    { role: "user", content: payload },
+  ]);
+  if (!parsed) return null;
+
+  const outer = journeyResponseSchema.safeParse(parsed);
+  if (!outer.success) return null;
+
+  const result = generatedJourneySchema.safeParse(outer.data.journey);
+  return result.success ? normaliseJourney(result.data) : null;
 }

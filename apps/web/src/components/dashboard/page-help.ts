@@ -23,12 +23,13 @@ export const DASHBOARD_PAGE_HELP = {
   },
   careerJourney: {
     title: "How to use Career journey",
-    description: "Use Career journey to generate, inspect, and maintain the single trajectory Kursa commits to from your Profile.",
+    description:
+      "Use Career journey to generate one best-fit path from your profile, then focus on what to do now — milestones, projects, and actions stay in separate tabs.",
     tips: [
-      "Generate a journey after your Profile has enough evidence, then use milestones as the main roadmap.",
-      "Mark milestone progress when reality changes; manual status takes precedence until you regenerate the journey.",
-      "Use the action queue for concrete next steps across path, skills, and applications.",
-      "Open advisor reasoning when you want fit reasons, risks, mitigations, and evidence behind the journey.",
+      "Start with the intake conversation: Kursa reflects your profile first, then asks only what's missing.",
+      "Use the Focus tab for today's milestone and top actions; Roadmap and Build tabs hold the full timeline and projects.",
+      "Use Change path with Aria to tune the plan without losing completed milestone progress.",
+      "Regenerate only when you want a fresh start — it resets manual milestone status.",
     ],
     guideHref: GUIDE,
   },
