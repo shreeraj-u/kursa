@@ -33,3 +33,7 @@ export const skillProposalQuerySchema = z.object({
   status: z.enum(["pending", "accepted", "dismissed"]).default("pending"),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
+
+export const skillInterpretSchema = z.object({
+  message: z.string().min(1).max(500),
+});

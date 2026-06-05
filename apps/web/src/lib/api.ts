@@ -284,6 +284,12 @@ export const api = {
       request<{ dismissed: boolean }>(`/api/v1/profile/me/skill-proposals/${id}/dismiss`, {
         method: "POST",
       }),
+
+    interpret: (message: string) =>
+      request<{ actions: Array<{ action: "added" | "updated"; skill: UserSkill }> }>(
+        "/api/v1/profile/me/skills/interpret",
+        { method: "POST", body: JSON.stringify({ message }) },
+      ),
   },
 
   resume: {

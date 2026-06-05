@@ -7,6 +7,7 @@ import * as skillsIntelligence from "../services/skills-intelligence.service.js"
 import * as skillsService from "../services/skills.service.js";
 import {
   skillCreateSchema,
+  skillInterpretSchema,
   skillProposalQuerySchema,
   skillUpdateSchema,
 } from "../validators/skills.validator.js";
@@ -63,4 +64,11 @@ export async function dismissSkillProposal(req: Request, res: Response): Promise
   if (typeof id !== "string" || !id) throw Errors.badRequest("Proposal id required");
   await skillsService.dismissSkillProposal(req.user!.id, id);
   ok(res, { dismissed: true });
+}
+
+export async function interpretSkillMessage(req: Request, res: Response): Promise<void> {
+  const parsed = skillInterpretSchema.safeParse(req.body);
+  if (!parsed.success) throw Errors.badRequest("Invalid", z.flattenError(parsed.error));
+  const result = await skillsIntelligence.interpretSkillMessage(req.user!.id, parsed.data.message);
+  ok(res, result);
 }

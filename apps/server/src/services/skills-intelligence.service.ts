@@ -11,6 +11,7 @@ import {
   mergeSkillRecommendations,
   parsePathSkillGaps,
 } from "../compute/skills-intelligence.compute.js";
+import { openai } from "../lib/openai.js";
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { formatLearningGoalLabel } from "../lib/learning-goal-label.js";
 import { getMarketContextForUser } from "./market.service.js";
@@ -247,4 +248,90 @@ export async function getSkillsOverview(userId: string): Promise<SkillsOverviewR
       pendingProposalCount: proposalsResult.total,
     },
   };
+}
+
+type InterpretAction = {
+  skillId: string | null;
+  name: string;
+  action: "add" | "update";
+  proficiencyLevel: "beginner" | "intermediate" | "advanced" | "expert" | null;
+  confidenceRating: number | null;
+  category: "technical" | "soft" | "tool";
+};
+
+export async function interpretSkillMessage(
+  userId: string,
+  message: string,
+): Promise<{ actions: Array<{ action: "added" | "updated"; skill: unknown }> }> {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    include: { skills: { orderBy: [{ category: "asc" }, { name: "asc" }] } },
+  });
+
+  const existingSkills = profile?.skills ?? [];
+  const skillList = existingSkills
+    .map((s) => `- id:${s.id} name:"${s.name}" category:${s.category} proficiency:${s.proficiencyLevel ?? "none"} confidence:${s.confidenceRating ?? "none"}`)
+    .join("\n");
+
+  const systemPrompt = `You are a skill-level interpreter for a career advisor app. The user will describe how their skills have changed or ask to add new skills. You must return a JSON object with an "actions" array.
+
+User's current skills:
+${skillList || "(no skills yet)"}
+
+Each action must be:
+- action "update": for an existing skill (match by name, case-insensitive). Set skillId to the matching id. Infer proficiencyLevel and confidenceRating from the user's description.
+- action "add": for a new skill not in the list. Set skillId to null. Infer category, proficiencyLevel, and confidenceRating.
+
+proficiencyLevel must be one of: "beginner", "intermediate", "advanced", "expert", or null if undetectable.
+confidenceRating must be an integer 1-5, or null if undetectable.
+category must be one of: "technical", "soft", "tool".
+
+Return ONLY valid JSON: { "actions": [ { "skillId": string|null, "name": string, "action": "add"|"update", "proficiencyLevel": string|null, "confidenceRating": number|null, "category": string } ] }`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: message },
+    ],
+    temperature: 0.2,
+    max_tokens: 800,
+  });
+
+  const raw = completion.choices[0]?.message.content ?? "{}";
+  let parsed: { actions?: InterpretAction[] };
+  try {
+    parsed = JSON.parse(raw) as { actions?: InterpretAction[] };
+  } catch {
+    return { actions: [] };
+  }
+
+  const interpretActions = Array.isArray(parsed.actions) ? parsed.actions : [];
+  const results: Array<{ action: "added" | "updated"; skill: unknown }> = [];
+
+  for (const item of interpretActions) {
+    try {
+      if (item.action === "update" && item.skillId) {
+        const patch: Record<string, unknown> = {};
+        if (item.proficiencyLevel) patch.proficiencyLevel = item.proficiencyLevel;
+        if (item.confidenceRating != null) patch.confidenceRating = item.confidenceRating;
+        const skill = await skillsService.updateSkill(userId, item.skillId, patch);
+        results.push({ action: "updated", skill });
+      } else if (item.action === "add") {
+        const skill = await skillsService.createSkill(userId, {
+          name: item.name,
+          category: item.category ?? "technical",
+          proficiencyLevel: item.proficiencyLevel ?? undefined,
+          confidenceRating: item.confidenceRating ?? undefined,
+          source: "inferred_chat",
+        });
+        results.push({ action: "added", skill });
+      }
+    } catch {
+      // skip failed individual actions
+    }
+  }
+
+  return { actions: results };
 }

@@ -32,6 +32,7 @@ meRouter.post("/social-links", profileController.createSocialLink);
 meRouter.put("/social-links/:id", profileController.updateSocialLink);
 meRouter.delete("/social-links/:id", profileController.deleteSocialLink);
 meRouter.get("/skills/overview", skillsController.getSkillsOverview);
+meRouter.post("/skills/interpret", skillsController.interpretSkillMessage);
 meRouter.post("/skills", skillsController.createSkill);
 meRouter.put("/skills/:id", skillsController.updateSkill);
 meRouter.delete("/skills/:id", skillsController.deleteSkill);

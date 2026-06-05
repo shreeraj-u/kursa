@@ -1,49 +1,68 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
-  CareerJourney,
   SkillProposalSummary,
-  SkillRecommendation,
   SkillsOverviewResponse,
-  UserLearningGoal,
   UserSkill,
 } from "@kursa/types";
+import { skillCategoryValues, skillProficiencyValues } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
-import { api } from "@/lib/api";
 import PageHelpButton from "@/components/dashboard/page-help-button";
 import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
+import { api } from "@/lib/api";
 
-import { SkillInventory } from "./skill-inventory";
-import { LearningGoals } from "./learning-goals";
-import { SkillGap } from "./skill-gap";
+type Category = (typeof skillCategoryValues)[number];
+type Proficiency = (typeof skillProficiencyValues)[number];
 
-interface SkillsStudioProps {
-  initialSkills: UserSkill[];
-  initialGoals: UserLearningGoal[];
-  activePath: CareerJourney | null;
-  initialOverview?: SkillsOverviewResponse | null;
-}
+const CATEGORY_COLOR: Record<Category, string> = {
+  technical: "#6366f1",
+  soft: "#22c55e",
+  tool: "#f59e0b",
+};
 
-function AriaProposalsRail({
+const CATEGORY_LABEL: Record<Category, string> = {
+  technical: "Technical",
+  soft: "Soft",
+  tool: "Tools",
+};
+
+const PROFICIENCY_LABEL: Record<Proficiency, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  expert: "Expert",
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  github: "GitHub",
+  market: "Market",
+  chat: "Aria",
+  journal: "Journal",
+  path: "Path",
+};
+
+// ---- ProposalsFeed ----
+
+function ProposalsFeed({
   proposals,
   onChange,
+  onSkillAdded,
 }: {
   proposals: SkillProposalSummary[];
   onChange: (next: SkillProposalSummary[]) => void;
+  onSkillAdded: (skill: UserSkill) => void;
 }) {
-  if (proposals.length === 0) return null;
-
   async function accept(id: string) {
     try {
-      await api.skills.acceptProposal(id);
-      toast.success("Skill added to your profile");
+      const { skill } = await api.skills.acceptProposal(id);
       onChange(proposals.filter((p) => p.id !== id));
-      void api.skills.overview().then((overview) => onChange(overview.proposals)).catch(() => undefined);
+      if (skill) onSkillAdded(skill as unknown as UserSkill);
+      toast.success("Skill confirmed");
     } catch {
-      toast.error("Could not accept proposal");
+      toast.error("Could not confirm skill");
     }
   }
 
@@ -57,274 +76,319 @@ function AriaProposalsRail({
   }
 
   return (
-    <section className="rounded-xl border border-[var(--accent-line)] bg-[var(--accent-soft)] p-4">
-      <div className="mono mb-3 text-[10px] text-[var(--accent)]">pending proposals · {proposals.length}</div>
-      <div className="flex flex-col gap-2">
-        {proposals.map((p) => (
-          <div key={p.id} className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-medium text-[var(--ink)]">{p.displayName}</p>
-              {p.source === "github" && (
-                <span className="mono rounded border border-[var(--line)] px-1 py-px text-[8px] text-[var(--mute)]">github</span>
-              )}
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-[var(--mute)]">{p.evidence}</p>
-            <div className="mt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => void accept(p.id)}
-                className="mono rounded px-2 py-1 text-[9px]"
-                style={{ background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer" }}
-              >
-                + add
-              </button>
-              <button
-                type="button"
-                onClick={() => void dismiss(p.id)}
-                className="mono rounded border border-[var(--line)] px-2 py-1 text-[9px] text-[var(--mute)]"
-                style={{ background: "transparent", cursor: "pointer" }}
-              >
-                dismiss
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function StatCard({ value, label, tone }: { value: string | number; label: string; tone?: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-center">
-      <div className="text-lg font-semibold leading-none text-[var(--ink)]" style={tone ? { color: tone } : undefined}>
-        {value}
-      </div>
-      <div className="mono mt-0.5 text-[10px] text-[var(--mute)]">{label}</div>
-    </div>
-  );
-}
-
-function SetupChecklist({
-  skills,
-  goals,
-  activePath,
-}: {
-  skills: UserSkill[];
-  goals: UserLearningGoal[];
-  activePath: CareerJourney | null;
-}) {
-  const gaps = activePath?.details?.skillGaps ?? [];
-  const missingLevel = skills.filter((skill) => !skill.proficiencyLevel).length;
-  const activeGoals = goals.filter((goal) => goal.status === "LEARNING").length;
-  const gapGoals = gaps.filter((gap) => goals.some((goal) => goal.skillName.toLowerCase() === gap.skill.toLowerCase())).length;
-
-  const items = [
-    {
-      label: "Review imported skills",
-      help: skills.length > 0 ? `${skills.length} skills in your Profile` : "Add at least one skill to start",
-      done: skills.length > 0,
-    },
-    {
-      label: "Fill missing proficiency",
-      help: missingLevel === 0 ? "Every skill has a level" : `${missingLevel} skill${missingLevel === 1 ? "" : "s"} still need a level`,
-      done: skills.length > 0 && missingLevel === 0,
-    },
-    {
-      label: "Choose active learning goals",
-      help: activeGoals > 0 ? `${activeGoals} active now` : "Move 1–3 priorities into Learning",
-      done: activeGoals > 0,
-    },
-    {
-      label: "Track journey gaps",
-      help: activePath ? `${gapGoals}/${gaps.length} gaps queued or covered` : "Create a journey to unlock path-specific gaps",
-      done: !activePath ? false : gaps.length === 0 || gapGoals > 0,
-    },
-  ];
-
-  return (
     <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--ink)]">First-time setup</h2>
+          <h2 className="text-sm font-semibold text-[var(--ink)]">Skill suggestions</h2>
           <p className="mt-0.5 text-xs leading-relaxed text-[var(--mute)]">
-            Follow these steps to turn a raw skill list into useful career guidance.
+            Aria spotted these from your activity. Confirm what fits, dismiss what doesn&apos;t.
           </p>
         </div>
-        <span className="mono shrink-0 rounded-full bg-[var(--bg-sub)] px-2 py-1 text-[10px] text-[var(--mute-3)]">
-          {items.filter((item) => item.done).length}/{items.length} done
-        </span>
+        {proposals.length > 0 && (
+          <span className="mono shrink-0 rounded-full border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2 py-1 text-[10px] text-[var(--accent)]">
+            {proposals.length} pending
+          </span>
+        )}
       </div>
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => (
-          <div key={item.label} className="rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3">
-            <div className="mb-1 flex items-center gap-2">
-              <span
-                className="flex h-4 w-4 items-center justify-center rounded-full text-[10px]"
-                style={{
-                  background: item.done ? "var(--accent)" : "var(--surface)",
-                  color: item.done ? "white" : "var(--mute-3)",
-                  border: item.done ? "none" : "1px solid var(--line)",
-                }}
-              >
-                {item.done ? "✓" : ""}
-              </span>
-              <span className="text-xs font-medium text-[var(--ink)]">{item.label}</span>
+
+      {proposals.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-[var(--line)] px-4 py-8 text-center">
+          <p className="mono text-xs text-[var(--mute-3)]">No pending suggestions</p>
+          <p className="mt-1 text-[11px] text-[var(--mute-3)]">
+            Aria will surface skills as you journal, chat, and connect GitHub.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {proposals.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-start gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-[var(--ink)]">{p.displayName}</span>
+                  <span className="mono rounded border border-[var(--line)] px-1.5 py-px text-[9px] text-[var(--mute)]">
+                    {SOURCE_LABEL[p.source] ?? p.source}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-[var(--mute)]">{p.evidence}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void accept(p.id)}
+                  className="mono rounded-md px-2.5 py-1.5 text-[10px] text-white"
+                  style={{ background: "var(--accent)", cursor: "pointer" }}
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void dismiss(p.id)}
+                  className="mono rounded-md border border-[var(--line)] bg-transparent px-2.5 py-1.5 text-[10px] text-[var(--mute)]"
+                  style={{ cursor: "pointer" }}
+                >
+                  Not me
+                </button>
+              </div>
             </div>
-            <p className="pl-6 text-[11px] leading-relaxed text-[var(--mute)]">{item.help}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-const SKILL_FLOW = [
-  "inventory",
-  "gap analysis",
-  "learning goals",
-  "journey signal",
-];
+// ---- SkillRow ----
 
-export function SkillsStudio({
-  initialSkills,
-  initialGoals,
-  activePath,
-  initialOverview = null,
-}: SkillsStudioProps) {
-  const [skills, setSkills] = useState<UserSkill[]>(initialSkills);
-  const [goals, setGoals] = useState<UserLearningGoal[]>(initialGoals);
-  const [proposals, setProposals] = useState<SkillProposalSummary[]>(initialOverview?.proposals ?? []);
-  const [recommendations, setRecommendations] = useState<SkillRecommendation[]>(
-    initialOverview?.recommendations ?? [],
+function SkillRow({
+  skill,
+  onDelete,
+}: {
+  skill: UserSkill;
+  onDelete: () => void;
+}) {
+  const proficiency = skill.proficiencyLevel as Proficiency | null;
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] px-3 py-2.5">
+      <span
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={{ background: CATEGORY_COLOR[(skill.category as Category) ?? "technical"] }}
+      />
+      <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]" title={skill.name}>
+        {skill.name}
+      </span>
+      {proficiency && (
+        <span className="mono shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] px-2 py-px text-[10px] text-[var(--mute)]">
+          {PROFICIENCY_LABEL[proficiency]}
+        </span>
+      )}
+      {skill.confidenceRating != null && (
+        <span className="mono shrink-0 text-[10px] text-[var(--mute-3)]">
+          {skill.confidenceRating}/5
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onDelete}
+        aria-label={`Remove ${skill.name}`}
+        className="mono shrink-0 rounded border border-transparent px-1.5 py-1 text-[11px] text-[var(--mute-3)] transition-colors hover:border-[var(--line)] hover:text-red-500"
+      >
+        ×
+      </button>
+    </div>
   );
+}
 
-  async function refreshIntelligence() {
+// ---- AriaSkillInput ----
+
+type AriaResult = { action: "added" | "updated"; skill: UserSkill };
+
+function AriaSkillInput({
+  onResult,
+}: {
+  onResult: (results: AriaResult[]) => void;
+}) {
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [lastResults, setLastResults] = useState<AriaResult[] | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function submit() {
+    const trimmed = value.trim();
+    if (!trimmed || busy) return;
+    setBusy(true);
+    setLastResults(null);
     try {
-      const overview = await api.skills.overview();
-      setProposals(overview.proposals);
-      setRecommendations(overview.recommendations);
+      const { actions } = await api.skills.interpret(trimmed);
+      onResult(actions);
+      setLastResults(actions);
+      setValue("");
+      inputRef.current?.focus();
     } catch {
-      // Keep existing proposals if refresh fails.
+      toast.error("Aria couldn't process that — try again");
+    } finally {
+      setBusy(false);
     }
   }
 
-  function upsertGoal(goal: UserLearningGoal) {
-    setGoals((prev) => {
-      const exists = prev.some((g) => g.id === goal.id);
-      if (exists) return prev.map((g) => (g.id === goal.id ? goal : g));
-      const sameName = prev.some((g) => g.skillName.toLowerCase() === goal.skillName.toLowerCase());
-      if (sameName) return prev.map((g) => (g.skillName.toLowerCase() === goal.skillName.toLowerCase() ? goal : g));
-      return [...prev, goal];
-    });
+  return (
+    <div className="mb-4 border-b border-[var(--line)] pb-4">
+      <p className="mb-2 text-[11px] text-[var(--mute)]">
+        Tell Aria how your skills changed, or ask to add one.
+      </p>
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void submit();
+          }}
+          placeholder="e.g. &quot;I've been writing TypeScript professionally&quot; or &quot;add Docker as a tool&quot;"
+          disabled={busy}
+          className="flex-1 rounded-lg border border-[var(--line)] bg-[var(--bg-sub)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--mute-3)] focus:border-[var(--accent)] focus:outline-none disabled:opacity-50"
+        />
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={busy || !value.trim()}
+          className="mono rounded-lg px-3 py-2 text-xs text-white transition-opacity disabled:opacity-40"
+          style={{ background: "var(--accent)" }}
+        >
+          {busy ? "…" : "Ask Aria"}
+        </button>
+      </div>
+      {lastResults && lastResults.length > 0 && (
+        <div className="mt-2 rounded-lg border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-2">
+          {lastResults.map((r, i) => (
+            <p key={i} className="mono text-[11px] text-[var(--accent)]">
+              {r.action === "added" ? "+" : "↑"} {r.skill.name}
+              {r.skill.proficiencyLevel ? ` → ${PROFICIENCY_LABEL[r.skill.proficiencyLevel as Proficiency]}` : ""}
+              {r.skill.confidenceRating != null ? ` · ${r.skill.confidenceRating}/5` : ""}
+            </p>
+          ))}
+        </div>
+      )}
+      {lastResults && lastResults.length === 0 && (
+        <p className="mono mt-2 text-[11px] text-[var(--mute-3)]">
+          Aria didn&apos;t find anything to update — try being more specific.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---- SkillList ----
+
+function SkillList({
+  skills,
+  onChange,
+}: {
+  skills: UserSkill[];
+  onChange: (skills: UserSkill[]) => void;
+}) {
+  const grouped = skillCategoryValues.reduce<Record<Category, UserSkill[]>>(
+    (acc, cat) => {
+      acc[cat] = skills.filter((s) => (s.category as Category) === cat);
+      return acc;
+    },
+    { technical: [], soft: [], tool: [] },
+  );
+
+  async function handleDelete(id: string) {
+    const prev = skills;
+    const removed = skills.find((s) => s.id === id);
+    onChange(skills.filter((s) => s.id !== id));
+    try {
+      await api.deleteSkill(id);
+      if (removed) toast.success(`Removed ${removed.name}`);
+    } catch {
+      onChange(prev);
+      toast.error("Could not remove skill");
+    }
   }
 
-  const stats = useMemo(() => {
-    const gaps = activePath?.details?.skillGaps ?? [];
-    const covered = gaps.filter((gap) => {
-      const s = skills.find((sk) => sk.name.toLowerCase() === gap.skill.toLowerCase());
-      return s && (s.proficiencyLevel === "advanced" || s.proficiencyLevel === "expert");
-    }).length;
-    const learning = goals.filter((g) => g.status === "LEARNING").length;
-    const missingLevel = skills.filter((s) => !s.proficiencyLevel).length;
-    return { total: skills.length, covered, totalGaps: gaps.length, learning, missingLevel };
-  }, [skills, goals, activePath]);
+  function handleAriaResult(results: AriaResult[]) {
+    onChange(
+      results.reduce((acc, r) => {
+        const existing = acc.find((s) => s.id === r.skill.id);
+        if (existing) return acc.map((s) => (s.id === r.skill.id ? r.skill : s));
+        return [r.skill, ...acc];
+      }, skills),
+    );
+  }
 
   return (
-    <div className="flex min-h-full flex-col">
-      <PageHeader pageTitle="Skills" />
-      <div className="flex flex-col gap-6 px-8 pb-8 pt-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[var(--ink)]">Skills</h1>
-            <PageHelpButton help={DASHBOARD_PAGE_HELP.skills} label="Skills" />
-          </div>
-          <p className="max-w-2xl text-sm leading-relaxed text-[var(--mute)]">
-            Skills are the evidence layer behind journeys, résumé tailoring, and Aria&apos;s advice. Keep them current so recommendations stay specific.
+          <h2 className="text-sm font-semibold text-[var(--ink)]">Your skills</h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-[var(--mute)]">
+            Grouped by category · tell Aria below to update levels or add new ones
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {SKILL_FLOW.map((step, index) => (
-              <span key={step} className="mono rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] text-mute">
-                {index + 1}. {step}
-              </span>
-            ))}
-          </div>
         </div>
-
-        <div className="flex flex-wrap items-stretch gap-2">
-          <StatCard value={stats.total} label="skills" />
-          {stats.totalGaps > 0 && <StatCard value={`${stats.covered}/${stats.totalGaps}`} label="gaps covered" tone="var(--accent)" />}
-          <StatCard value={stats.learning} label="learning" />
-          <StatCard value={stats.missingLevel} label="need level" />
-        </div>
+        <span className="mono shrink-0 rounded-full bg-[var(--bg-sub)] px-2 py-1 text-[10px] text-[var(--mute-3)]">
+          {skills.length} total
+        </span>
       </div>
 
-      <SetupChecklist skills={skills} goals={goals} activePath={activePath} />
+      <AriaSkillInput onResult={handleAriaResult} />
 
-      {proposals.length > 0 && (
-        <AriaProposalsRail proposals={proposals} onChange={setProposals} />
+      {skills.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-[var(--line)] px-4 py-8 text-center">
+          <p className="mono text-xs text-[var(--mute-3)]">
+            No skills yet — confirm a suggestion or tell Aria above.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {skillCategoryValues.map((cat) => {
+            const catSkills = grouped[cat];
+            if (catSkills.length === 0) return null;
+            return (
+              <section key={cat}>
+                <div className="mb-2 flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: CATEGORY_COLOR[cat] }}
+                  />
+                  <span className="mono text-[10px] text-[var(--mute)]">{CATEGORY_LABEL[cat]}</span>
+                  <span className="mono text-[10px] text-[var(--mute-3)]">· {catSkills.length}</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {catSkills.map((skill) => (
+                    <SkillRow
+                      key={skill.id}
+                      skill={skill}
+                      onDelete={() => void handleDelete(skill.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       )}
+    </div>
+  );
+}
 
-      {recommendations.length > 0 && skills.length < 3 && (
-        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-          <div className="mono mb-2 text-[10px] text-[var(--mute)]">suggested from profile & path</div>
-          <div className="flex flex-wrap gap-2">
-            {recommendations.slice(0, 8).map((rec) => (
-              <button
-                key={`${rec.skillName}-${rec.source}`}
-                type="button"
-                onClick={() => {
-                  void api
-                    .createSkill({
-                      name: rec.skillName,
-                      category: "technical",
-                      confidenceRating: 3,
-                    })
-                    .then(({ skill }) => {
-                      setSkills((prev) => [...prev, skill]);
-                      setRecommendations((prev) =>
-                        prev.filter((item) => item.skillName.toLowerCase() !== rec.skillName.toLowerCase()),
-                      );
-                      void refreshIntelligence();
-                      toast.success(`Added ${rec.skillName}`);
-                    })
-                    .catch((e) => toast.error(e instanceof Error ? e.message : "Could not add skill"));
-                }}
-                className="mono rounded-full border border-[var(--accent-line)] bg-[var(--bg-sub)] px-3 py-1.5 text-[10px] text-[var(--ink)]"
-                style={{ cursor: "pointer" }}
-                title={rec.reason}
-              >
-                + {rec.skillName}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+// ---- SkillsStudio ----
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <SkillInventory
-          skills={skills}
-          onChange={setSkills}
-          onSkillCreated={() => void refreshIntelligence()}
+interface SkillsStudioProps {
+  initialSkills: UserSkill[];
+  initialOverview?: SkillsOverviewResponse | null;
+}
+
+export function SkillsStudio({
+  initialSkills,
+  initialOverview = null,
+}: SkillsStudioProps) {
+  const [skills, setSkills] = useState<UserSkill[]>(initialSkills);
+  const [proposals, setProposals] = useState<SkillProposalSummary[]>(
+    initialOverview?.proposals ?? [],
+  );
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          pageTitle="Skills"
+          breadcrumb="Workspace"
         />
+        <PageHelpButton help={DASHBOARD_PAGE_HELP.skills} label="Skills" />
+      </div>
 
-        <div className="flex flex-col gap-6">
-          <SkillGap
-            activePath={activePath}
-            skills={skills}
-            goals={goals}
-            onGoalAdded={upsertGoal}
-          />
-          <LearningGoals
-            goals={goals}
-            skills={skills}
-            onChange={setGoals}
-            onSkillAdded={(skill) => setSkills((prev) => [...prev, skill])}
-          />
-        </div>
-      </div>
-      </div>
+      <ProposalsFeed
+        proposals={proposals}
+        onChange={setProposals}
+        onSkillAdded={(skill) => setSkills((prev) => [skill, ...prev])}
+      />
+
+      <SkillList skills={skills} onChange={setSkills} />
     </div>
   );
 }
