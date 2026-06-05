@@ -24,6 +24,8 @@ import { api } from "@/lib/api";
 import JourneyRoadmap from "./journey-roadmap";
 import JourneyDetailsPanel from "./journey-details-panel";
 import JourneyActionQueue from "./journey-action-queue";
+import JourneyActiveProjects from "./journey-active-projects";
+import JourneySuggestedProjects from "./journey-suggested-projects";
 
 interface CareerJourneyPageProps {
   data: CareerJourneyResponse;
@@ -258,6 +260,14 @@ export default function CareerJourneyPage({ data, profile, materialChangeDetecte
               updatingMilestoneOrder={updatingMilestoneOrder}
             />
             <JourneyActionQueue actionQueue={actionQueue} />
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <JourneyActiveProjects
+              projects={data.activeProjects ?? []}
+              githubConnected={data.githubConnected}
+            />
+            <JourneySuggestedProjects suggestions={data.suggestedProjects ?? []} />
           </section>
 
           <details className="group rounded-xl border border-line bg-surface">

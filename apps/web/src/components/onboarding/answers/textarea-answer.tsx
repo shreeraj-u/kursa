@@ -16,6 +16,12 @@ export function TextareaAnswer(props: TextareaAnswerProps) {
         placeholder={props.placeholder}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            props.onSubmit();
+          }
+        }}
       />
       <div className="flex justify-between">
         <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>

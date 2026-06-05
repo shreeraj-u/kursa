@@ -13,6 +13,8 @@ export * from './api/journey';
 export * from './api/events';
 export * from './api/memory';
 export * from './api/intelligence';
+export * from './api/chat';
+export * from './api/market';
 export * from './api/resume';
 export * from './api/onboarding';
 export * from './api/skills';

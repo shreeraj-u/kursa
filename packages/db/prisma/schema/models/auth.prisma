@@ -13,6 +13,8 @@ model User {
   userMemories            UserMemory[]
   persistedObservations   PersistedObservation[]
   conversations           Conversation[]
+  marketSnapshots         MarketSnapshot[]
+  jobListings             JobListing[]
 
   @@unique([email])
   @@map("user")

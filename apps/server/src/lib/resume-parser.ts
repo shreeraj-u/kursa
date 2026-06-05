@@ -3,6 +3,7 @@ import { z } from "zod";
 import { EXTRACT_RESUME_DATA_PROMPT, Models } from "./ai/prompts.js";
 import { openai } from "./openai.js";
 import { extractSkillsFromTaxonomy } from "./resume-taxonomy.js";
+import { normalizeLlmResumePayload } from "./resume-parser-normalize.js";
 import {
   llmResponseSchema,
   type ParsedSkill,
@@ -58,11 +59,13 @@ export async function parseResumeText(rawText: string): Promise<ResumeParseResul
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = llmResponseSchema.safeParse(JSON.parse(content));
+    const parsed = llmResponseSchema.safeParse(
+      normalizeLlmResumePayload(JSON.parse(content)),
+    );
     if (parsed.success) {
       llmData = parsed.data;
     } else {
-      llmError = "LLM response failed validation";
+      llmError = "Some resume fields could not be parsed — using partial extraction";
       console.error("[resume-parser] LLM validation failed:", parsed.error.flatten());
     }
   } catch (error) {

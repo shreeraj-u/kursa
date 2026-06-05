@@ -11,6 +11,10 @@ import type {
   SentimentTrendPoint,
 } from "@kursa/types";
 
+import {
+  extractLearningGoalFromText,
+  fallbackLearningGoalExtraction,
+} from "../lib/ai/journal-learn.extract.js";
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { computeJournalActivityScore } from "../compute/advisor.compute.js";
 import { eventToTag, ingestEvent, listEvents } from "./career-event-intelligence/index.js";
@@ -31,7 +35,7 @@ export async function getTimeline(
   const entries: JournalTimelineEntry[] = data.map((e) => ({
     ...e,
     tag: eventToTag(e.type, e.source),
-    agent: e.source === "aria" || e.type === "aria_observation",
+    agent: e.source === "aria" || e.type === "aria_observation" || e.type === "chat_insight",
   }));
 
   return {
@@ -104,12 +108,17 @@ export async function createDecision(userId: string, input: CreateDecisionInput)
 }
 
 export async function createLearning(userId: string, input: CreateLearningInput) {
+  const rawText = input.skillName.trim();
+  const extracted =
+    (await extractLearningGoalFromText(rawText)) ?? fallbackLearningGoalExtraction(rawText);
+
   return ingestEvent(userId, {
     type: "learning",
     source: "user",
-    body: `Learning ${input.skillName}`,
+    body: extracted.summary,
     structured: {
-      skillName: input.skillName,
+      skillName: extracted.skillName,
+      originalText: rawText !== extracted.skillName ? rawText : undefined,
       resourceType: input.resourceType,
       hours: input.hours,
       completed: input.completed,

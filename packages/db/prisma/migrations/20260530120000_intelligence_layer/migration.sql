@@ -5,6 +5,9 @@ CREATE TYPE "CareerEventType" AS ENUM ('checkin_weekly', 'checkin_monthly', 'win
 CREATE TYPE "CareerEventSource" AS ENUM ('user', 'aria', 'system');
 
 -- CreateEnum
+CREATE TYPE "SkillCategory" AS ENUM ('technical', 'soft', 'tool');
+CREATE TYPE "SkillProficiency" AS ENUM ('beginner', 'intermediate', 'advanced', 'expert');
+
 CREATE TYPE "SkillSource" AS ENUM ('self_reported', 'resume', 'inferred_checkin', 'inferred_journal');
 
 -- AlterTable

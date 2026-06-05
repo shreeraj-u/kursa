@@ -1,9 +1,5 @@
-import { randomBytes, scrypt } from "node:crypto";
-import { promisify } from "node:util";
-
 import prisma from "../src/index.js";
-
-const scryptAsync = promisify(scrypt);
+import { hashPassword } from "./lib/hash-password.js";
 
 const TEST_USER = {
   id: "aZxF0RanmdKJew0GYi57N2bxYyijY8l2",
@@ -18,18 +14,6 @@ function daysAgo(days: number) {
 
 function daysFromNow(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const key = (await scryptAsync(password.normalize("NFKC"), salt, 64, {
-    N: 16384,
-    r: 16,
-    p: 1,
-    maxmem: 128 * 16384 * 16 * 2,
-  })) as Buffer;
-
-  return `${salt}:${key.toString("hex")}`;
 }
 
 function profileData() {

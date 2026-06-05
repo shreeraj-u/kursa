@@ -11,18 +11,22 @@ export type ServerFetchResult<T> =
  * Typed fetch for Next.js server components.
  * Forwards cookies to the backend and unwraps the { success, data } envelope.
  */
+const SERVER_FETCH_TIMEOUT_MS = 20_000;
+
 export async function serverFetch<T>(
   path: string,
-  options?: { retries?: number },
+  options?: { retries?: number; timeoutMs?: number },
 ): Promise<ServerFetchResult<T>> {
   const requestHeaders = await headers();
   const cookie = requestHeaders.get("cookie") ?? "";
   const retries = options?.retries ?? 1;
+  const timeoutMs = options?.timeoutMs ?? SERVER_FETCH_TIMEOUT_MS;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}${path}`, {
       headers: { cookie },
       cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (res.ok) {

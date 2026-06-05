@@ -24,6 +24,8 @@ export function createAuth() {
     github: {
       clientId: env.OAUTH_GITHUB_CLIENT_ID,
       clientSecret: env.OAUTH_GITHUB_CLIENT_SECRET,
+      // Required for listing/importing user repositories after OAuth link or sign-in.
+      scope: ["repo"],
     },
     ...(env.OAUTH_LINKEDIN_CLIENT_ID && env.OAUTH_LINKEDIN_CLIENT_SECRET
       ? {
@@ -53,6 +55,14 @@ export function createAuth() {
       autoSignIn: true,
     },
     socialProviders,
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["github"],
+        // GitHub email may differ from the email used at sign-up.
+        allowDifferentEmails: true,
+      },
+    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     user: {

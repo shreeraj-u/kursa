@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import type { Route } from "next";
 import { ChevronDown } from "lucide-react";
 
 interface PageHeaderProps {
@@ -53,25 +55,19 @@ export default function PageHeader({
                 </div>
 
                 {/* Ask Aria button */}
-                <button
-                    className="mono flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors"
+                <Link
+                    href={"/dashboard/aria" as Route}
+                    className="mono flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors hover:bg-bg-sub"
                     style={{
                         fontSize: "var(--text-xs)",
                         color: "var(--ink)",
                         border: "1px solid var(--line-2)",
                         background: "var(--bg)",
-                        cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-sub)";
-                    }}
-                    onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "var(--bg)";
                     }}
                 >
                     Ask Aria
                     <ChevronDown size={11} style={{ color: "var(--mute-2)" }} />
-                </button>
+                </Link>
             </div>
         </header>
     );

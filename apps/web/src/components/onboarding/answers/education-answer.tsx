@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { EducationInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type EducationAnswerProps = {
   items: EducationInput[];
   onChange: (items: EducationInput[]) => void;
@@ -25,12 +27,14 @@ export function EducationAnswer(props: EducationAnswerProps) {
   const [issuer, setIssuer] = useState("");
   const [completionDate, setCompletionDate] = useState("");
 
-  const addEntry = () => {
+  const hasDraft = Boolean(credentialName.trim() || issuer.trim() || completionDate.trim());
+
+  const addEntry = (): boolean => {
     const name = credentialName.trim();
     const org = issuer.trim();
     if (!name || !org) {
       toast.error("Add the credential and the issuer");
-      return;
+      return false;
     }
     props.onChange([
       ...props.items,
@@ -40,6 +44,7 @@ export function EducationAnswer(props: EducationAnswerProps) {
     setCredentialName("");
     setIssuer("");
     setCompletionDate("");
+    return true;
   };
 
   return (
@@ -89,10 +94,14 @@ export function EducationAnswer(props: EducationAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add education</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={props.onSubmit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="an education entry"
+        addLabel="Add education"
+        onAdd={addEntry}
+        onContinue={props.onSubmit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }
