@@ -15,6 +15,16 @@ import {
   skillUpdateSchema,
   learningGoalCreateSchema,
   learningGoalUpdateSchema,
+  workHistoryCreateSchema,
+  workHistoryUpdateSchema,
+  projectCreateSchema,
+  projectUpdateSchema,
+  achievementCreateSchema,
+  achievementUpdateSchema,
+  educationCreateSchema,
+  educationUpdateSchema,
+  languageCreateSchema,
+  languageUpdateSchema,
 } from "../validators/profile.validator.js";
 
 function parseOrThrow<T>(schema: ZodSchema<T>, data: unknown): T {
@@ -186,5 +196,100 @@ export async function updateLearningGoal(req: Request, res: Response): Promise<v
  */
 export async function deleteLearningGoal(req: Request, res: Response): Promise<void> {
   await profileService.deleteLearningGoal(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Work history ────────────────────────────────────────────────────────────────
+
+export async function createWorkHistory(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(workHistoryCreateSchema, req.body);
+  const workHistory = await profileService.createWorkHistory(req.user!.id, data);
+  created(res, { workHistory });
+}
+
+export async function updateWorkHistory(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(workHistoryUpdateSchema, req.body);
+  const workHistory = await profileService.updateWorkHistory(req.user!.id, req.params.id as string, data);
+  ok(res, { workHistory });
+}
+
+export async function deleteWorkHistory(req: Request, res: Response): Promise<void> {
+  await profileService.deleteWorkHistory(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Projects ────────────────────────────────────────────────────────────────────
+
+export async function createProject(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(projectCreateSchema, req.body);
+  const project = await profileService.createProject(req.user!.id, data);
+  created(res, { project });
+}
+
+export async function updateProject(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(projectUpdateSchema, req.body);
+  const project = await profileService.updateProject(req.user!.id, req.params.id as string, data);
+  ok(res, { project });
+}
+
+export async function deleteProject(req: Request, res: Response): Promise<void> {
+  await profileService.deleteProject(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Achievements ────────────────────────────────────────────────────────────────
+
+export async function createAchievement(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(achievementCreateSchema, req.body);
+  const achievement = await profileService.createAchievement(req.user!.id, data);
+  created(res, { achievement });
+}
+
+export async function updateAchievement(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(achievementUpdateSchema, req.body);
+  const achievement = await profileService.updateAchievement(req.user!.id, req.params.id as string, data);
+  ok(res, { achievement });
+}
+
+export async function deleteAchievement(req: Request, res: Response): Promise<void> {
+  await profileService.deleteAchievement(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Education ───────────────────────────────────────────────────────────────────
+
+export async function createEducation(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(educationCreateSchema, req.body);
+  const education = await profileService.createEducation(req.user!.id, data);
+  created(res, { education });
+}
+
+export async function updateEducation(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(educationUpdateSchema, req.body);
+  const education = await profileService.updateEducation(req.user!.id, req.params.id as string, data);
+  ok(res, { education });
+}
+
+export async function deleteEducation(req: Request, res: Response): Promise<void> {
+  await profileService.deleteEducation(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Languages ───────────────────────────────────────────────────────────────────
+
+export async function createLanguage(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(languageCreateSchema, req.body);
+  const language = await profileService.createLanguage(req.user!.id, data);
+  created(res, { language });
+}
+
+export async function updateLanguage(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(languageUpdateSchema, req.body);
+  const language = await profileService.updateLanguage(req.user!.id, req.params.id as string, data);
+  ok(res, { language });
+}
+
+export async function deleteLanguage(req: Request, res: Response): Promise<void> {
+  await profileService.deleteLanguage(req.user!.id, req.params.id as string);
   ok(res, { deleted: true });
 }

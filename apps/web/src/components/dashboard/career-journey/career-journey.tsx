@@ -12,6 +12,7 @@ import type {
   JourneyPriority,
   JourneyActionItem,
   MilestoneStatus,
+  UserProfile,
 } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
@@ -26,8 +27,28 @@ import JourneyActionQueue from "./journey-action-queue";
 
 interface CareerJourneyPageProps {
   data: CareerJourneyResponse;
+  profile: UserProfile | null;
   materialChangeDetected?: boolean;
 }
+
+interface RecommendedPath {
+  id: string;
+  title: string;
+  subtitle: string;
+  timeline: string;
+  fit: string;
+  entails: string[];
+  tradeoffs: string[];
+  preferencePatch: Partial<JourneyPreferences>;
+}
+
+const SETUP_STEPS = [
+  { id: "direction", label: "Direction", prompt: "First, tell me what kind of future you want to explore." },
+  { id: "constraints", label: "Constraints", prompt: "Now we narrow the route to what is realistic for your life." },
+  { id: "priorities", label: "Priorities", prompt: "Choose the outcomes that should shape the recommendation." },
+  { id: "paths", label: "Path options", prompt: "Based on that, here are paths you can take and what each entails." },
+  { id: "review", label: "Generate", prompt: "Last check: confirm the chosen path and add any extra context." },
+] as const;
 
 const EMPTY_PREFERENCES: JourneyPreferences = {
   preferredDirection: "",
@@ -56,7 +77,7 @@ const PRIORITIES: Array<{ value: JourneyPriority; label: string }> = [
   { value: "impact", label: "Impact" },
 ];
 
-export default function CareerJourneyPage({ data, materialChangeDetected }: CareerJourneyPageProps) {
+export default function CareerJourneyPage({ data, profile, materialChangeDetected }: CareerJourneyPageProps) {
   const router = useRouter();
   const [journey, setJourney] = useState<CareerJourney | null>(data.journey);
   const [actionQueue, setActionQueue] = useState<JourneyActionItem[]>(data.actionQueue);
@@ -148,6 +169,7 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
           {showSetup ? (
             <JourneySetupForm
               preferences={setupPreferences}
+              profile={profile}
               onChange={setSetupPreferences}
               onSubmit={submitSetup}
               onCancel={() => setShowSetup(false)}
@@ -199,6 +221,7 @@ export default function CareerJourneyPage({ data, materialChangeDetected }: Care
         {showSetup && (
           <JourneySetupForm
             preferences={setupPreferences}
+            profile={profile}
             onChange={setSetupPreferences}
             onSubmit={submitSetup}
             onCancel={() => setShowSetup(false)}
@@ -430,6 +453,7 @@ function HeroMetric({ label, value }: { label: string; value: string }) {
 
 function JourneySetupForm({
   preferences,
+  profile,
   onChange,
   onSubmit,
   onCancel,
@@ -438,6 +462,7 @@ function JourneySetupForm({
   compact = false,
 }: {
   preferences: JourneyPreferences;
+  profile: UserProfile | null;
   onChange: (preferences: JourneyPreferences) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -445,8 +470,19 @@ function JourneySetupForm({
   error: string | null;
   compact?: boolean;
 }) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
+  const recommendations = buildPathRecommendations(preferences, profile);
+  const selectedPath = recommendations.find((path) => path.id === selectedPathId) ?? null;
+  const step = SETUP_STEPS[stepIndex];
+  const isLastStep = stepIndex === SETUP_STEPS.length - 1;
+
   const update = <Key extends keyof JourneyPreferences>(key: Key, value: JourneyPreferences[Key]) => {
     onChange({ ...preferences, [key]: value });
+  };
+
+  const mergePreferences = (patch: Partial<JourneyPreferences>) => {
+    onChange({ ...preferences, ...patch });
   };
 
   const togglePriority = (priority: JourneyPriority) => {
@@ -459,124 +495,369 @@ function JourneySetupForm({
     update("priorities", [...preferences.priorities, priority]);
   };
 
+  const selectPath = (path: RecommendedPath) => {
+    setSelectedPathId(path.id);
+    mergePreferences({
+      ...path.preferencePatch,
+      notes: withGuidedSelection(preferences.notes, path),
+    });
+  };
+
+  const goNext = () => setStepIndex((value) => Math.min(value + 1, SETUP_STEPS.length - 1));
+  const goBack = () => setStepIndex((value) => Math.max(value - 1, 0));
+
   return (
-    <div className={`w-full ${compact ? "" : "max-w-2xl"} rounded-2xl border border-line bg-surface p-5`}>
-      <div className="mb-4">
-        <div className="mono text-2xs text-mute-2 uppercase tracking-mono">career journey setup</div>
-        <h2 className="mt-2 text-sm font-medium text-ink">Customize your path before Kursa generates it</h2>
-        <p className="mt-1 text-xs leading-relaxed text-mute-2">
-          Everything here is optional. Kursa will use these answers to shape one realistic path from your profile evidence.
-        </p>
+    <div className={`w-full ${compact ? "" : "max-w-5xl"} rounded-2xl border border-line bg-surface p-5`}>
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <div className="mono text-2xs text-mute-2 uppercase tracking-mono">guided career conversation</div>
+          <h2 className="mt-2 text-sm font-medium text-ink">Build the journey step by step with Kursa</h2>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-mute-2">
+            Instead of a static form, answer a short sequence. Kursa turns your answers into concrete path options, explains
+            what each path entails, then generates the active journey from your chosen route.
+          </p>
+        </div>
+        <div className="mono text-2xs text-mute-3">
+          step {stepIndex + 1}/{SETUP_STEPS.length}
+        </div>
       </div>
 
-      <div className="grid gap-3">
-        <PreferenceTextarea
-          label="Preferred direction"
-          placeholder="e.g. Staff AI Engineer, founder path, product-minded engineering leadership"
-          value={preferences.preferredDirection}
-          onChange={(value) => update("preferredDirection", value)}
-        />
-        <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-          <PreferenceTextarea
-            label="Lean toward"
-            placeholder="Roles, industries, company stages, or kinds of work you want more of"
-            value={preferences.leanToward}
-            onChange={(value) => update("leanToward", value)}
-          />
-          <PreferenceTextarea
-            label="Avoid"
-            placeholder="Paths, industries, responsibilities, or tradeoffs you do not want"
-            value={preferences.avoid}
-            onChange={(value) => update("avoid", value)}
-          />
-        </div>
-
-        <div>
-          <div className="mb-2 mono text-2xs text-mute-2 uppercase tracking-mono">growth pace</div>
-          <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
-            {GROWTH_PACES.map((pace) => (
-              <button
-                key={pace.value}
-                type="button"
-                onClick={() => update("growthPace", preferences.growthPace === pace.value ? "" : pace.value)}
-                className="rounded-lg border px-3 py-2 text-left"
-                style={{
-                  borderColor: preferences.growthPace === pace.value ? "var(--accent)" : "var(--line)",
-                  background: preferences.growthPace === pace.value ? "var(--bg-sub)" : "transparent",
-                }}
-              >
-                <div className="text-xs font-medium text-ink">{pace.label}</div>
-                <div className="mt-1 text-2xs text-mute-2">{pace.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <div className="mono text-2xs text-mute-2 uppercase tracking-mono">priorities</div>
-            <div className="mono text-2xs text-mute-3">{preferences.priorities.length}/5</div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {PRIORITIES.map((priority) => {
-              const active = preferences.priorities.includes(priority.value);
+      <div className="grid grid-cols-[250px_minmax(0,1fr)] gap-5 max-lg:grid-cols-1">
+        <aside className="rounded-xl border border-line bg-bg-sub p-3">
+          <div className="mono mb-3 text-2xs uppercase tracking-mono text-mute-2">conversation</div>
+          <ol className="space-y-2">
+            {SETUP_STEPS.map((setupStep, index) => {
+              const active = index === stepIndex;
+              const complete = index < stepIndex;
               return (
-                <button
-                  key={priority.value}
-                  type="button"
-                  onClick={() => togglePriority(priority.value)}
-                  className="rounded-full border px-3 py-1 mono text-2xs"
+                <li
+                  key={setupStep.id}
+                  className="rounded-lg border px-3 py-2"
                   style={{
                     borderColor: active ? "var(--accent)" : "var(--line)",
-                    background: active ? "var(--bg-sub)" : "transparent",
-                    color: active ? "var(--ink)" : "var(--mute)",
+                    background: active ? "var(--accent-soft)" : complete ? "var(--bg-sub-2)" : "transparent",
                   }}
                 >
-                  {priority.label}
-                </button>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-ink">{setupStep.label}</span>
+                    <span className="mono text-2xs text-mute-3">{complete ? "done" : active ? "now" : "next"}</span>
+                  </div>
+                  <p className="mt-1 text-2xs leading-relaxed text-mute-2">{setupStep.prompt}</p>
+                </li>
               );
             })}
+          </ol>
+        </aside>
+
+        <section className="rounded-xl border border-line bg-bg p-4">
+          <div className="mb-4 rounded-xl border border-[var(--accent-line)] bg-[var(--accent-soft)] p-3">
+            <div className="mono text-2xs uppercase tracking-mono text-accent">Kursa asks</div>
+            <p className="mt-1 text-sm leading-relaxed text-ink">{step.prompt}</p>
           </div>
-        </div>
 
-        <PreferenceTextarea
-          label="Hard constraints"
-          placeholder="e.g. remote only, no relocation, visa constraints, family schedule, minimum compensation"
-          value={preferences.hardConstraints}
-          onChange={(value) => update("hardConstraints", value)}
-        />
-        <PreferenceTextarea
-          label="Anything else"
-          placeholder="Extra context you want Kursa to consider when choosing the best path"
-          value={preferences.notes}
-          onChange={(value) => update("notes", value)}
-        />
-      </div>
+          {step.id === "direction" && (
+            <div className="grid gap-3">
+              <PreferenceTextarea
+                label="Where are you curious about going?"
+                placeholder="e.g. Staff AI Engineer, founder path, product-minded engineering leadership, climate tech pivot"
+                value={preferences.preferredDirection}
+                onChange={(value) => update("preferredDirection", value)}
+              />
+              <PreferenceTextarea
+                label="What should this path lean toward?"
+                placeholder="Roles, industries, company stages, or kinds of work you want more of"
+                value={preferences.leanToward}
+                onChange={(value) => update("leanToward", value)}
+              />
+            </div>
+          )}
 
-      {error && <div className="mt-3 mono text-2xs text-warn">{error}</div>}
+          {step.id === "constraints" && (
+            <div className="grid gap-3">
+              <PreferenceTextarea
+                label="What should Kursa avoid?"
+                placeholder="Paths, industries, responsibilities, or tradeoffs you do not want"
+                value={preferences.avoid}
+                onChange={(value) => update("avoid", value)}
+              />
+              <PreferenceTextarea
+                label="Hard constraints"
+                placeholder="e.g. remote only, no relocation, visa constraints, family schedule, minimum compensation"
+                value={preferences.hardConstraints}
+                onChange={(value) => update("hardConstraints", value)}
+              />
+              <div>
+                <div className="mb-2 mono text-2xs text-mute-2 uppercase tracking-mono">growth pace</div>
+                <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
+                  {GROWTH_PACES.map((pace) => (
+                    <button
+                      key={pace.value}
+                      type="button"
+                      onClick={() => update("growthPace", preferences.growthPace === pace.value ? "" : pace.value)}
+                      className="rounded-lg border px-3 py-2 text-left"
+                      style={{
+                        borderColor: preferences.growthPace === pace.value ? "var(--accent)" : "var(--line)",
+                        background: preferences.growthPace === pace.value ? "var(--bg-sub)" : "transparent",
+                      }}
+                    >
+                      <div className="text-xs font-medium text-ink">{pace.label}</div>
+                      <div className="mt-1 text-2xs text-mute-2">{pace.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
-      <div className="mt-5 flex justify-end gap-2">
-        <Button
-          onClick={onCancel}
-          disabled={isSubmitting}
-          variant="outline"
-          size="sm"
-          className="mono text-mute border-line rounded-sm bg-bg hover:bg-bg-sub-2"
-        >
-          cancel
-        </Button>
-        <Button
-          onClick={onSubmit}
-          disabled={isSubmitting}
-          variant="outline"
-          size="sm"
-          className="mono text-ink border-line rounded-sm bg-surface hover:bg-bg-sub-2"
-        >
-          {isSubmitting ? "generating…" : "generate customized journey"}
-        </Button>
+          {step.id === "priorities" && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="mono text-2xs text-mute-2 uppercase tracking-mono">priorities</div>
+                <div className="mono text-2xs text-mute-3">{preferences.priorities.length}/5</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {PRIORITIES.map((priority) => {
+                  const active = preferences.priorities.includes(priority.value);
+                  return (
+                    <button
+                      key={priority.value}
+                      type="button"
+                      onClick={() => togglePriority(priority.value)}
+                      className="rounded-full border px-3 py-1 mono text-2xs"
+                      style={{
+                        borderColor: active ? "var(--accent)" : "var(--line)",
+                        background: active ? "var(--bg-sub)" : "transparent",
+                        color: active ? "var(--ink)" : "var(--mute)",
+                      }}
+                    >
+                      {priority.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-mute-2">
+                These priorities change the suggested routes: leadership pushes management paths forward, autonomy and
+                impact surface founder/operator paths, and learning or stability changes the recommended pace.
+              </p>
+            </div>
+          )}
+
+          {step.id === "paths" && (
+            <div className="grid gap-3">
+              {recommendations.map((path) => {
+                const active = selectedPathId === path.id;
+                return (
+                  <button
+                    key={path.id}
+                    type="button"
+                    onClick={() => selectPath(path)}
+                    className="rounded-xl border p-4 text-left transition-colors hover:bg-bg-sub"
+                    style={{
+                      borderColor: active ? "var(--accent)" : "var(--line)",
+                      background: active ? "var(--accent-soft)" : "transparent",
+                    }}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-ink">{path.title}</div>
+                        <p className="mt-1 text-xs leading-relaxed text-mute-2">{path.subtitle}</p>
+                      </div>
+                      <div className="mono rounded-full border border-line bg-bg-sub px-2 py-1 text-2xs text-mute">
+                        {path.timeline}
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <PathDetailList title="what this entails" items={path.entails} />
+                      <PathDetailList title="tradeoffs to expect" items={path.tradeoffs} />
+                    </div>
+                    <p className="mt-3 text-xs leading-relaxed text-ink">{path.fit}</p>
+                  </button>
+                );
+              })}
+              {!selectedPath && <div className="mono text-2xs text-mute-3">Pick one route to carry into generation.</div>}
+            </div>
+          )}
+
+          {step.id === "review" && (
+            <div className="grid gap-3">
+              <div className="rounded-xl border border-line bg-bg-sub p-4">
+                <div className="mono text-2xs uppercase tracking-mono text-mute-2">chosen direction</div>
+                <div className="mt-2 text-sm font-medium text-ink">
+                  {selectedPath?.title ?? (preferences.preferredDirection || "Kursa will infer the best-fit path")}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-mute-2">
+                  {selectedPath?.subtitle ?? "No path card selected. Kursa will use your profile evidence and answers to commit to one realistic journey."}
+                </p>
+              </div>
+              <PreferenceTextarea
+                label="Final note to the advisor"
+                placeholder="Extra context you want Kursa to consider when choosing the best path"
+                value={preferences.notes}
+                onChange={(value) => update("notes", value)}
+              />
+            </div>
+          )}
+
+          {error && <div className="mt-3 mono text-2xs text-warn">{error}</div>}
+
+          <div className="mt-5 flex flex-wrap justify-between gap-2">
+            <Button
+              onClick={onCancel}
+              disabled={isSubmitting}
+              variant="outline"
+              size="sm"
+              className="mono text-mute border-line rounded-sm bg-bg hover:bg-bg-sub-2"
+            >
+              cancel
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={goBack}
+                disabled={isSubmitting || stepIndex === 0}
+                variant="outline"
+                size="sm"
+                className="mono text-mute border-line rounded-sm bg-bg hover:bg-bg-sub-2 disabled:opacity-40"
+              >
+                back
+              </Button>
+              {isLastStep ? (
+                <Button
+                  onClick={onSubmit}
+                  disabled={isSubmitting}
+                  variant="outline"
+                  size="sm"
+                  className="mono text-ink border-line rounded-sm bg-surface hover:bg-bg-sub-2"
+                >
+                  {isSubmitting ? "generating…" : "generate guided journey"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={goNext}
+                  disabled={isSubmitting}
+                  variant="outline"
+                  size="sm"
+                  className="mono text-ink border-line rounded-sm bg-surface hover:bg-bg-sub-2"
+                >
+                  continue
+                </Button>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
+}
+
+function PathDetailList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <div className="mono text-2xs uppercase tracking-mono text-mute-2">{title}</div>
+      <ul className="mt-2 space-y-1">
+        {items.map((item) => (
+          <li key={item} className="text-xs leading-relaxed text-mute-2">
+            • {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function buildPathRecommendations(preferences: JourneyPreferences, profile: UserProfile | null): RecommendedPath[] {
+  const aspirationRole = profile?.aspirations?.targetRoles?.[0] ?? profile?.targetRole ?? "";
+  const currentRole = profile?.workHistories?.find((work) => work.isCurrent)?.roleTitle ?? profile?.workHistories?.[0]?.roleTitle ?? "";
+  const strongestSkills = (profile?.skills ?? []).slice(0, 4).map((skill) => skill.name).filter(Boolean);
+  const evidenceSummary = [
+    currentRole ? `current role evidence from ${currentRole}` : null,
+    strongestSkills.length ? `skills such as ${strongestSkills.join(", ")}` : null,
+  ].filter(Boolean).join(" and ");
+  const target = preferences.preferredDirection || aspirationRole || "your next best-fit role";
+  const pace = preferences.growthPace || "steady";
+  const timeline = pace === "accelerated" ? "6–12 months" : pace === "exploratory" ? "3–9 months" : "9–18 months";
+  const lean = preferences.leanToward || evidenceSummary || "work that compounds your strongest evidence";
+  const constraints = preferences.hardConstraints ? ` while respecting: ${preferences.hardConstraints}` : "";
+  const wantsLeadership = preferences.priorities.includes("leadership");
+  const wantsAutonomy = preferences.priorities.includes("autonomy");
+  const wantsImpact = preferences.priorities.includes("impact");
+  const wantsStability = preferences.priorities.includes("stability");
+
+  const primaryTitle = preferences.preferredDirection
+    ? `Focused route: ${preferences.preferredDirection}`
+    : wantsLeadership
+      ? "Leadership route: team and scope expansion"
+      : "Specialist route: deepen your strongest lane";
+
+  return [
+    {
+      id: "focused",
+      title: primaryTitle,
+      subtitle: `Make ${target} the center of the plan and filter milestones toward ${lean}${constraints}.`,
+      timeline,
+      fit: "Best when you already have a credible direction and want Kursa to turn it into milestones, proof artifacts, skill gaps, and next actions.",
+      entails: [
+        "Commit to one target role or role family before optimizing résumé and applications.",
+        "Build proof around the exact scope this route requires, not generic professional growth.",
+        "Use each milestone as a decision gate: continue, adjust, or regenerate when evidence changes.",
+      ],
+      tradeoffs: [
+        "Less room for broad exploration once the active journey is generated.",
+        "Weak profile evidence may require bridge milestones before the target role is realistic.",
+      ],
+      preferencePatch: {
+        preferredDirection: preferences.preferredDirection || aspirationRole || (wantsLeadership ? "team and scope expansion" : "senior specialist growth"),
+        leanToward: preferences.leanToward || lean,
+      },
+    },
+    {
+      id: "portfolio",
+      title: wantsAutonomy || wantsImpact ? "Builder route: product, founder, or operator path" : "Portfolio route: test adjacent paths safely",
+      subtitle: "Keep the active journey grounded while exploring adjacent opportunities through projects, advisory work, or internal experiments.",
+      timeline: pace === "accelerated" ? "4–10 months" : "6–15 months",
+      fit: "Best when you want the system to recommend non-obvious options without forcing an immediate all-in pivot.",
+      entails: [
+        "Run small proof projects that reveal whether the adjacent path is energizing and marketable.",
+        "Translate current strengths into a new context before changing titles or industries.",
+        "Compare options by evidence gathered, not vibes or generic market trends.",
+      ],
+      tradeoffs: [
+        "Can feel slower because the first milestone is evidence gathering.",
+        "Requires disciplined journaling so Kursa can tell which experiment is working.",
+      ],
+      preferencePatch: {
+        growthPace: preferences.growthPace || "exploratory",
+        leanToward: preferences.leanToward || "adjacent experiments, product ownership, and visible proof projects",
+      },
+    },
+    {
+      id: "stability",
+      title: wantsStability ? "Stable advancement route: lower-risk compounding" : "Bridge route: close gaps before the bigger move",
+      subtitle: "Prioritize achievable next steps, skill-gap closure, and résumé evidence before taking a sharper leap.",
+      timeline: pace === "accelerated" ? "8–14 months" : "12–24 months",
+      fit: "Best when constraints, confidence, or missing evidence make the dream path possible but not yet immediate.",
+      entails: [
+        "Sequence milestones from current proof to target readiness instead of skipping levels.",
+        "Turn missing skills into specific learning goals and portfolio artifacts.",
+        "Use applications as calibration signals before committing to a more aggressive path.",
+      ],
+      tradeoffs: [
+        "Less dramatic short-term change than a pivot or accelerated route.",
+        "May need regeneration after new evidence appears so the plan does not stay too conservative.",
+      ],
+      preferencePatch: {
+        growthPace: preferences.growthPace || "steady",
+        leanToward: preferences.leanToward || "lower-risk progression with visible evidence gains",
+      },
+    },
+  ];
+}
+
+function withGuidedSelection(notes: string, path: RecommendedPath): string {
+  const selection = `Guided path selection: ${path.title} — ${path.subtitle}`;
+  if (notes.includes("Guided path selection:")) {
+    return notes.replace(/Guided path selection:.*$/m, selection);
+  }
+  return notes.trim() ? `${notes.trim()}\n\n${selection}` : selection;
 }
 
 function PreferenceTextarea({

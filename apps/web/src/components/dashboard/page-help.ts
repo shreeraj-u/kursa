@@ -87,13 +87,24 @@ export const DASHBOARD_PAGE_HELP = {
     ],
     guideHref: GUIDE,
   },
+  profile: {
+    title: "How to use Profile",
+    description: "Use Profile to maintain the career evidence Kursa reads when generating journeys, résumés, shortlists, and Aria guidance.",
+    tips: [
+      "Keep basics, experience, and projects current — they are the primary evidence behind fit scores and journey recommendations.",
+      "Add measurable outcomes to work history entries so résumé generation and ATS scoring stay specific.",
+      "Update career preferences when your direction, constraints, or risk tolerance change.",
+      "Use Skills and Connections from the related links when you need to import evidence or connect external sources.",
+    ],
+    guideHref: GUIDE,
+  },
   settings: {
     title: "How to use Settings",
-    description: "Use Settings to manage account details, Profile preferences, privacy, integrations, notifications, plan, and documentation access.",
+    description: "Use Settings to manage account details, privacy, integrations, notifications, plan, and documentation access.",
     tips: [
-      "Use the left settings navigation to move between profile, career, connections, account, notifications, privacy, plan, and docs.",
-      "Keep career preferences and social links current because they shape downstream guidance and documents.",
-      "Review privacy and connection settings when you add or remove external sources.",
+      "Use the left settings navigation to move between connections, account, notifications, privacy, plan, and docs.",
+      "Keep connection settings current when you add or remove external sources.",
+      "Review privacy settings when you change what Kursa can read or store.",
       "Open Documentation from settings when you want the longer product guide.",
     ],
     guideHref: GUIDE,

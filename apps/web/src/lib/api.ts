@@ -14,10 +14,25 @@ import type {
   OnboardingReviewResponse,
   UserSkill,
   UserLearningGoal,
+  UserWorkHistory,
+  UserProject,
+  UserAchievement,
+  UserEducation,
+  UserLanguage,
   SkillCreateInput,
   SkillUpdateInput,
   LearningGoalCreateInput,
   LearningGoalUpdateInput,
+  WorkHistoryCreateInput,
+  WorkHistoryUpdateInput,
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  AchievementCreateInput,
+  AchievementUpdateInput,
+  EducationCreateInput,
+  EducationUpdateInput,
+  LanguageCreateInput,
+  LanguageUpdateInput,
   ProactiveNudge,
   RelevanceSummary,
 } from "@kursa/types";
@@ -118,6 +133,91 @@ export const api = {
 
   deleteLearningGoal: (id: string) =>
     request<{ deleted: boolean }>(`/api/v1/profile/me/learning-goals/${id}`, {
+      method: "DELETE",
+    }),
+
+  createWorkHistory: (body: WorkHistoryCreateInput) =>
+    request<{ workHistory: UserWorkHistory }>("/api/v1/profile/me/work-history", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateWorkHistory: (id: string, body: WorkHistoryUpdateInput) =>
+    request<{ workHistory: UserWorkHistory }>(`/api/v1/profile/me/work-history/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteWorkHistory: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/work-history/${id}`, {
+      method: "DELETE",
+    }),
+
+  createProject: (body: ProjectCreateInput) =>
+    request<{ project: UserProject }>("/api/v1/profile/me/projects", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateProject: (id: string, body: ProjectUpdateInput) =>
+    request<{ project: UserProject }>(`/api/v1/profile/me/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteProject: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/projects/${id}`, {
+      method: "DELETE",
+    }),
+
+  createAchievement: (body: AchievementCreateInput) =>
+    request<{ achievement: UserAchievement }>("/api/v1/profile/me/achievements", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateAchievement: (id: string, body: AchievementUpdateInput) =>
+    request<{ achievement: UserAchievement }>(`/api/v1/profile/me/achievements/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteAchievement: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/achievements/${id}`, {
+      method: "DELETE",
+    }),
+
+  createEducation: (body: EducationCreateInput) =>
+    request<{ education: UserEducation }>("/api/v1/profile/me/education", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateEducation: (id: string, body: EducationUpdateInput) =>
+    request<{ education: UserEducation }>(`/api/v1/profile/me/education/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteEducation: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/education/${id}`, {
+      method: "DELETE",
+    }),
+
+  createLanguage: (body: LanguageCreateInput) =>
+    request<{ language: UserLanguage }>("/api/v1/profile/me/languages", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateLanguage: (id: string, body: LanguageUpdateInput) =>
+    request<{ language: UserLanguage }>(`/api/v1/profile/me/languages/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteLanguage: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/languages/${id}`, {
       method: "DELETE",
     }),
 

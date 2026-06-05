@@ -8,8 +8,19 @@ import type {
   SkillUpdateInput,
   LearningGoalCreateInput,
   LearningGoalUpdateInput,
+  WorkHistoryCreateInput,
+  WorkHistoryUpdateInput,
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  AchievementCreateInput,
+  AchievementUpdateInput,
+  EducationCreateInput,
+  EducationUpdateInput,
+  LanguageCreateInput,
+  LanguageUpdateInput,
 } from "@kursa/types";
 import { Errors } from "../errors/http-error.js";
+import { yearToDate } from "../lib/year-to-date.js";
 
 function isUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
@@ -200,4 +211,188 @@ export async function deleteLearningGoal(userId: string, goalId: string) {
   const existing = await prisma.learningGoal.findFirst({ where: { id: goalId, profileId } });
   if (!existing) throw Errors.notFound("Learning goal");
   return prisma.learningGoal.delete({ where: { id: goalId } });
+}
+
+// ── Work history CRUD ─────────────────────────────────────────────────────────
+
+export async function createWorkHistory(userId: string, data: WorkHistoryCreateInput) {
+  const profileId = await getProfileId(userId);
+  const startDate = yearToDate(data.startDate);
+  if (!startDate) throw Errors.badRequest("Work history start year is required");
+  return prisma.workHistory.create({
+    data: {
+      profileId,
+      companyName: data.companyName.trim(),
+      roleTitle: data.roleTitle.trim(),
+      startDate,
+      endDate: yearToDate(data.endDate),
+      isCurrent: data.isCurrent,
+      outcomes: { text: data.outcomes.trim() } as never,
+    },
+  });
+}
+
+export async function updateWorkHistory(userId: string, id: string, data: WorkHistoryUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.workHistory.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Work history");
+  const updateData: Prisma.WorkHistoryUpdateInput = {};
+  if (data.companyName !== undefined) updateData.companyName = data.companyName.trim();
+  if (data.roleTitle !== undefined) updateData.roleTitle = data.roleTitle.trim();
+  if (data.outcomes !== undefined) updateData.outcomes = { text: data.outcomes.trim() } as never;
+  if (data.startDate !== undefined) {
+    const startDate = yearToDate(data.startDate);
+    if (!startDate) throw Errors.badRequest("Work history start year is required");
+    updateData.startDate = startDate;
+  }
+  if (data.endDate !== undefined) updateData.endDate = yearToDate(data.endDate);
+  if (data.isCurrent !== undefined) updateData.isCurrent = data.isCurrent;
+  return prisma.workHistory.update({ where: { id }, data: updateData });
+}
+
+export async function deleteWorkHistory(userId: string, id: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.workHistory.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Work history");
+  return prisma.workHistory.delete({ where: { id } });
+}
+
+// ── Project CRUD ──────────────────────────────────────────────────────────────
+
+export async function createProject(userId: string, data: ProjectCreateInput) {
+  const profileId = await getProfileId(userId);
+  return prisma.project.create({
+    data: {
+      profileId,
+      title: data.title.trim(),
+      description: data.description,
+      url: data.url,
+      startDate: yearToDate(data.startDate),
+      endDate: yearToDate(data.endDate),
+      outcomes: { text: data.outcomes.trim() } as never,
+    },
+  });
+}
+
+export async function updateProject(userId: string, id: string, data: ProjectUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.project.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Project");
+  const updateData: Prisma.ProjectUpdateInput = {};
+  if (data.title !== undefined) updateData.title = data.title.trim();
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.url !== undefined) updateData.url = data.url;
+  if (data.outcomes !== undefined) updateData.outcomes = { text: data.outcomes.trim() } as never;
+  if (data.startDate !== undefined) updateData.startDate = yearToDate(data.startDate);
+  if (data.endDate !== undefined) updateData.endDate = yearToDate(data.endDate);
+  return prisma.project.update({ where: { id }, data: updateData });
+}
+
+export async function deleteProject(userId: string, id: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.project.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Project");
+  return prisma.project.delete({ where: { id } });
+}
+
+// ── Achievement CRUD ──────────────────────────────────────────────────────────
+
+export async function createAchievement(userId: string, data: AchievementCreateInput) {
+  const profileId = await getProfileId(userId);
+  return prisma.achievement.create({
+    data: {
+      profileId,
+      type: data.type,
+      title: data.title.trim(),
+      issuer: data.issuer,
+      description: data.description,
+      url: data.url,
+      dateAchieved: yearToDate(data.dateAchieved),
+    },
+  });
+}
+
+export async function updateAchievement(userId: string, id: string, data: AchievementUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.achievement.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Achievement");
+  const updateData: Prisma.AchievementUpdateInput = {};
+  if (data.type !== undefined) updateData.type = data.type;
+  if (data.title !== undefined) updateData.title = data.title.trim();
+  if (data.issuer !== undefined) updateData.issuer = data.issuer;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.url !== undefined) updateData.url = data.url;
+  if (data.dateAchieved !== undefined) updateData.dateAchieved = yearToDate(data.dateAchieved);
+  return prisma.achievement.update({ where: { id }, data: updateData });
+}
+
+export async function deleteAchievement(userId: string, id: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.achievement.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Achievement");
+  return prisma.achievement.delete({ where: { id } });
+}
+
+// ── Education CRUD ────────────────────────────────────────────────────────────
+
+export async function createEducation(userId: string, data: EducationCreateInput) {
+  const profileId = await getProfileId(userId);
+  return prisma.education.create({
+    data: {
+      profileId,
+      type: data.type,
+      credentialName: data.credentialName.trim(),
+      issuer: data.issuer.trim(),
+      completionDate: yearToDate(data.completionDate),
+    },
+  });
+}
+
+export async function updateEducation(userId: string, id: string, data: EducationUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.education.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Education");
+  const updateData: Prisma.EducationUpdateInput = {};
+  if (data.type !== undefined) updateData.type = data.type;
+  if (data.credentialName !== undefined) updateData.credentialName = data.credentialName.trim();
+  if (data.issuer !== undefined) updateData.issuer = data.issuer.trim();
+  if (data.completionDate !== undefined) updateData.completionDate = yearToDate(data.completionDate);
+  return prisma.education.update({ where: { id }, data: updateData });
+}
+
+export async function deleteEducation(userId: string, id: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.education.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Education");
+  return prisma.education.delete({ where: { id } });
+}
+
+// ── Language CRUD ─────────────────────────────────────────────────────────────
+
+export async function createLanguage(userId: string, data: LanguageCreateInput) {
+  const profileId = await getProfileId(userId);
+  return prisma.language.create({
+    data: {
+      profileId,
+      name: data.name.trim(),
+      proficiency: data.proficiency,
+    },
+  });
+}
+
+export async function updateLanguage(userId: string, id: string, data: LanguageUpdateInput) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.language.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Language");
+  const updateData: Prisma.LanguageUpdateInput = {};
+  if (data.name !== undefined) updateData.name = data.name.trim();
+  if (data.proficiency !== undefined) updateData.proficiency = data.proficiency;
+  return prisma.language.update({ where: { id }, data: updateData });
+}
+
+export async function deleteLanguage(userId: string, id: string) {
+  const profileId = await getProfileId(userId);
+  const existing = await prisma.language.findFirst({ where: { id, profileId } });
+  if (!existing) throw Errors.notFound("Language");
+  return prisma.language.delete({ where: { id } });
 }

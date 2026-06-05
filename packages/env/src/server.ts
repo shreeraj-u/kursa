@@ -2,12 +2,28 @@ import "dotenv/config";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+function isValidOriginList(configuredOrigins: string): boolean {
+    const origins = configuredOrigins
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+
+    return origins.length > 0 && origins.every((origin) => {
+        try {
+            new URL(origin);
+            return true;
+        } catch {
+            return false;
+        }
+    });
+}
+
 export const env = createEnv({
     server: {
         DATABASE_URL: z.string().min(1),
         BETTER_AUTH_SECRET: z.string().min(32),
         BETTER_AUTH_URL: z.url(),
-        CORS_ORIGIN: z.url(),
+        CORS_ORIGIN: z.string().min(1).refine(isValidOriginList, "Must be a comma-separated list of valid URL origins"),
         NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
         OAUTH_GITHUB_CLIENT_ID: z.string(),
         OAUTH_GITHUB_CLIENT_SECRET: z.string(),

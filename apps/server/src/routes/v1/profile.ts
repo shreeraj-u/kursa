@@ -43,6 +43,26 @@ meRouter.post("/applications", applicationController.createApplication);
 meRouter.patch("/applications/:id", applicationController.updateApplication);
 meRouter.delete("/applications/:id", applicationController.deleteApplication);
 
+meRouter.post("/work-history", profileController.createWorkHistory);
+meRouter.patch("/work-history/:id", profileController.updateWorkHistory);
+meRouter.delete("/work-history/:id", profileController.deleteWorkHistory);
+
+meRouter.post("/projects", profileController.createProject);
+meRouter.patch("/projects/:id", profileController.updateProject);
+meRouter.delete("/projects/:id", profileController.deleteProject);
+
+meRouter.post("/achievements", profileController.createAchievement);
+meRouter.patch("/achievements/:id", profileController.updateAchievement);
+meRouter.delete("/achievements/:id", profileController.deleteAchievement);
+
+meRouter.post("/education", profileController.createEducation);
+meRouter.patch("/education/:id", profileController.updateEducation);
+meRouter.delete("/education/:id", profileController.deleteEducation);
+
+meRouter.post("/languages", profileController.createLanguage);
+meRouter.patch("/languages/:id", profileController.updateLanguage);
+meRouter.delete("/languages/:id", profileController.deleteLanguage);
+
 router.use("/me", meRouter);
 
 export default router;

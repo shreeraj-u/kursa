@@ -1,6 +1,7 @@
 import prisma from "@kursa/db";
 
 import type { CompleteOnboardingInput } from "../validators/onboarding.validator.js";
+import { yearToDate } from "../lib/year-to-date.js";
 import { ingestEvent } from "./career-event-intelligence/index.js";
 
 export async function getOnboardingStatus(userId: string) {
@@ -56,14 +57,6 @@ function dedupeSocialLinks(items: CompleteOnboardingInput["socialLinks"]) {
     out.push({ platform: item.platform.trim(), url: item.url.trim() });
   }
   return out;
-}
-
-function yearToDate(s: string | null): Date | null {
-  if (!s) return null;
-  const trimmed = s.trim();
-  if (!trimmed) return null;
-  const parsed = new Date(/^\d{4}$/.test(trimmed) ? `${trimmed}-01-01` : trimmed);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export async function completeOnboarding(userId: string, input: CompleteOnboardingInput): Promise<void> {

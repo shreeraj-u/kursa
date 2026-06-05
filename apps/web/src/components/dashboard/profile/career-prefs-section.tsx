@@ -9,9 +9,9 @@ import z from "zod";
 
 import { api } from "@/lib/api";
 import type { UserProfile } from "@/types/profile";
-import { SectionHeader, FormField } from "./settings-ui";
+import { SectionHeader, FormField } from "@/components/dashboard/settings/settings-ui";
 import { normalizeCareerDefaults, serializeCareerSubmission } from "@/lib/dashboard/settings/career-section.utils";
-import { SectionDivider, ToggleGroup, Textarea } from "./settings-controls";
+import { SectionDivider, ToggleGroup, Textarea } from "@/components/dashboard/settings/settings-controls";
 
 const WORK_ENV_OPTIONS = [
   { value: "startup", label: "Startup" },
@@ -52,7 +52,7 @@ const schema = z.object({
   successDefinition: z.string().max(1000),
 });
 
-export default function CareerSection({ profile }: { profile: UserProfile | null }) {
+export default function CareerPrefsSection({ profile }: { profile: UserProfile | null }) {
   const form = useForm({
     defaultValues: normalizeCareerDefaults(profile),
     onSubmit: async ({ value }) => {
@@ -79,7 +79,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
           onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
           className="flex flex-col gap-5"
         >
-          {/* ── Role ── */}
           <div className="flex gap-4">
             <form.Field name="targetRole">
               {(field) => (
@@ -115,51 +114,35 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
 
           <SectionDivider label="Work style" />
 
-          {/* Work environment */}
           <form.Field name="workEnvironment">
             {(field) => (
               <div className="flex flex-col gap-2">
                 <Label style={{ fontSize: "var(--text-sm)" }}>Work environment</Label>
-                <ToggleGroup
-                  options={WORK_ENV_OPTIONS}
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                />
+                <ToggleGroup options={WORK_ENV_OPTIONS} value={field.state.value} onChange={field.handleChange} />
               </div>
             )}
           </form.Field>
 
-          {/* Risk appetite */}
           <form.Field name="riskAppetite">
             {(field) => (
               <div className="flex flex-col gap-2">
                 <Label style={{ fontSize: "var(--text-sm)" }}>Risk appetite</Label>
-                <ToggleGroup
-                  options={RISK_OPTIONS}
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                />
+                <ToggleGroup options={RISK_OPTIONS} value={field.state.value} onChange={field.handleChange} />
               </div>
             )}
           </form.Field>
 
-          {/* Team size */}
           <form.Field name="teamSizePreference">
             {(field) => (
               <div className="flex flex-col gap-2">
                 <Label style={{ fontSize: "var(--text-sm)" }}>Team size preference</Label>
-                <ToggleGroup
-                  options={TEAM_SIZE_OPTIONS}
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                />
+                <ToggleGroup options={TEAM_SIZE_OPTIONS} value={field.state.value} onChange={field.handleChange} />
               </div>
             )}
           </form.Field>
 
           <SectionDivider label="Compensation" />
 
-          {/* Salary range + currency */}
           <div className="flex gap-3 items-end">
             <form.Field name="minSalary">
               {(field) => (
@@ -220,7 +203,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
             </form.Field>
           </div>
 
-          {/* Geographic constraints */}
           <form.Field name="geographicConstraints">
             {(field) => (
               <FormField
@@ -241,7 +223,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
 
           <SectionDivider label="Aspirations" />
 
-          {/* Target roles */}
           <form.Field name="targetRoles">
             {(field) => (
               <FormField
@@ -260,7 +241,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
             )}
           </form.Field>
 
-          {/* Target industries */}
           <form.Field name="targetIndustries">
             {(field) => (
               <FormField
@@ -279,7 +259,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
             )}
           </form.Field>
 
-          {/* 3-year goal */}
           <form.Field name="threeYear">
             {(field) => (
               <FormField
@@ -299,7 +278,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
             )}
           </form.Field>
 
-          {/* 5-year goal */}
           <form.Field name="fiveYear">
             {(field) => (
               <FormField
@@ -319,7 +297,6 @@ export default function CareerSection({ profile }: { profile: UserProfile | null
             )}
           </form.Field>
 
-          {/* Success definition */}
           <form.Field name="successDefinition">
             {(field) => (
               <FormField

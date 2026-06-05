@@ -1,11 +1,9 @@
 "use client";
 
-import { Bell, Briefcase, Link2, Lock, Shield, Sparkles, User, CircleHelp } from "lucide-react";
+import { Bell, Link2, Lock, Shield, Sparkles, CircleHelp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
-  { key: "profile", label: "Profile", Icon: User },
-  { key: "career", label: "Career", Icon: Briefcase },
   { key: "connections", label: "Connections", Icon: Link2 },
   { key: "account", label: "Account", Icon: Lock },
   { key: "notifications", label: "Notifications", Icon: Bell },

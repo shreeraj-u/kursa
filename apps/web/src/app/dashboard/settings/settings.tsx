@@ -7,12 +7,10 @@ import PageHeader from "@/components/dashboard/page-header";
 import PageHelpButton from "@/components/dashboard/page-help-button";
 import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import AccountSection from "@/components/dashboard/settings/account-section";
-import CareerSection from "@/components/dashboard/settings/career-section";
 import ConnectionsSection from "@/components/dashboard/settings/connections-section";
 import NotificationsSection from "@/components/dashboard/settings/notifications-section";
 import PlanSection from "@/components/dashboard/settings/plan-section";
 import PrivacySection from "@/components/dashboard/settings/privacy-section";
-import ProfileSection from "@/components/dashboard/settings/profile-section";
 import DocsSection from "@/components/dashboard/settings/docs-section";
 import SettingsNav from "@/components/dashboard/settings/settings-nav";
 import type { UserProfile } from "@/types/profile";
@@ -24,7 +22,7 @@ interface SettingsProps {
 
 function SettingsBody({ profile, user }: SettingsProps) {
   const searchParams = useSearchParams();
-  const section = searchParams.get("section") ?? "profile";
+  const section = searchParams.get("section") ?? "account";
 
   return (
     <div className="flex gap-8 min-h-[calc(100vh-44px)]">
@@ -32,8 +30,6 @@ function SettingsBody({ profile, user }: SettingsProps) {
         <SettingsNav activeSection={section} user={user} />
       </div>
       <div className="flex-1 max-w-[640px]">
-        {section === "profile" && <ProfileSection profile={profile} user={user} />}
-        {section === "career" && <CareerSection profile={profile} />}
         {section === "connections" && <ConnectionsSection socialLinks={profile?.socialLinks ?? []} />}
         {section === "account" && <AccountSection user={user} />}
         {section === "notifications" && <NotificationsSection />}

@@ -181,3 +181,52 @@ export interface SocialLinkCreateInput {
 export interface SocialLinkUpdateInput {
   url: string;
 }
+
+export interface WorkHistoryCreateInput {
+  companyName: string;
+  roleTitle: string;
+  outcomes: string;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+}
+
+export type WorkHistoryUpdateInput = Partial<WorkHistoryCreateInput>;
+
+export interface ProjectCreateInput {
+  title: string;
+  description: string | null;
+  url: string | null;
+  outcomes: string;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export type ProjectUpdateInput = Partial<ProjectCreateInput>;
+
+export interface AchievementCreateInput {
+  type: "HACKATHON" | "AWARD" | "PUBLICATION" | "SPEAKING" | "OPEN_SOURCE" | "VOLUNTEER" | "OTHER";
+  title: string;
+  issuer: string | null;
+  description: string | null;
+  url: string | null;
+  dateAchieved: string | null;
+}
+
+export type AchievementUpdateInput = Partial<AchievementCreateInput>;
+
+export interface EducationCreateInput {
+  type: "degree" | "certification" | "course";
+  credentialName: string;
+  issuer: string;
+  completionDate: string | null;
+}
+
+export type EducationUpdateInput = Partial<EducationCreateInput>;
+
+export interface LanguageCreateInput {
+  name: string;
+  proficiency: "Native" | "Fluent" | "Conversational" | "Basic";
+}
+
+export type LanguageUpdateInput = Partial<LanguageCreateInput>;

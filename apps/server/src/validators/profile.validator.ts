@@ -4,6 +4,11 @@ import {
   skillCategorySchema,
   skillProficiencySchema,
   learningGoalStatusSchema,
+  workHistorySchema,
+  projectSchema,
+  achievementSchema,
+  educationSchema,
+  languageSchema,
 } from "@kursa/types";
 
 // ── Sub-schemas ───────────────────────────────────────────────────────────────
@@ -155,5 +160,36 @@ export const learningGoalUpdateSchema = z
     position: z.number().int().min(0),
   })
   .partial();
+
+// ── Profile entity schemas ────────────────────────────────────────────────────
+
+const dateRangeRefine = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.superRefine((value, ctx) => {
+    const datedValue = value as { startDate?: string | null; endDate?: string | null };
+    const startDate = datedValue.startDate;
+    const endDate = datedValue.endDate;
+    if (startDate && endDate && Number(endDate) < Number(startDate)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End year cannot be before start year",
+      });
+    }
+  });
+
+export const workHistoryCreateSchema = dateRangeRefine(workHistorySchema);
+export const workHistoryUpdateSchema = dateRangeRefine(workHistorySchema.partial());
+
+export const projectCreateSchema = dateRangeRefine(projectSchema);
+export const projectUpdateSchema = dateRangeRefine(projectSchema.partial());
+
+export const achievementCreateSchema = achievementSchema;
+export const achievementUpdateSchema = achievementCreateSchema.partial();
+
+export const educationCreateSchema = educationSchema;
+export const educationUpdateSchema = educationCreateSchema.partial();
+
+export const languageCreateSchema = languageSchema;
+export const languageUpdateSchema = languageCreateSchema.partial();
 
 // Type inference moved to @kursa/types

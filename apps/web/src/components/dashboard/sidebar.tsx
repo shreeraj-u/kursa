@@ -6,6 +6,7 @@ import type { Route } from "next";
 import { useEffect, useState } from "react";
 import {
     House,
+    User,
     MapPin,
     Waypoints,
     BarChart2,
@@ -32,6 +33,7 @@ interface SidebarProps {
 
 const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
     { href: "/dashboard" as Route, label: "Home", Icon: House, key: "home" },
+    { href: "/dashboard/profile" as Route, label: "Profile", Icon: User, key: "profile" },
     { href: "/dashboard/career-journey" as Route, label: "Career journey", Icon: MapPin, key: "career" },
     { href: "/dashboard/career-graph" as Route, label: "Career graph", Icon: Waypoints, key: "graph" },
     { href: "/dashboard/skills" as Route, label: "Skills", Icon: BarChart2, key: "skills" },
