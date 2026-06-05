@@ -58,7 +58,7 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
     nudges.push({
       id: "checkin-reminder",
       type: "checkin_reminder",
-      title: "Weekly pulse due",
+      title: "Weekly check-in due",
       message: "A quick check-in helps Aria track your momentum.",
       actionLabel: "Complete check-in",
       priority: "medium",
@@ -79,9 +79,9 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
     nudges.push({
       id: "review-prep",
       type: "review_prep",
-      title: "Review prep ready",
+      title: "Impact bullets ready",
       message: `You have ${winsSinceReview} accomplishments this quarter — great time to draft review bullets.`,
-      actionLabel: "Open review prep",
+      actionLabel: "Open impact bullets",
       priority: "low",
     });
   }
@@ -119,7 +119,7 @@ export async function runCheckInReminderScan(): Promise<void> {
           id: "checkin-reminder-job",
           type: "checkin_reminder",
           title: "Check-in due",
-          message: "Your career pulse check-in is due.",
+          message: "Your weekly check-in is due.",
           priority: "medium",
         });
       }

@@ -40,7 +40,7 @@ export default function HeroDashboardMock() {
         <section className="flex flex-col justify-between gap-8 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-5 sm:p-6">
           <div>
             <div className="eyebrow mono mb-3" style={{ fontSize: 10 }}>
-              aria noticed
+              daily suggestions
             </div>
             <h3
               className="max-w-xl font-semibold leading-tight text-[var(--ink)]"

@@ -37,15 +37,16 @@ pnpm db:migrate
 
 ### 2. Intelligence sidebar (unified surface)
 
+Home shows:
+- **Daily suggestions** — proactive nudges (`GET /api/v1/journal/proactive`)
+
 Journal sidebar now shows:
-- **Aria suggests** — proactive nudges (`GET /api/v1/journal/proactive`)
-- **Path pulse** — alignment, wins, streak, activity score (`GET /api/v1/journal/relevance`)
-- **What Aria knows** — distilled memories (`GET /api/v1/memory`)
-- **Engagement chart** — composite trend (check-ins + journal activity)
+- **Weekly check-in** — due check-in questions (`GET /api/v1/checkins/next`)
+- **Engagement chart** — composite trend from relevance API (`GET /api/v1/journal/relevance`)
 
-### 3. Weekly pulse
+### 3. Weekly check-in
 
-When backend returns a due check-in, the journal sidebar renders the weekly pulse questions and no separate monthly review is scheduled.
+When backend returns a due check-in, the journal sidebar renders the weekly check-in questions and no separate monthly review is scheduled.
 
 ### 4. Evidence-based path alignment
 
@@ -77,6 +78,6 @@ See [LLM_STRATEGY.md](./LLM_STRATEGY.md):
 - **Rules**: advisor signals, cold-start observations
 - **LLM on ingest**: async enrichment after each journal event (requires `OPENAI_API_KEY`)
 - **LLM nightly**: batch memory distillation job
-- **LLM read-time**: observations, review prep, paths (existing)
+- **LLM read-time**: observations, impact bullet generation, paths (existing)
 
 Without OpenAI key, rule-based enrichment still runs (skills, themes, milestone keyword matching).

@@ -5,11 +5,9 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import type { ProactiveNudge, RelevanceSummary } from "@kursa/types";
+import type { RelevanceSummary } from "@kursa/types";
 
-import { JournalMemoriesPanel } from "./journal-memories";
-import { JournalProactiveNudges } from "./journal-proactive";
-import { JournalRelevance } from "./journal-relevance";
+import { JournalEngagementChart } from "./journal-engagement-chart";
 
 type CheckInNext = {
   due: boolean;
@@ -18,20 +16,9 @@ type CheckInNext = {
   lastCompletedAt: string | null;
 };
 
-type Memory = {
-  id: string;
-  category: string;
-  fact: string;
-  confidence: number;
-  validFrom: string;
-};
-
 type Props = {
   relevance: RelevanceSummary | null;
   relevanceLoading: boolean;
-  memories: Memory[];
-  memoriesLoading: boolean;
-  nudges: ProactiveNudge[];
   checkIn: CheckInNext | null;
   onSubmitPulse: (responses: Record<string, string | number>) => Promise<boolean> | boolean | void;
   pulseSaving: boolean;
@@ -40,9 +27,6 @@ type Props = {
 export function JournalSidebar({
   relevance,
   relevanceLoading,
-  memories,
-  memoriesLoading,
-  nudges,
   checkIn,
   onSubmitPulse,
   pulseSaving,
@@ -72,12 +56,6 @@ export function JournalSidebar({
 
   return (
     <aside className="flex flex-col gap-4 w-full lg:w-72 flex-shrink-0">
-      {nudges.length > 0 && (
-        <div className="rounded-lg p-4 border border-line bg-surface">
-          <JournalProactiveNudges nudges={nudges} />
-        </div>
-      )}
-
       <div className="rounded-lg overflow-hidden border border-line bg-surface">
         <button
           type="button"
@@ -89,7 +67,7 @@ export function JournalSidebar({
           <div className="flex items-center gap-2">
             {due && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-accent" />}
             <span className="mono text-2xs text-mute-2">
-              weekly pulse
+              weekly check-in
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -159,14 +137,14 @@ export function JournalSidebar({
                       disabled={pulseSaving}
                       className="mono rounded px-3 py-1 w-full bg-accent text-white border-none text-2xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                     >
-                      {pulseSaving ? "submitting…" : "submit pulse"}
+                      {pulseSaving ? "submitting…" : "submit check-in"}
                     </button>
                   </>
                 ) : (
                   <p className="text-xs text-mute-2">
                     {checkIn?.lastCompletedAt
                       ? `Last completed ${new Date(checkIn.lastCompletedAt).toLocaleDateString()}`
-                      : "Your next pulse will appear here when due."}
+                      : "Your next check-in will appear here when due."}
                   </p>
                 )}
               </div>
@@ -176,11 +154,15 @@ export function JournalSidebar({
       </div>
 
       <div className="rounded-lg p-4 border border-line bg-surface">
-        <JournalRelevance data={relevance} loading={relevanceLoading} />
-      </div>
-
-      <div className="rounded-lg p-4 border border-line bg-surface">
-        <JournalMemoriesPanel memories={memories} loading={memoriesLoading} />
+        {relevanceLoading ? (
+          <p className="mono text-2xs text-mute-2">Loading engagement trend…</p>
+        ) : (
+          <JournalEngagementChart
+            data={relevance?.engagementTrend ?? []}
+            trendLabel={relevance?.engagementTrendLabel}
+            height={56}
+          />
+        )}
       </div>
     </aside>
   );

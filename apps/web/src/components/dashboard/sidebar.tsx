@@ -10,6 +10,7 @@ import {
     MapPin,
     Waypoints,
     BarChart2,
+    GraduationCap,
     Sparkles,
     FileText,
     Bookmark,
@@ -38,6 +39,7 @@ const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType
     { href: "/dashboard/career-journey" as Route, label: "Career journey", Icon: MapPin, key: "career" },
     { href: "/dashboard/career-graph" as Route, label: "Career graph", Icon: Waypoints, key: "graph" },
     { href: "/dashboard/skills" as Route, label: "Skills", Icon: BarChart2, key: "skills" },
+    { href: "/dashboard/learning" as Route, label: "Learning", Icon: GraduationCap, key: "learning" },
     { href: "/dashboard/aria" as Route, label: "Aria", Icon: Sparkles, key: "aria" },
 ];
 

@@ -8,7 +8,6 @@ import type { UserAchievement, AchievementCreateInput } from "@kursa/types";
 
 import { api } from "@/lib/api";
 import { toAchievementInput } from "@/lib/profile-mappers";
-import { SectionHeader } from "@/components/dashboard/settings/settings-ui";
 
 const ACHIEVEMENT_TYPES: { value: AchievementCreateInput["type"]; label: string }[] = [
   { value: "HACKATHON", label: "Hackathon" },
@@ -100,14 +99,7 @@ export default function AchievementsSection({ items: initial }: { items: UserAch
   };
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="achievements"
-        title="Achievements"
-        description="Awards, publications, speaking, and other highlights."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line flex flex-col gap-4">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line flex flex-col gap-4">
         {items.length === 0 ? (
           <p className="text-xs text-mute">No achievements added yet.</p>
         ) : (
@@ -163,7 +155,6 @@ export default function AchievementsSection({ items: initial }: { items: UserAch
             </Button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -51,14 +51,14 @@ export function JournalReviewTab({ onScrollToEntry }: Props) {
   };
 
   const exportMarkdown = () => {
-    const md = `# Review prep\n_${new Date(from).toLocaleDateString()} – ${new Date(to).toLocaleDateString()}_\n\n${sections
+    const md = `# Impact bullets\n_${new Date(from).toLocaleDateString()} – ${new Date(to).toLocaleDateString()}_\n\n${sections
       .map((s) => `## ${s.theme}\n${s.bullets.map((b) => `- ${b.text}`).join("\n")}`)
       .join("\n\n")}`;
     const blob = new Blob([md], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "review-prep.md";
+    a.download = "impact-bullets.md";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -121,7 +121,7 @@ export function JournalReviewTab({ onScrollToEntry }: Props) {
       </div>
 
       <div className="mb-4 rounded-lg border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-mute">
-        <div className="font-medium text-ink">How review prep is built</div>
+        <div className="font-medium text-ink">How impact bullets are built</div>
         <ul className="mt-1.5 list-disc space-y-1 pl-4">
           <li>Bullets are generated from wins and feedback in the selected date range.</li>
           <li>Use “source” to jump back to the original journal event.</li>
@@ -142,7 +142,7 @@ export function JournalReviewTab({ onScrollToEntry }: Props) {
             className="mono"
             style={{ fontSize: "var(--text-xs)", color: "var(--mute-2)" }}
           >
-            Log accomplishments and feedback to generate review prep.
+            Log accomplishments and feedback to generate impact bullets.
           </motion.p>
         ) : (
           <motion.div key="sections" className="flex flex-col gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

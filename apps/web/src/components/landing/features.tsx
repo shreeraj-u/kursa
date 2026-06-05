@@ -85,7 +85,7 @@ export default function FeaturesSection() {
       <Feature
         num="06" eyebrow="career journal"
         head="The work doesn't end at signing."
-        body="Once you're in the role, Kursa keeps the log. Wins captured, drift noticed, review prep written for you. When the next move starts to make sense, you'll hear it here first."
+        body="Once you're in the role, Kursa keeps the log. Wins captured, drift noticed, impact bullets drafted for you. When the next move starts to make sense, you'll hear it here first."
         mock={<JournalMock />}
         flip
       />

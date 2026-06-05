@@ -29,7 +29,7 @@ Rule-based fallback when OpenAI is unavailable.
 
 ## LLM at read time (cached)
 
-- Observations, review prep, path generation
+- Observations, impact bullet generation, path generation
 - Inputs are pre-computed `AdvisorContext` + evidence graph
 - Outputs cite `sourceEntryIds` and linked skills
 

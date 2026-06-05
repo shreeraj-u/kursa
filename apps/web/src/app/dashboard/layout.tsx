@@ -1,9 +1,8 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import DashboardFirstRunGuide from "@/components/dashboard/dashboard-first-run-guide";
 import Sidebar from "@/components/dashboard/sidebar";
-import { authClient } from "@/lib/auth-client";
+import { getServerSession } from "@/lib/require-onboarded";
 import { serverFetch } from "@/lib/server-fetch";
 import type { UserProfile } from "@/types/profile";
 
@@ -12,12 +11,7 @@ export default async function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const session = await authClient.getSession({
-        fetchOptions: {
-            headers: await headers(),
-            throw: true,
-        },
-    });
+    const session = await getServerSession();
 
     if (!session?.user) {
         redirect("/login");

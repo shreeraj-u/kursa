@@ -8,7 +8,6 @@ import type { UserLanguage, LanguageCreateInput } from "@kursa/types";
 
 import { api } from "@/lib/api";
 import { toLanguageInput } from "@/lib/profile-mappers";
-import { SectionHeader } from "@/components/dashboard/settings/settings-ui";
 
 const PROFICIENCIES: { value: LanguageCreateInput["proficiency"]; label: string }[] = [
   { value: "Native", label: "Native" },
@@ -86,14 +85,7 @@ export default function LanguagesSection({ items: initial }: { items: UserLangua
   };
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="languages"
-        title="Languages"
-        description="Languages you speak and your proficiency level."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line flex flex-col gap-4">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line flex flex-col gap-4">
         {items.length === 0 ? (
           <p className="text-xs text-mute">No languages added yet.</p>
         ) : (
@@ -143,7 +135,6 @@ export default function LanguagesSection({ items: initial }: { items: UserLangua
             </Button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

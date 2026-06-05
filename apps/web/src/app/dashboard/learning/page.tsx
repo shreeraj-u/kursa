@@ -1,0 +1,26 @@
+import type { CareerJourneyResponse, UserProfile } from "@kursa/types";
+
+import { requireOnboarded } from "@/lib/require-onboarded";
+import { serverFetch } from "@/lib/server-fetch";
+
+import { LearningPage } from "@/components/dashboard/learning/learning-page";
+
+export default async function Page() {
+  await requireOnboarded();
+
+  const [profileResult, journeyResult] = await Promise.all([
+    serverFetch<{ profile: UserProfile | null }>("/api/v1/profile/me"),
+    serverFetch<CareerJourneyResponse>("/api/v1/profile/me/journey"),
+  ]);
+
+  const profile = profileResult.ok ? profileResult.data.profile : null;
+  const activePath = journeyResult.ok ? journeyResult.data.journey : null;
+
+  return (
+    <LearningPage
+      initialGoals={profile?.learningGoals ?? []}
+      initialSkills={profile?.skills ?? []}
+      activePath={activePath}
+    />
+  );
+}

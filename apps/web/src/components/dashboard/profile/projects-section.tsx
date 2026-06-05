@@ -8,7 +8,6 @@ import type { UserProject, ProjectCreateInput } from "@kursa/types";
 
 import { api } from "@/lib/api";
 import { toProjectInput } from "@/lib/profile-mappers";
-import { SectionHeader } from "@/components/dashboard/settings/settings-ui";
 
 type ProjectRow = { id: string; data: ProjectCreateInput };
 
@@ -90,14 +89,7 @@ export default function ProjectsSection({ items: initial }: { items: UserProject
   };
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="projects"
-        title="Projects"
-        description="Side projects, open source, and portfolio work."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line flex flex-col gap-4">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line flex flex-col gap-4">
         {items.length === 0 ? (
           <p className="text-xs text-mute">No projects added yet.</p>
         ) : (
@@ -151,7 +143,6 @@ export default function ProjectsSection({ items: initial }: { items: UserProject
             </Button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

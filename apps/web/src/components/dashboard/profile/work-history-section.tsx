@@ -8,7 +8,6 @@ import type { UserWorkHistory, WorkHistoryCreateInput } from "@kursa/types";
 
 import { api } from "@/lib/api";
 import { toWorkHistoryInput } from "@/lib/profile-mappers";
-import { SectionHeader } from "@/components/dashboard/settings/settings-ui";
 
 type WorkHistoryRow = { id: string; data: WorkHistoryCreateInput };
 
@@ -111,14 +110,7 @@ export default function WorkHistorySection({ items: initial }: { items: UserWork
   };
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="experience"
-        title="Work experience"
-        description="Roles and outcomes that shape your career story."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line flex flex-col gap-4">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line flex flex-col gap-4">
         {items.length === 0 ? (
           <p className="text-xs text-mute">No experience added yet.</p>
         ) : (
@@ -214,7 +206,6 @@ export default function WorkHistorySection({ items: initial }: { items: UserWork
             </Button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

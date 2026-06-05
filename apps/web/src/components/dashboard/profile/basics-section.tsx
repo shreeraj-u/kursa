@@ -9,7 +9,7 @@ import z from "zod";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import type { UserProfile } from "@/types/profile";
-import { SectionHeader, FormField } from "@/components/dashboard/settings/settings-ui";
+import { FormField } from "@/components/dashboard/settings/settings-ui";
 import { Textarea } from "@/components/dashboard/settings/settings-controls";
 
 interface Props {
@@ -54,13 +54,7 @@ export default function BasicsSection({ profile, user }: Props) {
 
   return (
     <div>
-      <SectionHeader
-        eyebrow="basics"
-        title="Basics"
-        description="Your public identity on Kursa."
-      />
-
-      <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-surface border border-line">
+      <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-bg-sub border border-line">
         <div
           className="mono flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-bg-sub-2 border border-line-2 text-ink-2 font-semibold"
           style={{ fontSize: "var(--text-md)" }}
@@ -77,7 +71,7 @@ export default function BasicsSection({ profile, user }: Props) {
         </div>
       </div>
 
-      <div className="rounded-xl p-6 bg-surface border border-line">
+      <div className="rounded-xl p-6 bg-bg-sub border border-line">
         <form
           onSubmit={(e) => {
             e.preventDefault();

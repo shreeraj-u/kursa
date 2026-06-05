@@ -27,9 +27,11 @@ export function getTrustedAccountProviders(socialProviderIds: string[]): string[
   return ["email-password", ...new Set(socialProviderIds)].filter(Boolean);
 }
 
-export function getAuthRateLimitConfig() {
+export function getAuthRateLimitConfig(nodeEnv: AuthNodeEnv) {
   return {
-    enabled: true,
+    // Dev SSR issues many parallel get-session calls per navigation; production-only
+    // matches express-rate-limit on /api/v1 in apps/server.
+    enabled: nodeEnv === "production",
     window: 60,
     max: 100,
     storage: "memory" as const,

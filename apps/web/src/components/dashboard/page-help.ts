@@ -12,11 +12,11 @@ const GUIDE = "/dashboard/docs" as Route;
 export const DASHBOARD_PAGE_HELP = {
   home: {
     title: "How to use Home",
-    description: "Use Home as your career command center: it summarizes memory, reasoning, execution signals, and what needs attention next.",
+    description: "Use Home as your career command center: it shows what needs attention next, how your journey is tracking, and actionable daily suggestions.",
     tips: [
       "Start with the top action when one appears; it is the most urgent step from your journey-wide action queue.",
-      "Review Career pulse and Journey pulse together: pulse shows current signals, while journey pulse shows alignment and engagement over time.",
-      "Use Aria noticed for observations grounded in your profile, journal, applications, and journey context.",
+      "Check journey status for alignment, recent wins, and stale skills that may need attention.",
+      "Work through daily suggestions — actionable next steps grounded in your profile, journal, and journey.",
       "Export the career digest when you want portable proof of journey alignment, skills, applications, and recent activity.",
     ],
     guideHref: GUIDE,
@@ -82,8 +82,8 @@ export const DASHBOARD_PAGE_HELP = {
     tips: [
       "Log wins and feedback close to when they happen; they become evidence for Aria, reviews, and journey alignment.",
       "Use accomplishments for concrete outcomes and feedback for praise or constructive input.",
-      "Complete check-ins when due to feed engagement trends and weekly pulse signals.",
-      "Review Aria noticed entries as reflections on your timeline, not generic productivity tips.",
+      "Complete weekly check-ins when due to feed engagement trends on the sidebar chart.",
+      "Review Aria noticed entries on your timeline as system reflections, not generic productivity tips.",
     ],
     guideHref: GUIDE,
   },

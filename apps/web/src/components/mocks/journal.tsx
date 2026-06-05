@@ -1,4 +1,4 @@
-const TABS = ["Log", "Wins", "Review prep", "Relevance"];
+const TABS = ["Log", "Wins", "Impact bullets", "Relevance"];
 
 const ENTRIES = [
   {

@@ -6,7 +6,7 @@
     "packages/db/scripts/**",
     "packages/db/prisma/seed-*.ts",
     "designs/**",
-    "apps/web/src/components/dashboard/career-journey/journey-pulse-panel.tsx",
+    "apps/web/src/components/dashboard/career-journey/journey-status-panel.tsx",
     "apps/web/src/components/header.tsx",
     "apps/web/src/components/motion/animated-button.tsx",
     "apps/web/src/components/user-menu.tsx"

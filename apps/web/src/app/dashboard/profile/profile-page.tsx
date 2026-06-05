@@ -14,6 +14,7 @@ import ProjectsSection from "@/components/dashboard/profile/projects-section";
 import AchievementsSection from "@/components/dashboard/profile/achievements-section";
 import EducationSection from "@/components/dashboard/profile/education-section";
 import LanguagesSection from "@/components/dashboard/profile/languages-section";
+import ProfileCollapsibleSection from "@/components/dashboard/profile/profile-collapsible-section";
 import type { UserProfile } from "@/types/profile";
 
 interface ProfilePageProps {
@@ -55,28 +56,74 @@ export default function ProfilePage({ profile, user }: ProfilePageProps) {
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-12">
-          <section id="basics" className="scroll-mt-16">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+          <ProfileCollapsibleSection
+            id="basics"
+            eyebrow="basics"
+            title="Basics"
+            description="Your public identity on Kursa."
+          >
             <BasicsSection profile={profile} user={user} />
-          </section>
-          <section id="experience" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="experience"
+            eyebrow="experience"
+            title="Work experience"
+            description="Roles and outcomes that shape your career story."
+            count={profile?.workHistories.length ?? 0}
+          >
             <WorkHistorySection items={profile?.workHistories ?? []} />
-          </section>
-          <section id="projects" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="projects"
+            eyebrow="projects"
+            title="Projects"
+            description="Side projects, open source, and portfolio work."
+            count={profile?.projects.length ?? 0}
+          >
             <ProjectsSection items={profile?.projects ?? []} />
-          </section>
-          <section id="achievements" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="achievements"
+            eyebrow="achievements"
+            title="Achievements"
+            description="Awards, publications, speaking, and other highlights."
+            count={profile?.achievements.length ?? 0}
+          >
             <AchievementsSection items={profile?.achievements ?? []} />
-          </section>
-          <section id="education" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="education"
+            eyebrow="education"
+            title="Education"
+            description="Degrees, certifications, and courses."
+            count={profile?.educations.length ?? 0}
+          >
             <EducationSection items={profile?.educations ?? []} />
-          </section>
-          <section id="languages" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="languages"
+            eyebrow="languages"
+            title="Languages"
+            description="Languages you speak and your proficiency level."
+            count={profile?.languages.length ?? 0}
+          >
             <LanguagesSection items={profile?.languages ?? []} />
-          </section>
-          <section id="career-prefs" className="scroll-mt-16">
+          </ProfileCollapsibleSection>
+
+          <ProfileCollapsibleSection
+            id="career-prefs"
+            eyebrow="career"
+            title="Career preferences"
+            description="Shape how Kursa understands your career direction and generates paths for you."
+          >
             <CareerPrefsSection profile={profile} />
-          </section>
+          </ProfileCollapsibleSection>
         </div>
       </div>
     </div>

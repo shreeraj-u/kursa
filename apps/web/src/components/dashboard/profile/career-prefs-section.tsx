@@ -9,7 +9,7 @@ import z from "zod";
 
 import { api } from "@/lib/api";
 import type { UserProfile } from "@/types/profile";
-import { SectionHeader, FormField } from "@/components/dashboard/settings/settings-ui";
+import { FormField } from "@/components/dashboard/settings/settings-ui";
 import { normalizeCareerDefaults, serializeCareerSubmission } from "@/lib/dashboard/settings/career-section.utils";
 import { SectionDivider, ToggleGroup, Textarea } from "@/components/dashboard/settings/settings-controls";
 
@@ -67,14 +67,7 @@ export default function CareerPrefsSection({ profile }: { profile: UserProfile |
   });
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="career"
-        title="Career preferences"
-        description="Shape how Kursa understands your career direction and generates paths for you."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line">
         <form
           onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
           className="flex flex-col gap-5"
@@ -326,7 +319,6 @@ export default function CareerPrefsSection({ profile }: { profile: UserProfile |
             </form.Subscribe>
           </div>
         </form>
-      </div>
     </div>
   );
 }

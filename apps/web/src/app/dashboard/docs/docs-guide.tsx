@@ -7,7 +7,7 @@ const SECTIONS = [
   {
     id: "home",
     title: "Home",
-    body: `Your dashboard at a glance. The top strip shows Kursa's loop: memory from profile and journal, reasoning from journeys and gaps, and execution from résumés and applications. Aria noticed surfaces observations generated from your profile, journal, applications, and career data — not generic tips.`,
+    body: `Your dashboard at a glance. Home shows your top journey action, journey status (alignment, wins, stale skills), and daily suggestions — actionable next steps from your profile, journal, and applications. In-flight applications and recent activity live in the right column.`,
   },
   {
     id: "career-journey",
@@ -22,12 +22,12 @@ const SECTIONS = [
   {
     id: "aria",
     title: "Aria",
-    body: `Aria is your career advisor. Observations on Home and in Journal (under "aria noticed") come from the same intelligence pipeline — LLM-generated from your signals, not templates. The more you capture in Journal, the sharper Aria's read becomes.`,
+    body: `Aria is your career advisor. Daily suggestions on Home surface actionable nudges from your signals. Aria noticed entries on your Journal timeline are LLM-generated reflections — not templates. The more you capture in Journal, the sharper Aria's read becomes.`,
   },
   {
     id: "journal",
     title: "Journal",
-    body: `A place to jot what you want Kursa to know. Use note for general thoughts, accomplishment for something you did that matters (first line = title), and feedback for praise or constructive input you received. Weekly pulse in the sidebar captures how your week felt — complete it when due to feed engagement trends. Review prep turns accomplishments and feedback into performance-review bullets. Aria noticed entries are the system's reflections on your timeline — collapsible so they don't overwhelm your own entries.`,
+    body: `A place to jot what you want Kursa to know. Use note for general thoughts, accomplishment for something you did that matters (first line = title), and feedback for praise or constructive input you received. The weekly check-in in the sidebar captures how your week felt. Impact bullets turn accomplishments and feedback into performance-review-ready bullets. Aria noticed entries are the system's reflections on your timeline — collapsible so they don't overwhelm your own entries.`,
   },
   {
     id: "roadmap",

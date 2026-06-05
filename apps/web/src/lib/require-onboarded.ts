@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { serverFetch } from "@/lib/server-fetch";
@@ -9,13 +10,18 @@ export type OnboardingStatus = {
   hasProfile: boolean;
 };
 
-export async function requireSession() {
-  const session = await authClient.getSession({
+/** One get-session call per RSC request (layout + page share this). */
+export const getServerSession = cache(async () =>
+  authClient.getSession({
     fetchOptions: {
       headers: await headers(),
       throw: true,
     },
-  });
+  }),
+);
+
+export async function requireSession() {
+  const session = await getServerSession();
 
   if (!session?.user) {
     redirect("/login");

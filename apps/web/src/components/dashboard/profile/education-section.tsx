@@ -8,7 +8,6 @@ import type { UserEducation, EducationCreateInput } from "@kursa/types";
 
 import { api } from "@/lib/api";
 import { toEducationInput } from "@/lib/profile-mappers";
-import { SectionHeader } from "@/components/dashboard/settings/settings-ui";
 
 const EDUCATION_TYPES: { value: EducationCreateInput["type"]; label: string }[] = [
   { value: "degree", label: "Degree" },
@@ -91,14 +90,7 @@ export default function EducationSection({ items: initial }: { items: UserEducat
   };
 
   return (
-    <div>
-      <SectionHeader
-        eyebrow="education"
-        title="Education"
-        description="Degrees, certifications, and courses."
-      />
-
-      <div className="rounded-xl p-6 bg-surface border border-line flex flex-col gap-4">
+    <div className="rounded-xl p-6 bg-bg-sub border border-line flex flex-col gap-4">
         {items.length === 0 ? (
           <p className="text-xs text-mute">No education added yet.</p>
         ) : (
@@ -150,7 +142,6 @@ export default function EducationSection({ items: initial }: { items: UserEducat
             </Button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

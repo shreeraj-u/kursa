@@ -89,11 +89,16 @@ applications). Each item carries a deep link to the relevant surface. Lives on t
 the static "next actions" inside [[Journey Details]], which are narrative AI
 suggestions generated once at journey creation time with no links.
 
-### Journey Pulse
-Retrospective health data about a user's engagement with their [[Career Journey]]:
-path-alignment score, accomplishments this quarter, dormant skills, milestone
-evidence, engagement trend, and distilled memories. Lives on the main dashboard
-as a widget, not on the Journey page itself.
+### Journey status
+Compact health snapshot on Home about a user's [[Career Journey]]: path-alignment
+score, accomplishments this quarter, check-in streak, and dormant skills, plus
+alerts when intentions and actions drift or the profile changes materially.
+Engagement trends live on the Journal page.
+
+### Daily suggestions
+Actionable next steps on Home, powered by proactive nudges from the user's
+profile, journal, applications, and journey context. Distinct from passive
+timeline reflections (aria noticed on Journal).
 
 ### Career Graph
 An interactive node-link rendering of the **entire** [[Profile]] as a single

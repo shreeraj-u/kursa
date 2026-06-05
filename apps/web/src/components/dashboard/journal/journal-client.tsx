@@ -15,7 +15,7 @@ import { JournalCompose, type JournalComposeData } from "./journal-compose";
 import { JournalTimelineTab } from "./journal-log";
 import { JournalReviewTab } from "./journal-review";
 import { JournalSidebar } from "./journal-sidebar";
-import type { ProactiveNudge, RelevanceSummary } from "@kursa/types";
+import type { RelevanceSummary } from "@kursa/types";
 
 import type {
   JournalContext,
@@ -26,7 +26,7 @@ import type {
 
 const TABS: Array<{ id: JournalTab; label: string }> = [
   { id: "timeline", label: "timeline" },
-  { id: "review", label: "review prep" },
+  { id: "review", label: "impact bullets" },
 ];
 
 export default function JournalClient() {
@@ -40,11 +40,6 @@ export default function JournalClient() {
   const [context, setContext] = useState<JournalContext | null>(null);
   const [relevance, setRelevance] = useState<RelevanceSummary | null>(null);
   const [relevanceLoading, setRelevanceLoading] = useState(true);
-  const [memories, setMemories] = useState<
-    Array<{ id: string; category: string; fact: string; confidence: number; validFrom: string }>
-  >([]);
-  const [memoriesLoading, setMemoriesLoading] = useState(true);
-  const [nudges, setNudges] = useState<ProactiveNudge[]>([]);
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [checkIn, setCheckIn] = useState<Awaited<ReturnType<typeof api.checkins.next>> | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -70,25 +65,13 @@ export default function JournalClient() {
     [apiFilter],
   );
 
-  const refreshIntelligence = useCallback(() => {
+  const refreshRelevance = useCallback(() => {
     setRelevanceLoading(true);
     api.journal
       .relevance()
-      .then((r) => setRelevance(r))
+      .then(setRelevance)
       .catch(() => setRelevance(null))
       .finally(() => setRelevanceLoading(false));
-
-    setMemoriesLoading(true);
-    api.journal
-      .memories()
-      .then((r) => setMemories(r.data))
-      .catch(() => setMemories([]))
-      .finally(() => setMemoriesLoading(false));
-
-    api.journal
-      .proactive()
-      .then((r) => setNudges(r.nudges))
-      .catch(() => setNudges([]));
   }, []);
 
   useEffect(() => {
@@ -101,12 +84,12 @@ export default function JournalClient() {
     api.journal.context().then(setContext).catch(() => null);
     api.journal.skills().then((r) => setAvailableSkills(r.skills)).catch(() => null);
     api.checkins.next().then(setCheckIn).catch(() => null);
-    refreshIntelligence();
+    refreshRelevance();
 
     if (typeof window !== "undefined") {
       localStorage.setItem("kursa-journal-last-visit", new Date().toISOString());
     }
-  }, [refreshIntelligence]);
+  }, [refreshRelevance]);
 
   const loadMore = async () => {
     if (page >= totalPages || loadingMore) return;
@@ -117,7 +100,7 @@ export default function JournalClient() {
 
   const refreshAfterSave = () => {
     if (tab === "timeline") void loadTimeline(1, false);
-    refreshIntelligence();
+    refreshRelevance();
   };
 
   const submitCompose = (data: JournalComposeData): Promise<boolean> => {
@@ -149,7 +132,7 @@ export default function JournalClient() {
           if (newId) setHighlightId(newId);
           const successCopy = {
             win: "Saved as résumé/review evidence",
-            feedback: "Saved for review prep",
+            feedback: "Saved for impact bullets",
             note: "Saved to Aria memory context",
             learning: "Saved as skill growth signal",
           } satisfies Record<JournalComposeData["type"], string>;
@@ -188,7 +171,7 @@ export default function JournalClient() {
             responses: payload,
           });
           toast.success(
-            checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved",
+            checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly check-in saved",
           );
           setCheckIn(await api.checkins.next());
           refreshAfterSave();
@@ -228,10 +211,10 @@ export default function JournalClient() {
               <PageHelpButton help={DASHBOARD_PAGE_HELP.journal} label="Journal" />
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-mute">
-              Capture what happened at work so Kursa has evidence: wins for résumé proof, feedback for review prep, and notes for Aria&apos;s memory.
+              Capture what happened at work so Kursa has evidence: wins for résumé proof, feedback for impact bullets, and notes for Aria&apos;s memory.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {["win → evidence", "feedback → review prep", "note → memory", "check-in → momentum"].map((item) => (
+              {["win → evidence", "feedback → impact bullets", "note → memory", "check-in → momentum"].map((item) => (
                 <span key={item} className="mono rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] text-mute">
                   {item}
                 </span>
@@ -329,9 +312,6 @@ export default function JournalClient() {
           <JournalSidebar
             relevance={relevance}
             relevanceLoading={relevanceLoading}
-            memories={memories}
-            memoriesLoading={memoriesLoading}
-            nudges={nudges}
             checkIn={checkIn}
             onSubmitPulse={submitPulse}
             pulseSaving={isPending}

@@ -33,7 +33,7 @@ const TAG_DISPLAY_LABEL: Record<string, string> = {
   win: "accomplishment",
   note: "note",
   feedback: "feedback",
-  checkin: "weekly pulse",
+  checkin: "weekly check-in",
   aria: "aria noticed",
   decision: "decision",
   learning: "learning",

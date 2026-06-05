@@ -76,7 +76,7 @@ function startOfWeek(d: Date): Date {
 function summarizeWeekly(r: Record<string, unknown>): string {
   const challenge = r.challengeLevel ?? "?";
   const energy = String(r.energyFocus ?? "").slice(0, 120);
-  return `Weekly pulse — challenge ${challenge}/5. ${energy}`;
+  return `Weekly check-in — challenge ${challenge}/5. ${energy}`;
 }
 
 function summarizeMonthly(r: Record<string, unknown>): string {

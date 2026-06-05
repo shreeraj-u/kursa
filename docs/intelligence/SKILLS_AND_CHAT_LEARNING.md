@@ -24,7 +24,7 @@ Every chat message is saved in conversation history. In addition:
 
 3. **Journal page (`/dashboard/journal`)**
    - `chat_insight` learning entries are visible in timeline as Aria-tagged events.
-   - Memory panel (`what aria knows`) shows distilled facts with `· chat` markers.
+   - Aria suggestions use distilled facts from chat and logged activity.
 
 ## Skills recommendation sources
 
@@ -53,4 +53,3 @@ Kursa uses **confirm-first** behavior for chat-detected skills:
 - `GET /api/v1/profile/me/skill-proposals?status=pending`
 - `POST /api/v1/profile/me/skill-proposals/:id/accept`
 - `POST /api/v1/profile/me/skill-proposals/:id/dismiss`
-

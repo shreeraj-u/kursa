@@ -59,7 +59,7 @@ export function JournalEngagementChart({
   if (data.length === 0) {
     return (
       <p className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--mute-2)" }}>
-        Log weekly pulses to see your trend.
+        Log weekly check-ins to see your trend.
       </p>
     );
   }

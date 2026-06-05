@@ -32,9 +32,15 @@ void describe("auth config helpers", () => {
     ]);
   });
 
-  void it("enables in-process auth rate limiting", () => {
-    assert.deepEqual(getAuthRateLimitConfig(), {
+  void it("enables in-process auth rate limiting in production only", () => {
+    assert.deepEqual(getAuthRateLimitConfig("production"), {
       enabled: true,
+      window: 60,
+      max: 100,
+      storage: "memory",
+    });
+    assert.deepEqual(getAuthRateLimitConfig("development"), {
+      enabled: false,
       window: 60,
       max: 100,
       storage: "memory",
