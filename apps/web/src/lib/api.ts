@@ -7,6 +7,15 @@ import type {
   AchievementUpdateInput,
   CareerJourney,
   CareerJourneyResponse,
+  JourneyGenerateResponse,
+  JourneyIntakeSummary,
+  JourneyRevisionBrief,
+  JourneyRevisionPreview,
+  JourneyRevisionStartRequest,
+  JourneyRevisionStartResponse,
+  JourneyReviseResponse,
+  JourneySetupApplyResponse,
+  JourneySetupStartResponse,
   ChatDecisionType,
   ChatMetaResponse,
   ChatSendResponse,
@@ -231,10 +240,18 @@ export const api = {
   journey: {
     get: () => request<CareerJourneyResponse>("/api/v1/profile/me/journey"),
 
-    generate: (journeyPreferences?: JourneyPreferences) =>
-      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/generate", {
+    intake: () => request<JourneyIntakeSummary>("/api/v1/profile/me/journey/intake"),
+
+    generate: (
+      journeyPreferences?: JourneyPreferences,
+      source?: "intake" | "quick" | "aria" | "regenerate",
+    ) =>
+      request<JourneyGenerateResponse>("/api/v1/profile/me/journey/generate", {
         method: "POST",
-        body: JSON.stringify(journeyPreferences ? { journeyPreferences } : {}),
+        body: JSON.stringify({
+          ...(journeyPreferences ? { journeyPreferences } : {}),
+          ...(source ? { source } : {}),
+        }),
       }),
 
     updateMilestone: (order: number, status: import("@kursa/types").MilestoneStatus | null) =>
@@ -246,6 +263,38 @@ export const api = {
     extend: () =>
       request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/extend", {
         method: "POST",
+      }),
+
+    revisionStart: (body?: JourneyRevisionStartRequest) =>
+      request<JourneyRevisionStartResponse>("/api/v1/profile/me/journey/revision/start", {
+        method: "POST",
+        body: JSON.stringify(body ?? {}),
+      }),
+
+    revisionBrief: (conversationId: string) =>
+      request<{ brief: JourneyRevisionBrief; preview: JourneyRevisionPreview }>(
+        "/api/v1/profile/me/journey/revision/brief",
+        {
+          method: "POST",
+          body: JSON.stringify({ conversationId }),
+        },
+      ),
+
+    revise: (brief: JourneyRevisionBrief) =>
+      request<JourneyReviseResponse>("/api/v1/profile/me/journey/revise", {
+        method: "POST",
+        body: JSON.stringify(brief),
+      }),
+
+    setupStart: () =>
+      request<JourneySetupStartResponse>("/api/v1/profile/me/journey/setup/start", {
+        method: "POST",
+      }),
+
+    setupApply: (conversationId: string, generate = false) =>
+      request<JourneySetupApplyResponse>("/api/v1/profile/me/journey/setup/apply", {
+        method: "POST",
+        body: JSON.stringify({ conversationId, generate }),
       }),
   },
 

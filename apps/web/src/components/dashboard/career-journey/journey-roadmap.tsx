@@ -7,6 +7,9 @@ interface JourneyRoadmapProps {
   onSelectMilestone: (order: number) => void;
   onMilestoneStatusChange?: (order: number, status: MilestoneStatus | null) => void;
   updatingMilestoneOrder?: number | null;
+  showCurrentDetail?: boolean;
+  showSalary?: boolean;
+  onMilestoneFeelsOff?: (order: number) => void;
 }
 
 const STATUS_ACTIONS: { status: MilestoneStatus; label: string }[] = [
@@ -30,11 +33,15 @@ function CurrentMilestone({
   order,
   onStatusChange,
   updating,
+  showSalary = false,
+  onMilestoneFeelsOff,
 }: {
   journey: CareerJourney;
   order: number | null;
   onStatusChange?: (order: number, status: MilestoneStatus | null) => void;
   updating?: boolean;
+  showSalary?: boolean;
+  onMilestoneFeelsOff?: (order: number) => void;
 }) {
   const milestone = journey.milestones.find((m) => m.order === order) ?? journey.milestones[0] ?? null;
   if (!milestone) return null;
@@ -47,8 +54,17 @@ function CurrentMilestone({
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="mono text-2xs uppercase tracking-mono text-mute-2">2 · work this milestone</div>
+          <div className="mono text-2xs uppercase tracking-mono text-mute-2">Milestone detail</div>
           <h2 className="mt-2 text-lg font-medium text-ink">{milestone.title}</h2>
+          {onMilestoneFeelsOff && (
+            <button
+              type="button"
+              onClick={() => onMilestoneFeelsOff(milestone.order)}
+              className="mono mt-1 text-2xs text-mute-3 hover:text-accent"
+            >
+              This step feels off
+            </button>
+          )}
         </div>
         <span className="mono shrink-0 rounded-full border border-line bg-bg-sub-2 px-2 py-1 text-2xs text-mute">
           {estimatedDate(milestone.estimatedMonthsFromNow)}
@@ -96,15 +112,20 @@ function CurrentMilestone({
 
       <div className="mt-5 grid grid-cols-2 gap-4 max-md:grid-cols-1">
         <CompactList title="done when" items={successCriteria} empty="No success criteria yet." />
-        <CompactList title="proof to collect" items={proofArtifacts} empty="No proof artifacts yet." />
+        <CompactList title="What to show" items={proofArtifacts} empty="Nothing listed yet." />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="mono rounded-sm border border-line bg-bg-sub-2 px-1.5 py-px text-2xs text-mute">
           {milestone.status.replace("_", " ")}
         </span>
-        {salary && (
-          <span className="mono rounded-sm border border-line bg-bg-sub-2 px-1.5 py-px text-2xs text-mute-2">est. {salary}</span>
+        {showSalary && salary && (
+          <span
+            className="mono rounded-sm border border-line bg-bg-sub-2 px-1.5 py-px text-2xs text-mute-2"
+            title="Compensation estimate (AI) — not benchmarked market data"
+          >
+            est. {salary}
+          </span>
         )}
         {milestone.requiredSkills.slice(0, 4).map((skill) => (
           <span key={skill} className="mono rounded-sm border border-line bg-bg-sub-2 px-1.5 py-px text-2xs text-mute">
@@ -142,20 +163,27 @@ export default function JourneyRoadmap({
   onSelectMilestone,
   onMilestoneStatusChange,
   updatingMilestoneOrder,
+  showCurrentDetail = true,
+  showSalary = false,
+  onMilestoneFeelsOff,
 }: JourneyRoadmapProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <CurrentMilestone
-        journey={journey}
-        order={selectedMilestoneOrder}
-        onStatusChange={onMilestoneStatusChange}
-        updating={updatingMilestoneOrder !== null && updatingMilestoneOrder !== undefined}
-      />
+      {showCurrentDetail && (
+        <CurrentMilestone
+          journey={journey}
+          order={selectedMilestoneOrder}
+          onStatusChange={onMilestoneStatusChange}
+          updating={updatingMilestoneOrder !== null && updatingMilestoneOrder !== undefined}
+          showSalary={showSalary}
+          onMilestoneFeelsOff={onMilestoneFeelsOff}
+        />
+      )}
 
       <div className="rounded-xl border border-line bg-surface p-5">
         <div className="mb-5 flex justify-between gap-4 max-md:flex-col">
           <div>
-            <div className="mono text-2xs uppercase tracking-mono text-mute-2">3 · roadmap</div>
+            <div className="mono text-2xs uppercase tracking-mono text-mute-2">Roadmap</div>
             <h2 className="mt-2 text-lg font-medium text-ink">Pick a milestone to inspect</h2>
           </div>
           <div className="mono text-2xs text-mute-3">

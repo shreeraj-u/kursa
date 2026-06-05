@@ -12,12 +12,14 @@ import { journeyPreferencesSchema } from "@kursa/types";
 
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import {
+  buildWelcomeSummary,
   extendCareerJourney,
   generateCareerJourney,
   type GeneratedJourney,
   type GeneratedMilestone,
   type JourneyProfileSnapshot,
 } from "../lib/ai/journey.generate.js";
+import type { JourneyGenerateResponse } from "@kursa/types";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -75,7 +77,7 @@ async function loadJourneyRow(profileId: string) {
 export async function generateJourney(
   userId: string,
   journeyPreferences?: JourneyPreferences,
-): Promise<CareerJourney | null> {
+): Promise<JourneyGenerateResponse | null> {
   const context = await assembleAdvisorContext(userId, "paths");
   if (!context) return null;
 
@@ -88,22 +90,13 @@ export async function generateJourney(
     if (!profile) return null;
   }
 
-  const snapshot = toSnapshot(profile);
-  const enrichedSnapshot = {
-    ...snapshot,
-    advisorSignals: {
-      winsThisQuarter: context.signals.winsThisQuarter,
-      sentimentTrend12w: context.signals.sentimentTrend12w,
-      intentionActionGap: context.signals.intentionActionGap,
-      memoryFacts: context.memories.map((m) => m.fact),
-    },
-  };
+  const enrichedSnapshot = buildEnrichedSnapshot(profile, context);
 
   let generated: GeneratedJourney;
   try {
-    generated = await generateCareerJourney(enrichedSnapshot as JourneyProfileSnapshot);
+    generated = await generateCareerJourney(enrichedSnapshot);
   } catch {
-    generated = buildFallbackJourney(snapshot);
+    generated = buildFallbackJourney(toSnapshot(profile));
   }
 
   const row = await prisma.$transaction(async (tx) => {
@@ -125,7 +118,70 @@ export async function generateJourney(
     });
   });
 
-  return toCareerJourney(row);
+  const journey = toCareerJourney(row);
+  return { journey, welcomeSummary: buildWelcomeSummary(generated) };
+}
+
+export async function buildProfileSnapshot(userId: string): Promise<JourneyProfileSnapshot | null> {
+  const context = await assembleAdvisorContext(userId, "paths");
+  const profile = await loadProfile(userId);
+  if (!profile || !context) return null;
+  return buildEnrichedSnapshot(profile, context);
+}
+
+export async function mergeAndSavePreferences(
+  userId: string,
+  patch: Partial<JourneyPreferences>,
+  noteAppend?: string,
+): Promise<JourneyPreferences> {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    select: { id: true, values: true },
+  });
+  if (!profile) return emptyJourneyPreferences();
+
+  const current = extractJourneyPreferences(profile.values);
+  const merged = journeyPreferencesSchema.parse({
+    ...current,
+    ...patch,
+    notes: noteAppend
+      ? [current.notes, noteAppend].filter(Boolean).join("\n")
+      : current.notes,
+  });
+  await saveJourneyPreferences(profile.id, profile.values, merged);
+  return merged;
+}
+
+function buildEnrichedSnapshot(
+  profile: ProfileRow,
+  context: NonNullable<Awaited<ReturnType<typeof assembleAdvisorContext>>>,
+): JourneyProfileSnapshot {
+  const snapshot = toSnapshot(profile);
+  const marketGapSkills =
+    context.marketContext?.gaps?.slice(0, 3).map((g) => g.skill) ??
+    context.activePath?.details?.skillGaps
+      ?.filter((g) => g.priority === "high")
+      .slice(0, 3)
+      .map((g) => g.skill) ??
+    [];
+
+  return {
+    ...snapshot,
+    advisorSignals: {
+      winsThisQuarter: context.signals.winsThisQuarter,
+      sentimentTrend12w: context.signals.sentimentTrend12w,
+      intentionActionGap: context.signals.intentionActionGap,
+      memoryFacts: context.memories.slice(0, 3).map((m) => m.fact),
+    },
+    githubSignals: context.githubSlice
+      ? {
+          frameworkSignals: context.githubSlice.frameworkSignals,
+          activeRepoNames: context.githubSlice.activeRepoNames,
+          primaryLanguages: context.githubSlice.primaryLanguages,
+        }
+      : null,
+    marketGapSkills,
+  };
 }
 
 export async function updateMilestoneStatus(

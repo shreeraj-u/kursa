@@ -55,14 +55,6 @@ export function createAuth() {
       autoSignIn: true,
     },
     socialProviders,
-    account: {
-      accountLinking: {
-        enabled: true,
-        trustedProviders: ["github"],
-        // GitHub email may differ from the email used at sign-up.
-        allowDifferentEmails: true,
-      },
-    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     user: {
@@ -87,7 +79,8 @@ export function createAuth() {
       accountLinking: {
         enabled: true,
         trustedProviders: getTrustedAccountProviders(socialProviderIds),
-        allowDifferentEmails: false,
+        // GitHub email may differ from the email used at sign-up.
+        allowDifferentEmails: true,
         allowUnlinkingAll: false,
         updateUserInfoOnLink: false,
       },

@@ -142,3 +142,123 @@ export interface CareerJourneyResponse {
   suggestedProjects?: JourneySuggestedProject[];
   githubConnected?: boolean;
 }
+
+export type JourneyIntakeSource = "resume" | "onboarding" | "github" | "journal";
+
+export interface JourneyIntakeSummary {
+  currentRole: string | null;
+  targetRole: string | null;
+  aspirationSnippet: string | null;
+  topSkills: string[];
+  recentWin: string | null;
+  constraintsSnippet: string | null;
+  sources: JourneyIntakeSource[];
+  inferredPreferences: JourneyPreferences;
+}
+
+export type JourneyGenerateSource = "intake" | "quick" | "aria" | "regenerate";
+
+export interface JourneyGenerateResponse {
+  journey: CareerJourney;
+  welcomeSummary: string;
+}
+
+export type JourneyRevisionTheme =
+  | "timeline"
+  | "direction"
+  | "milestone"
+  | "skills"
+  | "risks"
+  | "pace"
+  | "other";
+
+export type JourneyRevisionChangeScope = "journey_meta" | "milestones_partial" | "full_rebuild";
+
+export type JourneyRevisionMilestoneAction = "update" | "replace" | "insert_after" | "remove";
+
+export interface JourneyRevisionBrief {
+  summary: string;
+  changeScope: JourneyRevisionChangeScope;
+  journeyPatches?: {
+    title?: string;
+    description?: string;
+    projectedTimelineMonths?: number;
+    details?: Partial<CareerJourneyDetails>;
+  };
+  milestonePatches?: Array<{
+    order: number;
+    action: JourneyRevisionMilestoneAction;
+    patch?: Partial<JourneyMilestone>;
+    replacement?: Omit<JourneyMilestone, "targetDate" | "daysRemaining">;
+  }>;
+  preferenceUpdates?: Partial<JourneyPreferences>;
+  preserveCompleted: boolean;
+  preserveManuallySet: boolean;
+}
+
+export interface JourneyRevisionStartRequest {
+  focusMilestoneOrder?: number;
+  themes?: JourneyRevisionTheme[];
+}
+
+export interface JourneyRevisionStartResponse {
+  conversationId: string;
+  journey: CareerJourney;
+  initialMessage: string;
+  starterChips: string[];
+}
+
+export interface JourneyRevisionPreview {
+  summary: string;
+  userFeedbackSummary: string;
+  changes: Array<{ target: string; before: string; after: string }>;
+  preservedMilestones: number[];
+  willRebuildEntirePath: boolean;
+}
+
+export interface JourneyReviseResponse {
+  journey: CareerJourney;
+  revisionSummary: string;
+  changedMilestoneOrders: number[];
+}
+
+export interface JourneySetupStartResponse {
+  conversationId: string;
+  intakeSummary: JourneyIntakeSummary;
+  initialMessage: string;
+  starterChips: string[];
+}
+
+export interface JourneySetupApplyResponse {
+  preferences: JourneyPreferences;
+  journey?: CareerJourney;
+  welcomeSummary?: string;
+}
+
+const journeyRevisionMilestoneActionSchema = z.enum(["update", "replace", "insert_after", "remove"]);
+
+export const journeyRevisionBriefSchema = z.object({
+  summary: z.string().min(1),
+  changeScope: z.enum(["journey_meta", "milestones_partial", "full_rebuild"]),
+  journeyPatches: z
+    .object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      projectedTimelineMonths: z.number().int().positive().optional(),
+      details: z.record(z.string(), z.unknown()).optional(),
+    })
+    .optional(),
+  milestonePatches: z
+    .array(
+      z.object({
+        order: z.number().int(),
+        action: journeyRevisionMilestoneActionSchema,
+        patch: z.record(z.string(), z.unknown()).optional(),
+        replacement: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
+    .optional(),
+  preferenceUpdates: journeyPreferencesSchema.partial().optional(),
+  preserveCompleted: z.boolean().default(true),
+  preserveManuallySet: z.boolean().default(true),
+});

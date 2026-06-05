@@ -52,7 +52,9 @@ export type ChatDecisionType =
   | "promotion_timing"
   | "education"
   | "negotiation"
-  | "general";
+  | "general"
+  | "journey_setup"
+  | "journey_revision";
 
 export interface ChatMessageSummary {
   id: string;
