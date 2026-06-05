@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { LanguageInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type LanguagesAnswerProps = {
   items: LanguageInput[];
   onChange: (items: LanguageInput[]) => void;
@@ -24,19 +26,22 @@ export function LanguagesAnswer(props: LanguagesAnswerProps) {
   const [name, setName] = useState("");
   const [proficiency, setProficiency] = useState<LanguageInput["proficiency"]>("Fluent");
 
-  const addEntry = () => {
+  const hasDraft = Boolean(name.trim());
+
+  const addEntry = (): boolean => {
     const n = name.trim();
     if (!n) {
       toast.error("Add a language name");
-      return;
+      return false;
     }
     if (props.items.some((item) => item.name.toLowerCase() === n.toLowerCase())) {
       toast.error("Already added that language");
-      return;
+      return false;
     }
     props.onChange([...props.items, { name: n, proficiency }]);
     setName("");
     setProficiency("Fluent");
+    return true;
   };
 
   return (
@@ -80,10 +85,14 @@ export function LanguagesAnswer(props: LanguagesAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add language</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={props.onSubmit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="a language"
+        addLabel="Add language"
+        onAdd={addEntry}
+        onContinue={props.onSubmit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }

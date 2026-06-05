@@ -29,8 +29,11 @@ export interface ProfileInput {
     updatedAt: Date;
   }>;
   workHistories: Array<{
+    roleTitle: string;
+    companyName: string;
     isCurrent: boolean;
     startDate: Date;
+    endDate?: Date | null;
     outcomes: unknown | null;
   }>;
   learningGoals: Array<{

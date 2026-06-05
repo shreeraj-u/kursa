@@ -11,7 +11,9 @@ enum CareerEventType {
   onboarding_complete
   application_update
   github_sync
+  github_activity
   system
+  chat_insight
 }
 
 enum CareerEventSource {
@@ -25,7 +27,38 @@ enum SkillSource {
   resume
   inferred_checkin
   inferred_journal
+  inferred_chat
+  market
+  path
+  user_edited
   github_import
+}
+
+enum SkillProposalType {
+  add
+  update_confidence
+  mark_learning
+  mark_stale
+}
+
+enum SkillProposalSource {
+  chat
+  market
+  path
+  journal
+  github
+}
+
+enum ProjectProposalStatus {
+  pending
+  accepted
+  dismissed
+}
+
+enum SkillProposalStatus {
+  pending
+  accepted
+  dismissed
 }
 
 model CareerEvent {

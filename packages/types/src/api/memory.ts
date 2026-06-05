@@ -1,6 +1,7 @@
 import type { ProfileInput, ProfileSignals } from "./insights";
 import type { CareerJourney } from "./journey";
 import type { CareerEventSummary } from "./events";
+import type { MarketContext } from "./market";
 
 export interface UserMemorySummary {
   id: string;
@@ -8,6 +9,8 @@ export interface UserMemorySummary {
   fact: string;
   confidence: number;
   validFrom: string;
+  /** Present when fact was sourced from Aria chat learning. */
+  learnedFromChat?: boolean;
 }
 
 export interface SkillLastUsedUpdate {
@@ -57,6 +60,15 @@ export interface AdvisorSignals extends ProfileSignals {
 
 export type AdvisorPurpose = "observations" | "paths" | "journal" | "chat";
 
+export interface AdvisorGitHubSlice {
+  username: string;
+  lastActiveAt: string | null;
+  pushVelocity: string;
+  activeRepoNames: string[];
+  primaryLanguages: string[];
+  frameworkSignals: string[];
+}
+
 export interface AdvisorContext {
   purpose: AdvisorPurpose;
   profile: ProfileInput;
@@ -65,6 +77,8 @@ export interface AdvisorContext {
   memories: UserMemorySummary[];
   activePath: CareerJourney | null;
   materialChangeDetected: boolean;
+  marketContext: MarketContext | null;
+  githubSlice?: AdvisorGitHubSlice | null;
 }
 
 export interface MemoryCandidate {

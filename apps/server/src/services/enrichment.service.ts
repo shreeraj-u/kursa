@@ -43,7 +43,9 @@ async function enrichEventAsync(
   const event = await prisma.careerEvent.findUnique({ where: { id: eventId } });
   if (!event || event.userId !== userId) return;
 
-  const enrichableTypes: CareerEventType[] = ["win", "note", "feedback", "checkin_weekly", "decision", "learning"];
+  const enrichableTypes: CareerEventType[] = [
+    "win", "note", "feedback", "checkin_weekly", "decision", "learning", "github_activity",
+  ];
   if (!enrichableTypes.includes(event.type as CareerEventType)) return;
 
   const ctx = await loadGraphContext(profileId);

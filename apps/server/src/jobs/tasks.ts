@@ -4,6 +4,9 @@ import { runMemoryDistillation, runBatchMemoryDistillation } from "../services/m
 import { getObservations } from "../services/insights.service.js";
 import { backfillEnrichment } from "../services/enrichment.service.js";
 import { runCheckInReminderScan } from "../services/proactive.service.js";
+import { runChatConversationDigestSweep } from "../services/chat-learn.service.js";
+import { runGitHubDailySync } from "../services/github-sync.service.js";
+import { runMarketRefreshForAllUsers } from "../services/market.service.js";
 
 export async function runNightlyMemoryDistillation(): Promise<void> {
   const profiles = await prisma.profile.findMany({
@@ -59,6 +62,18 @@ export async function runObservationRefresh(): Promise<void> {
 
 export async function runCheckInReminders(): Promise<void> {
   await runCheckInReminderScan();
+}
+
+export async function runMarketRefresh(): Promise<void> {
+  await runMarketRefreshForAllUsers();
+}
+
+export async function runChatConversationDigest(): Promise<void> {
+  await runChatConversationDigestSweep();
+}
+
+export async function runGitHubDailySyncJob(): Promise<void> {
+  await runGitHubDailySync();
 }
 
 export async function runPathStaleFlags(): Promise<void> {

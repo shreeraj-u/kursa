@@ -2,24 +2,31 @@
 
 import { env } from "@kursa/env/web";
 import type {
+  AchievementInput,
   CareerJourney,
   CareerJourneyResponse,
+  ChatDecisionType,
+  ChatMetaResponse,
+  ChatSendResponse,
+  ConversationListItem,
   JourneyPreferences,
+  LearningGoalCreateInput,
+  LearningGoalUpdateInput,
+  OnboardingReviewResponse,
+  ProjectInput,
+  ProactiveNudge,
+  RelevanceSummary,
   Resume,
   ResumeContent,
   ResumeImproveAtsResponse,
-  UserSocialLink,
-  AchievementInput,
-  ProjectInput,
-  OnboardingReviewResponse,
-  UserSkill,
-  UserLearningGoal,
   SkillCreateInput,
+  SkillProposalListResponse,
+  SkillsOverviewResponse,
+  SkillSummary,
   SkillUpdateInput,
-  LearningGoalCreateInput,
-  LearningGoalUpdateInput,
-  ProactiveNudge,
-  RelevanceSummary,
+  UserLearningGoal,
+  UserSkill,
+  UserSocialLink,
 } from "@kursa/types";
 
 const BASE = env.NEXT_PUBLIC_SERVER_URL;
@@ -142,7 +149,49 @@ export const api = {
       }),
   },
 
+  skills: {
+    overview: () => request<SkillsOverviewResponse>("/api/v1/profile/me/skills/overview"),
+
+    create: (body: SkillCreateInput) =>
+      request<{ skill: SkillSummary }>("/api/v1/profile/me/skills", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: SkillUpdateInput) =>
+      request<{ skill: SkillSummary }>(`/api/v1/profile/me/skills/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/api/v1/profile/me/skills/${id}`, {
+        method: "DELETE",
+      }),
+
+    proposals: (status: "pending" | "accepted" | "dismissed" = "pending") =>
+      request<SkillProposalListResponse>(
+        `/api/v1/profile/me/skill-proposals?status=${status}`,
+      ),
+
+    acceptProposal: (id: string) =>
+      request<{ skill: SkillSummary | null; accepted: boolean }>(
+        `/api/v1/profile/me/skill-proposals/${id}/accept`,
+        { method: "POST" },
+      ),
+
+    dismissProposal: (id: string) =>
+      request<{ dismissed: boolean }>(`/api/v1/profile/me/skill-proposals/${id}/dismiss`, {
+        method: "POST",
+      }),
+  },
+
   resume: {
+    list: () =>
+      request<{ resumes: Resume[]; quota: { used: number; limit: number } }>(
+        "/api/v1/profile/me/resumes",
+      ),
+
     generate: () =>
       request<{ resume: Resume }>("/api/v1/profile/me/resumes/generate", {
         method: "POST",
@@ -319,27 +368,41 @@ export const api = {
   },
 
   chat: {
-    list: () =>
-      request<{
-        conversations: Array<{
-          id: string;
-          decisionType: string | null;
-          createdAt: string;
-          updatedAt: string;
-          messages: Array<{ id: string; role: string; content: string; createdAt: string }>;
-        }>;
-      }>("/api/v1/chat"),
+    list: () => request<{ conversations: ConversationListItem[] }>("/api/v1/chat"),
 
-    create: (decisionType?: string) =>
+    meta: () => request<ChatMetaResponse>("/api/v1/chat/meta"),
+
+    suggestedPrompts: () => request<{ prompts: string[] }>("/api/v1/chat/suggested-prompts"),
+
+    create: (decisionType?: ChatDecisionType) =>
       request<{ id: string }>("/api/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ decisionType }),
+        body: JSON.stringify(decisionType ? { decisionType } : {}),
       }),
 
     send: (conversationId: string, content: string) =>
-      request<{ message: string; conversationId: string }>(`/api/v1/chat/${conversationId}/messages`, {
+      request<ChatSendResponse>(`/api/v1/chat/${conversationId}/messages`, {
         method: "POST",
         body: JSON.stringify({ content }),
+      }),
+
+    recordDecision: (
+      conversationId: string,
+      body: {
+        title: string;
+        optionsConsidered: string[];
+        choiceMade: string;
+        reasoning: string;
+      },
+    ) =>
+      request<{ recorded: boolean }>(`/api/v1/chat/${conversationId}/decision`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (conversationId: string) =>
+      request<{ deleted: boolean }>(`/api/v1/chat/${conversationId}`, {
+        method: "DELETE",
       }),
   },
 
@@ -375,12 +438,36 @@ export const api = {
   },
 
   github: {
+    status: () =>
+      request<import("@kursa/types").GitHubStatusResponse>("/api/v1/github/status"),
+    snapshot: () =>
+      request<{ snapshot: import("@kursa/types").GitHubNormalizedSnapshot | null }>(
+        "/api/v1/github/snapshot",
+      ),
+    ingest: () =>
+      request<{ scheduled: boolean }>("/api/v1/github/ingest", { method: "POST" }),
     repos: () =>
       request<import("@kursa/types").GitHubSyncPreviewResponse>("/api/v1/github/repos"),
     sync: (body: import("@kursa/types").GitHubSyncConfirmRequest) =>
       request<import("@kursa/types").GitHubSyncSummaryResponse>("/api/v1/github/sync", {
         method: "POST",
         body: JSON.stringify(body),
+      }),
+  },
+
+  projectProposals: {
+    list: (status: "pending" | "accepted" | "dismissed" = "pending") =>
+      request<{ data: import("@kursa/types").ProjectProposalSummary[]; total: number }>(
+        `/api/v1/profile/me/project-proposals?status=${status}`,
+      ),
+    accept: (id: string) =>
+      request<{ project: { id: string; title: string; url: string | null } }>(
+        `/api/v1/profile/me/project-proposals/${id}/accept`,
+        { method: "POST" },
+      ),
+    dismiss: (id: string) =>
+      request<{ ok: boolean }>(`/api/v1/profile/me/project-proposals/${id}/dismiss`, {
+        method: "POST",
       }),
   },
 };

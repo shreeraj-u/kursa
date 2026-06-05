@@ -301,7 +301,13 @@ function SkillCard({
   );
 }
 
-function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
+function AddSkillForm({
+  onAdd,
+  onSkillCreated,
+}: {
+  onAdd: (skill: UserSkill) => void;
+  onSkillCreated?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<Category>("technical");
@@ -325,6 +331,7 @@ function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
         proficiencyLevel: proficiencyLevel || null,
       });
       onAdd(skill);
+      onSkillCreated?.();
       setName("");
       setConfidenceRating(3);
       setProficiencyLevel("");
@@ -384,9 +391,10 @@ function AddSkillForm({ onAdd }: { onAdd: (skill: UserSkill) => void }) {
 interface SkillInventoryProps {
   skills: UserSkill[];
   onChange: (skills: UserSkill[]) => void;
+  onSkillCreated?: () => void;
 }
 
-export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
+export function SkillInventory({ skills, onChange, onSkillCreated }: SkillInventoryProps) {
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -554,7 +562,10 @@ export function SkillInventory({ skills, onChange }: SkillInventoryProps) {
         })}
       </div>
 
-      <AddSkillForm onAdd={(skill) => onChange([...skills, skill])} />
+      <AddSkillForm
+        onAdd={(skill) => onChange([...skills, skill])}
+        onSkillCreated={onSkillCreated}
+      />
     </div>
   );
 }

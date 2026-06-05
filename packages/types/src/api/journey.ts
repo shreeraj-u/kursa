@@ -111,9 +111,34 @@ export interface JourneyActionItem {
   linkTo: string;
 }
 
+export interface JourneyActiveProject {
+  id: string;
+  source: "profile" | "github";
+  title: string;
+  url: string | null;
+  language: string | null;
+  topics: string[];
+  lastPushedAt: string;
+  activityLabel: string;
+  linkedMilestoneOrder?: number;
+}
+
+export interface JourneySuggestedProject {
+  id: string;
+  title: string;
+  rationale: string;
+  targetMilestoneOrder?: number;
+  suggestedSkills: string[];
+  effort: "small" | "medium" | "large";
+  source: "journey" | "github_patterns" | "market";
+}
+
 export interface CareerJourneyResponse {
   journey: CareerJourney | null;
   timeline: JourneyMilestone[];
   actionQueue: JourneyActionItem[];
   journeyPreferences?: JourneyPreferences;
+  activeProjects?: JourneyActiveProject[];
+  suggestedProjects?: JourneySuggestedProject[];
+  githubConnected?: boolean;
 }

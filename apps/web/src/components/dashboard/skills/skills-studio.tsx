@@ -1,9 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CareerJourney, UserSkill, UserLearningGoal } from "@kursa/types";
+import { toast } from "sonner";
+import type {
+  CareerJourney,
+  SkillProposalSummary,
+  SkillRecommendation,
+  SkillsOverviewResponse,
+  UserLearningGoal,
+  UserSkill,
+} from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
+import { api } from "@/lib/api";
 import PageHelpButton from "@/components/dashboard/page-help-button";
 import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 
@@ -15,6 +24,74 @@ interface SkillsStudioProps {
   initialSkills: UserSkill[];
   initialGoals: UserLearningGoal[];
   activePath: CareerJourney | null;
+  initialOverview?: SkillsOverviewResponse | null;
+}
+
+function AriaProposalsRail({
+  proposals,
+  onChange,
+}: {
+  proposals: SkillProposalSummary[];
+  onChange: (next: SkillProposalSummary[]) => void;
+}) {
+  if (proposals.length === 0) return null;
+
+  async function accept(id: string) {
+    try {
+      await api.skills.acceptProposal(id);
+      toast.success("Skill added to your profile");
+      onChange(proposals.filter((p) => p.id !== id));
+      void api.skills.overview().then((overview) => onChange(overview.proposals)).catch(() => undefined);
+    } catch {
+      toast.error("Could not accept proposal");
+    }
+  }
+
+  async function dismiss(id: string) {
+    try {
+      await api.skills.dismissProposal(id);
+      onChange(proposals.filter((p) => p.id !== id));
+    } catch {
+      toast.error("Could not dismiss");
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-[var(--accent-line)] bg-[var(--accent-soft)] p-4">
+      <div className="mono mb-3 text-[10px] text-[var(--accent)]">pending proposals · {proposals.length}</div>
+      <div className="flex flex-col gap-2">
+        {proposals.map((p) => (
+          <div key={p.id} className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium text-[var(--ink)]">{p.displayName}</p>
+              {p.source === "github" && (
+                <span className="mono rounded border border-[var(--line)] px-1 py-px text-[8px] text-[var(--mute)]">github</span>
+              )}
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-[var(--mute)]">{p.evidence}</p>
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => void accept(p.id)}
+                className="mono rounded px-2 py-1 text-[9px]"
+                style={{ background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer" }}
+              >
+                + add
+              </button>
+              <button
+                type="button"
+                onClick={() => void dismiss(p.id)}
+                className="mono rounded border border-[var(--line)] px-2 py-1 text-[9px] text-[var(--mute)]"
+                style={{ background: "transparent", cursor: "pointer" }}
+              >
+                dismiss
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function StatCard({ value, label, tone }: { value: string | number; label: string; tone?: string }) {
@@ -113,9 +190,24 @@ export function SkillsStudio({
   initialSkills,
   initialGoals,
   activePath,
+  initialOverview = null,
 }: SkillsStudioProps) {
   const [skills, setSkills] = useState<UserSkill[]>(initialSkills);
   const [goals, setGoals] = useState<UserLearningGoal[]>(initialGoals);
+  const [proposals, setProposals] = useState<SkillProposalSummary[]>(initialOverview?.proposals ?? []);
+  const [recommendations, setRecommendations] = useState<SkillRecommendation[]>(
+    initialOverview?.recommendations ?? [],
+  );
+
+  async function refreshIntelligence() {
+    try {
+      const overview = await api.skills.overview();
+      setProposals(overview.proposals);
+      setRecommendations(overview.recommendations);
+    } catch {
+      // Keep existing proposals if refresh fails.
+    }
+  }
 
   function upsertGoal(goal: UserLearningGoal) {
     setGoals((prev) => {
@@ -170,8 +262,52 @@ export function SkillsStudio({
 
       <SetupChecklist skills={skills} goals={goals} activePath={activePath} />
 
+      {proposals.length > 0 && (
+        <AriaProposalsRail proposals={proposals} onChange={setProposals} />
+      )}
+
+      {recommendations.length > 0 && skills.length < 3 && (
+        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+          <div className="mono mb-2 text-[10px] text-[var(--mute)]">suggested from profile & path</div>
+          <div className="flex flex-wrap gap-2">
+            {recommendations.slice(0, 8).map((rec) => (
+              <button
+                key={`${rec.skillName}-${rec.source}`}
+                type="button"
+                onClick={() => {
+                  void api
+                    .createSkill({
+                      name: rec.skillName,
+                      category: "technical",
+                      confidenceRating: 3,
+                    })
+                    .then(({ skill }) => {
+                      setSkills((prev) => [...prev, skill]);
+                      setRecommendations((prev) =>
+                        prev.filter((item) => item.skillName.toLowerCase() !== rec.skillName.toLowerCase()),
+                      );
+                      void refreshIntelligence();
+                      toast.success(`Added ${rec.skillName}`);
+                    })
+                    .catch((e) => toast.error(e instanceof Error ? e.message : "Could not add skill"));
+                }}
+                className="mono rounded-full border border-[var(--accent-line)] bg-[var(--bg-sub)] px-3 py-1.5 text-[10px] text-[var(--ink)]"
+                style={{ cursor: "pointer" }}
+                title={rec.reason}
+              >
+                + {rec.skillName}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <SkillInventory skills={skills} onChange={setSkills} />
+        <SkillInventory
+          skills={skills}
+          onChange={setSkills}
+          onSkillCreated={() => void refreshIntelligence()}
+        />
 
         <div className="flex flex-col gap-6">
           <SkillGap

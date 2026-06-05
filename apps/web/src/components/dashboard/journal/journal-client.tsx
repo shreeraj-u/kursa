@@ -36,6 +36,7 @@ export default function JournalClient() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [timelineLoading, setTimelineLoading] = useState(true);
   const [context, setContext] = useState<JournalContext | null>(null);
   const [relevance, setRelevance] = useState<RelevanceSummary | null>(null);
   const [relevanceLoading, setRelevanceLoading] = useState(true);
@@ -53,13 +54,17 @@ export default function JournalClient() {
 
   const loadTimeline = useCallback(
     async (pageNum = 1, append = false) => {
+      if (!append) setTimelineLoading(true);
       try {
         const res = await api.journal.timeline({ page: pageNum, filter: apiFilter });
         setEntries((prev) => (append ? [...prev, ...res.data] : res.data));
         setPage(res.pagination.page);
         setTotalPages(res.pagination.totalPages);
-      } catch {
-        toast.error("Could not load journal");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Could not load journal";
+        toast.error(msg.includes("Internal") ? "Could not load journal — try signing out and back in" : msg);
+      } finally {
+        if (!append) setTimelineLoading(false);
       }
     },
     [apiFilter],
@@ -162,14 +167,29 @@ export default function JournalClient() {
   const submitPulse = (responses: Record<string, string | number>): Promise<boolean> => {
     if (!checkIn?.type) return Promise.resolve(false);
 
+    const firstTextQ = checkIn.questions.find((q) => q.kind === "text");
+    if (firstTextQ && !String(responses[firstTextQ.id] ?? "").trim()) {
+      toast.error("Answer the first question");
+      return Promise.resolve(false);
+    }
+
+    const payload = { ...responses };
+    for (const q of checkIn.questions) {
+      if (q.kind === "scale" && payload[q.id] === undefined) {
+        payload[q.id] = 3;
+      }
+    }
+
     return new Promise((resolve) => {
       startTransition(async () => {
         try {
           await api.checkins.submit({
             type: checkIn.type!,
-            responses,
+            responses: payload,
           });
-          toast.success("Weekly pulse saved");
+          toast.success(
+            checkIn.type === "checkin_monthly" ? "Monthly review saved" : "Weekly pulse saved",
+          );
           setCheckIn(await api.checkins.next());
           refreshAfterSave();
           resolve(true);
@@ -291,6 +311,7 @@ export default function JournalClient() {
                         highlightId={highlightId}
                         hasMore={page < totalPages}
                         loadingMore={loadingMore}
+                        timelineLoading={timelineLoading}
                         timelineFilter={timelineFilter}
                         onTimelineFilterChange={setTimelineFilter}
                         onLoadMore={() => void loadMore()}

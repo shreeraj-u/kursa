@@ -13,7 +13,9 @@ export type CareerEventType =
   | "onboarding_complete"
   | "application_update"
   | "github_sync"
-  | "system";
+  | "github_activity"
+  | "system"
+  | "chat_insight";
 
 export type CareerEventSource = "user" | "aria" | "system";
 
@@ -76,6 +78,20 @@ export interface ApplicationUpdateStructured {
   previousStage?: string;
   newStage: string;
   status?: string;
+}
+
+export interface ChatInsightFact {
+  category: string;
+  fact: string;
+  confidence: number;
+}
+
+export interface ChatInsightStructured {
+  conversationId: string;
+  userMessageId?: string;
+  assistantMessageId?: string;
+  kind?: "message" | "conversation_digest";
+  extractedFacts: ChatInsightFact[];
 }
 
 export interface CareerEventSummary {

@@ -78,6 +78,30 @@ export function distillMemories(
     }
   }
 
+  for (const event of recent.filter((e) => e.type === "github_activity")) {
+    const s = event.structured as {
+      pushVelocity?: string;
+      primaryLanguages?: string[];
+      newlyActiveRepos?: string[];
+    };
+    if (s.primaryLanguages?.length) {
+      candidates.push({
+        category: "skill_evidence",
+        fact: `GitHub activity shows focus on ${s.primaryLanguages.slice(0, 3).join(", ")} (${s.pushVelocity ?? "active"} velocity).`,
+        confidence: 0.82,
+        sourceEntryIds: [event.id],
+      });
+    }
+    if (s.newlyActiveRepos?.length) {
+      candidates.push({
+        category: "pattern",
+        fact: `Recently active on GitHub repos: ${s.newlyActiveRepos.slice(0, 3).join(", ")}.`,
+        confidence: 0.8,
+        sourceEntryIds: [event.id],
+      });
+    }
+  }
+
   const asp = aspirations as Record<string, unknown> | null;
   if (asp) {
     const targetText = [asp.targetRoles, asp.horizon3y].filter(Boolean).join(" ").toLowerCase();

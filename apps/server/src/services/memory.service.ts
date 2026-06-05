@@ -196,12 +196,23 @@ export async function getMemoriesForUser(userId: string, limit = 20): Promise<Us
     take: limit,
   });
 
+  const sourceIds = [...new Set(rows.flatMap((m) => m.sourceEntryIds))];
+  const chatSourceIds = new Set<string>();
+  if (sourceIds.length > 0) {
+    const chatEvents = await prisma.careerEvent.findMany({
+      where: { id: { in: sourceIds }, type: "chat_insight" },
+      select: { id: true },
+    });
+    for (const e of chatEvents) chatSourceIds.add(e.id);
+  }
+
   return rows.map((m) => ({
     id: m.id,
     category: m.category,
     fact: m.fact,
     confidence: m.confidence,
     validFrom: m.validFrom.toISOString(),
+    learnedFromChat: m.sourceEntryIds.some((id) => chatSourceIds.has(id)),
   }));
 }
 

@@ -28,6 +28,7 @@ interface SidebarProps {
     user: { name: string; email: string; createdAt: string };
     attentionCount?: number;
     applicationCount?: number;
+    skillsProposalCount?: number;
 }
 
 const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
@@ -108,7 +109,7 @@ function NavItem({
     );
 }
 
-export default function Sidebar({ user, attentionCount, applicationCount }: SidebarProps) {
+export default function Sidebar({ user, attentionCount, applicationCount, skillsProposalCount = 0 }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [journalBadge, setJournalBadge] = useState<number>(0);
@@ -195,9 +196,11 @@ export default function Sidebar({ user, attentionCount, applicationCount }: Side
                             Icon={Icon}
                             isActive={isActive(href)}
                             badge={
-                                key === "home" && attentionCount && attentionCount > 0
-                                    ? <Badge>{attentionCount}</Badge>
-                                    : undefined
+                                key === "home" && attentionCount && attentionCount > 0 ? (
+                                    <Badge>{attentionCount}</Badge>
+                                ) : key === "skills" && skillsProposalCount > 0 ? (
+                                    <Badge>{skillsProposalCount}</Badge>
+                                ) : undefined
                             }
                             rightSlot={
                                 key === "aria" ? (

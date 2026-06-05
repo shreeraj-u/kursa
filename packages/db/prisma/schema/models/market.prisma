@@ -1,0 +1,35 @@
+model MarketSnapshot {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleKey   String
+  payload   Json
+  sources   String[] @default([])
+  asOf      DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleKey])
+  @@index([userId])
+  @@map("market_snapshot")
+}
+
+model JobListing {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalId String?
+  title      String
+  company    String
+  url        String
+  location   String?
+  salaryMin  Int?
+  salaryMax  Int?
+  postedAt   DateTime?
+  raw        Json?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("job_listing")
+}

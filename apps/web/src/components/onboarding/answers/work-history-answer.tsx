@@ -6,6 +6,8 @@ import { Input } from "@kursa/ui/components/input";
 
 import type { WorkHistoryInput } from "@kursa/types";
 
+import { UnsavedDraftGuard } from "./unsaved-draft-guard";
+
 type WorkHistoryAnswerProps = {
   items: WorkHistoryInput[];
   onChange: (items: WorkHistoryInput[]) => void;
@@ -50,7 +52,11 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
     props.onChange(props.items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   };
 
-  const addEntry = () => {
+  const hasDraft = Boolean(
+    companyName.trim() || roleTitle.trim() || outcomes.trim() || startDate.trim() || endDate.trim(),
+  );
+
+  const addEntry = (): boolean => {
     const company = companyName.trim();
     const role = roleTitle.trim();
     const outcomeText = outcomes.trim();
@@ -67,7 +73,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
     const validationMessage = validateEntry(next);
     if (validationMessage) {
       toast.error(validationMessage);
-      return;
+      return false;
     }
     if (props.items.some(
       (item) =>
@@ -75,7 +81,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
         item.roleTitle.toLowerCase() === role.toLowerCase(),
     )) {
       toast.error("Already added that role at that company");
-      return;
+      return false;
     }
     props.onChange([...props.items, next]);
     setCompanyName("");
@@ -84,6 +90,7 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
     setStartDate("");
     setEndDate("");
     setIsCurrent(false);
+    return true;
   };
 
   const submit = () => {
@@ -161,10 +168,14 @@ export function WorkHistoryAnswer(props: WorkHistoryAnswerProps) {
         <Button type="button" variant="outline" onClick={addEntry}>Add role</Button>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={props.onBack}>Back</Button>
-        <Button type="button" onClick={submit}>Continue</Button>
-      </div>
+      <UnsavedDraftGuard
+        hasDraft={hasDraft}
+        itemLabel="a work history entry"
+        addLabel="Add role"
+        onAdd={addEntry}
+        onContinue={submit}
+        onBack={props.onBack}
+      />
     </div>
   );
 }

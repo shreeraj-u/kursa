@@ -58,6 +58,17 @@ export function computeProfileUpdateDelta(event: CareerEventForDelta): ProfileUp
         ],
       };
     }
+    case "github_activity": {
+      const langs = Array.isArray(structured.primaryLanguages)
+        ? (structured.primaryLanguages as string[]).filter(Boolean)
+        : [];
+      const topics = Array.isArray(structured.topTopics)
+        ? (structured.topTopics as string[]).filter(Boolean)
+        : [];
+      const names = [...langs, ...topics].slice(0, 10);
+      if (names.length === 0) return {};
+      return { skillLastUsed: names.map((name) => ({ name, date: new Date() })) };
+    }
     default:
       return {};
   }

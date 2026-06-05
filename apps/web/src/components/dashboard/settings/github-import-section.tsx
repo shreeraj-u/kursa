@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
-import { Star, RefreshCw, ArrowRight, Check } from "lucide-react";
+import { Star, RefreshCw, ArrowRight, Check, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@kursa/ui/components/button";
 import { Skeleton } from "@kursa/ui/components/skeleton";
-import type { GitHubRepoPreview, GitHubSyncConfirmRequest, GitHubSyncSummaryResponse } from "@kursa/types";
+import type {
+  GitHubRepoPreview,
+  GitHubStatusResponse,
+  GitHubSyncConfirmRequest,
+  GitHubSyncSummaryResponse,
+  ProjectProposalSummary,
+} from "@kursa/types";
 
-// Language → colour dot mapping (best-effort subset)
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6",
   JavaScript: "#f1e05a",
@@ -32,52 +39,140 @@ const LANG_COLORS: Record<string, string> = {
   Scala: "#c22d40",
 };
 
+const VELOCITY_LABEL: Record<string, string> = {
+  accelerating: "Accelerating",
+  steady: "Steady",
+  slowing: "Slowing",
+  inactive: "Inactive",
+};
+
 type Phase =
   | { name: "idle" }
   | { name: "loading" }
   | { name: "disconnected" }
-  | { name: "review"; repos: GitHubRepoPreview[] }
+  | { name: "connected"; status: GitHubStatusResponse; proposals: ProjectProposalSummary[] }
+  | { name: "review"; repos: GitHubRepoPreview[]; status: GitHubStatusResponse }
   | { name: "syncing" }
   | ({ name: "done" } & GitHubSyncSummaryResponse);
+
+function formatLastSync(iso: string | null): string {
+  if (!iso) return "Never synced";
+  const diff = Date.now() - new Date(iso).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "Synced recently";
+  if (hours < 24) return `Synced ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `Synced ${days}d ago`;
+}
 
 export default function GitHubImportSection() {
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [mergeSelected, setMergeSelected] = useState<Set<number>>(new Set());
   const [showAll, setShowAll] = useState(false);
+  const [syncingProfile, setSyncingProfile] = useState(false);
   const PAGE_SIZE = 5;
+
+  const loadConnected = useCallback(async () => {
+    setPhase({ name: "loading" });
+    try {
+      const status = await api.github.status();
+      if (!status.connected) {
+        setPhase({ name: "disconnected" });
+        return;
+      }
+      const { data: proposals } = await api.projectProposals.list("pending");
+      setPhase({ name: "connected", status, proposals });
+    } catch (err: unknown) {
+      setPhase({ name: "idle" });
+      toast.error(err instanceof Error ? err.message : "Could not load GitHub status");
+    }
+  }, []);
 
   const fetchRepos = useCallback(async () => {
     setPhase({ name: "loading" });
     try {
-      const data = await api.github.repos();
-      if (!data.connected) {
+      const [status, data] = await Promise.all([api.github.status(), api.github.repos()]);
+      if (!status.connected || !data?.connected) {
         setPhase({ name: "disconnected" });
         return;
       }
       const reviewable = data.repos.filter((r) => r.status !== "existing");
-      setPhase({ name: "review", repos: reviewable });
+      if (reviewable.length === 0) {
+        const { data: proposals } = await api.projectProposals.list("pending");
+        setPhase({ name: "connected", status, proposals });
+        return;
+      }
+      setPhase({ name: "review", repos: reviewable, status });
       setSelected(new Set(reviewable.filter((r) => r.status === "new").map((r) => r.repo.id)));
       setMergeSelected(
-        new Set(reviewable.filter((r) => r.status === "merge_candidate").map((r) => r.repo.id))
+        new Set(reviewable.filter((r) => r.status === "merge_candidate").map((r) => r.repo.id)),
       );
       setShowAll(false);
-    } catch {
+    } catch (err: unknown) {
       setPhase({ name: "idle" });
-      toast.error("Could not fetch GitHub repos");
+      toast.error(err instanceof Error ? err.message : "Could not fetch GitHub repos");
     }
   }, []);
+
+  useEffect(() => {
+    void loadConnected();
+  }, [loadConnected]);
 
   async function handleConnect() {
     setPhase({ name: "loading" });
     try {
-      await authClient.signIn.social({
+      const result = await authClient.linkSocial({
         provider: "github",
         callbackURL: window.location.href,
+        scopes: ["repo"],
       });
+      const authUrl = result.data?.url;
+      if (authUrl) {
+        window.location.assign(authUrl);
+        return;
+      }
+      await loadConnected();
+    } catch (err: unknown) {
+      setPhase({ name: "disconnected" });
+      toast.error(err instanceof Error ? err.message : "GitHub connection failed");
+    }
+  }
+
+  async function handleProfileSync() {
+    setSyncingProfile(true);
+    try {
+      await api.github.ingest();
+      toast.success("GitHub profile sync scheduled");
+      setTimeout(() => void loadConnected(), 3000);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Sync failed");
+    } finally {
+      setSyncingProfile(false);
+    }
+  }
+
+  async function acceptProposal(id: string) {
+    try {
+      const { project } = await api.projectProposals.accept(id);
+      toast.success(`Added ${project.title} to your profile`);
+      await loadConnected();
     } catch {
-      setPhase({ name: "idle" });
-      toast.error("GitHub connection failed");
+      toast.error("Could not accept project proposal");
+    }
+  }
+
+  async function dismissProposal(id: string) {
+    try {
+      await api.projectProposals.dismiss(id);
+      if (phase.name === "connected") {
+        setPhase({
+          ...phase,
+          proposals: phase.proposals.filter((p) => p.id !== id),
+        });
+      }
+    } catch {
+      toast.error("Could not dismiss proposal");
     }
   }
 
@@ -99,11 +194,11 @@ export default function GitHubImportSection() {
       setPhase({ name: "done", ...result });
       toast.success(
         `Profile updated — imported ${result.imported} project${result.imported !== 1 ? "s" : ""}` +
-          (result.merged > 0 ? `, updated ${result.merged}` : "")
+          (result.merged > 0 ? `, updated ${result.merged}` : ""),
       );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Sync failed");
-      setPhase({ name: "idle" });
+      await loadConnected();
     }
   }
 
@@ -119,13 +214,15 @@ export default function GitHubImportSection() {
   const selectedCount =
     phase.name === "review"
       ? [...phase.repos].filter((r) =>
-          r.status === "new" ? selected.has(r.repo.id) : mergeSelected.has(r.repo.id)
+          r.status === "new" ? selected.has(r.repo.id) : mergeSelected.has(r.repo.id),
         ).length
       : 0;
 
+  const statusBar =
+    phase.name === "connected" || phase.name === "review" ? phase.status : null;
+
   return (
     <div className="mt-8">
-      {/* Header row */}
       <div className="flex items-center justify-between mb-3">
         <div>
           <div
@@ -138,10 +235,9 @@ export default function GitHubImportSection() {
             GitHub
           </h3>
         </div>
-
-        {phase.name === "review" && (
+        {(phase.name === "connected" || phase.name === "review") && (
           <button
-            onClick={fetchRepos}
+            onClick={() => void (phase.name === "review" ? fetchRepos() : loadConnected())}
             className="text-mute hover:text-ink-2 transition-colors p-1.5 rounded-lg hover:bg-bg-sub"
             title="Refresh"
           >
@@ -150,10 +246,7 @@ export default function GitHubImportSection() {
         )}
       </div>
 
-      {/* Card */}
       <div className="rounded-xl border border-line bg-surface overflow-hidden">
-
-        {/* ── Idle ── */}
         {phase.name === "idle" && (
           <div className="flex items-center justify-between px-6 py-5">
             <div className="flex items-center gap-3">
@@ -162,20 +255,19 @@ export default function GitHubImportSection() {
               </div>
               <div>
                 <p className="font-medium text-ink-2" style={{ fontSize: "var(--text-sm)" }}>
-                  Import your repositories
+                  Deep profile from GitHub
                 </p>
                 <p className="text-mute-2 mt-0.5" style={{ fontSize: "var(--text-xs)" }}>
-                  Pull owned repos in as profile projects, with skills auto-tagged
+                  Daily sync learns your stack, work patterns, and suggests projects
                 </p>
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={fetchRepos} className="shrink-0 ml-4">
+            <Button size="sm" variant="outline" onClick={() => void loadConnected()} className="shrink-0 ml-4">
               Connect <ArrowRight className="w-3 h-3 ml-1" />
             </Button>
           </div>
         )}
 
-        {/* ── Loading ── */}
         {phase.name === "loading" && (
           <div className="px-6 py-5 space-y-3">
             {[1, 2, 3].map((i) => (
@@ -185,13 +277,11 @@ export default function GitHubImportSection() {
                   <Skeleton className="h-3 w-32 rounded bg-bg-sub-2" />
                   <Skeleton className="h-2.5 w-48 rounded bg-bg-sub-2" />
                 </div>
-                <Skeleton className="h-5 w-14 rounded-full bg-bg-sub-2" />
               </div>
             ))}
           </div>
         )}
 
-        {/* ── Disconnected ── */}
         {phase.name === "disconnected" && (
           <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
             <div className="w-12 h-12 rounded-xl bg-bg-sub-2 border border-line flex items-center justify-center">
@@ -202,29 +292,137 @@ export default function GitHubImportSection() {
                 Connect your GitHub account
               </p>
               <p className="text-mute-2 mt-1 max-w-xs" style={{ fontSize: "var(--text-xs)" }}>
-                Authorize GitHub so Kursa can read your repositories and import them as profile projects.
+                OAuth lets Kursa read repos, READMEs, and activity — skills and projects land as proposals until you accept.
               </p>
             </div>
-            <Button size="sm" onClick={handleConnect}>
+            <Button size="sm" onClick={() => void handleConnect()}>
               <GitHubLogoIcon className="w-3.5 h-3.5 mr-1.5" />
               Authorize GitHub
             </Button>
           </div>
         )}
 
-        {/* ── Review ── */}
+        {statusBar && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-line bg-bg-sub/40">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-bg-sub-2 border border-line flex items-center justify-center shrink-0">
+                <GitHubLogoIcon className="w-4 h-4 text-ink-2" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-ink-2 truncate" style={{ fontSize: "var(--text-sm)" }}>
+                  {statusBar.username ? `@${statusBar.username}` : "Connected"}
+                </p>
+                <p className="text-mute-2" style={{ fontSize: "var(--text-xs)" }}>
+                  {formatLastSync(statusBar.lastIngestedAt)}
+                  {statusBar.snapshotStatus === "pending" && " · syncing…"}
+                  {statusBar.lastError && ` · ${statusBar.lastError}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {statusBar.pushVelocity && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-line bg-bg-sub-2 px-2 py-0.5 text-mute-2" style={{ fontSize: "10px" }}>
+                  <Zap className="w-3 h-3" />
+                  {VELOCITY_LABEL[statusBar.pushVelocity] ?? statusBar.pushVelocity}
+                </span>
+              )}
+              <Button size="sm" variant="outline" onClick={() => void handleProfileSync()} disabled={syncingProfile}>
+                {syncingProfile ? "Scheduling…" : "Sync now"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {phase.name === "connected" && (
+          <div className="px-6 py-5 space-y-5">
+            {(phase.status.pendingSkillProposals > 0 || phase.status.pendingProjectProposals > 0) && (
+              <div className="rounded-lg border border-[var(--accent-line)] bg-[var(--accent-soft)] p-4">
+                <p className="text-xs font-medium text-ink">Pending proposals</p>
+                <p className="mt-1 text-2xs text-mute-2 leading-relaxed">
+                  {phase.status.pendingSkillProposals > 0 && (
+                    <>
+                      {phase.status.pendingSkillProposals} skill proposal
+                      {phase.status.pendingSkillProposals !== 1 ? "s" : ""}
+                    </>
+                  )}
+                  {phase.status.pendingSkillProposals > 0 && phase.status.pendingProjectProposals > 0 && " · "}
+                  {phase.status.pendingProjectProposals > 0 && (
+                    <>
+                      {phase.status.pendingProjectProposals} project proposal
+                      {phase.status.pendingProjectProposals !== 1 ? "s" : ""}
+                    </>
+                  )}
+                </p>
+                {phase.status.pendingSkillProposals > 0 && (
+                  <Link
+                    href={"/dashboard/skills" as Route}
+                    className="mt-2 inline-block text-2xs text-accent hover:underline"
+                  >
+                    Review skills →
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {phase.proposals.length > 0 ? (
+              <div>
+                <div className="mono text-2xs uppercase tracking-mono text-mute-2 mb-3">
+                  project proposals · {phase.proposals.length}
+                </div>
+                <div className="divide-y divide-line rounded-lg border border-line overflow-hidden">
+                  {phase.proposals.map((p) => (
+                    <div key={p.id} className="px-4 py-3 bg-bg-sub/30">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-ink-2">{p.title}</p>
+                          {p.description && (
+                            <p className="text-mute-2 mt-0.5 line-clamp-2" style={{ fontSize: "var(--text-xs)" }}>
+                              {p.description}
+                            </p>
+                          )}
+                          <p className="text-mute-3 mt-1" style={{ fontSize: "10px" }}>
+                            {p.evidence}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" onClick={() => void acceptProposal(p.id)}>
+                            Accept
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => void dismissProposal(p.id)}>
+                            Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-mute-2 text-center py-4" style={{ fontSize: "var(--text-sm)" }}>
+                No pending project proposals. Kursa will suggest repos after the next daily sync.
+              </p>
+            )}
+
+            <div className="flex justify-center pt-2">
+              <Button size="sm" variant="outline" onClick={() => void fetchRepos()}>
+                Review repos to import
+              </Button>
+            </div>
+          </div>
+        )}
+
         {phase.name === "review" && (
           <>
             {phase.repos.length === 0 ? (
               <div className="px-6 py-10 text-center">
                 <p className="text-mute-2" style={{ fontSize: "var(--text-sm)" }}>
-                  All your repos are already in your profile.
+                  All your repos are already in your profile or pending as proposals.
                 </p>
               </div>
             ) : (
               <>
                 <div className="divide-y divide-line">
-                  {(showAll ? phase.repos : phase.repos.slice(0, PAGE_SIZE)).map(({ repo, status, existingProjectId }) => {
+                  {(showAll ? phase.repos : phase.repos.slice(0, PAGE_SIZE)).map(({ repo, status }) => {
                     const isNew = status === "new";
                     const checked = isNew ? selected.has(repo.id) : mergeSelected.has(repo.id);
                     const langColor = repo.language ? LANG_COLORS[repo.language] : undefined;
@@ -238,38 +436,25 @@ export default function GitHubImportSection() {
                           checked ? "bg-bg-sub" : "hover:bg-bg-sub/50"
                         }`}
                       >
-                        {/* Checkbox indicator */}
                         <div
                           className={`mt-0.5 w-4 h-4 rounded shrink-0 border flex items-center justify-center transition-colors ${
-                            checked
-                              ? "bg-ink border-ink"
-                              : "border-line bg-transparent"
+                            checked ? "bg-ink border-ink" : "border-line bg-transparent"
                           }`}
                         >
                           {checked && <Check className="w-2.5 h-2.5 text-bg" strokeWidth={3} />}
                         </div>
-
-                        {/* Repo info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span
-                              className="font-medium text-ink-2"
-                              style={{ fontSize: "var(--text-sm)" }}
-                            >
+                            <span className="font-medium text-ink-2" style={{ fontSize: "var(--text-sm)" }}>
                               {repo.name}
                             </span>
-
                             {status === "merge_candidate" && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                                 Updates existing
                               </span>
                             )}
-
                             {repo.language && (
-                              <span
-                                className="inline-flex items-center gap-1 text-mute-2"
-                                style={{ fontSize: "var(--text-xs)" }}
-                              >
+                              <span className="inline-flex items-center gap-1 text-mute-2" style={{ fontSize: "var(--text-xs)" }}>
                                 <span
                                   className="w-2 h-2 rounded-full shrink-0"
                                   style={{ backgroundColor: langColor ?? "#8b8b8b" }}
@@ -278,42 +463,14 @@ export default function GitHubImportSection() {
                               </span>
                             )}
                           </div>
-
                           {repo.description && (
-                            <p
-                              className="text-mute-2 mt-0.5 line-clamp-1"
-                              style={{ fontSize: "var(--text-xs)" }}
-                            >
+                            <p className="text-mute-2 mt-0.5 line-clamp-1" style={{ fontSize: "var(--text-xs)" }}>
                               {repo.description}
                             </p>
                           )}
-
-                          {repo.topics.length > 0 && (
-                            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                              {repo.topics.slice(0, 4).map((t) => (
-                                <span
-                                  key={t}
-                                  className="px-1.5 py-0.5 rounded-full border border-line text-mute-2 bg-bg-sub-2"
-                                  style={{ fontSize: "10px" }}
-                                >
-                                  {t}
-                                </span>
-                              ))}
-                              {repo.topics.length > 4 && (
-                                <span className="text-mute-3" style={{ fontSize: "10px" }}>
-                                  +{repo.topics.length - 4}
-                                </span>
-                              )}
-                            </div>
-                          )}
                         </div>
-
-                        {/* Stars */}
                         {repo.stargazers_count > 0 && (
-                          <div
-                            className="flex items-center gap-1 text-mute-3 shrink-0 mt-0.5"
-                            style={{ fontSize: "var(--text-xs)" }}
-                          >
+                          <div className="flex items-center gap-1 text-mute-3 shrink-0 mt-0.5" style={{ fontSize: "var(--text-xs)" }}>
                             <Star className="w-3 h-3" />
                             <span>{repo.stargazers_count}</span>
                           </div>
@@ -322,8 +479,6 @@ export default function GitHubImportSection() {
                     );
                   })}
                 </div>
-
-                {/* Show more */}
                 {!showAll && phase.repos.length > PAGE_SIZE && (
                   <button
                     type="button"
@@ -334,28 +489,24 @@ export default function GitHubImportSection() {
                     Show {phase.repos.length - PAGE_SIZE} more
                   </button>
                 )}
-
-                {/* Footer */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-line bg-bg-sub/30">
                   <p className="text-mute-2" style={{ fontSize: "var(--text-xs)" }}>
-                    {selectedCount === 0
-                      ? "Nothing selected"
-                      : `${selectedCount} repo${selectedCount !== 1 ? "s" : ""} selected`}
+                    {selectedCount === 0 ? "Nothing selected" : `${selectedCount} repo${selectedCount !== 1 ? "s" : ""} selected`}
                   </p>
-                  <Button
-                    size="sm"
-                    onClick={handleSync}
-                    disabled={selectedCount === 0}
-                  >
-                    Import selected
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => void loadConnected()}>
+                      Back
+                    </Button>
+                    <Button size="sm" onClick={() => void handleSync()} disabled={selectedCount === 0}>
+                      Import selected
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
           </>
         )}
 
-        {/* ── Syncing ── */}
         {phase.name === "syncing" && (
           <div className="px-6 py-5 space-y-3">
             {[1, 2, 3].map((i) => (
@@ -371,7 +522,6 @@ export default function GitHubImportSection() {
           </div>
         )}
 
-        {/* ── Done ── */}
         {phase.name === "done" && (
           <div className="flex items-start justify-between gap-4 px-6 py-5">
             <div className="flex items-start gap-3">
@@ -385,16 +535,12 @@ export default function GitHubImportSection() {
                 <div className="mt-2 grid gap-1 text-mute-2" style={{ fontSize: "var(--text-xs)" }}>
                   <p>Imported {phase.imported} project{phase.imported !== 1 ? "s" : ""}</p>
                   <p>Updated {phase.merged} project{phase.merged !== 1 ? "s" : ""}</p>
-                  {phase.skills.length > 0 && (
-                    <p>Added skills: {phase.skills.slice(0, 8).join(", ")}{phase.skills.length > 8 ? ` +${phase.skills.length - 8}` : ""}</p>
-                  )}
                   {phase.githubUrl && <p>GitHub profile: {phase.githubUrl}</p>}
-                  <p>Saved as career activity</p>
                 </div>
               </div>
             </div>
-            <Button size="sm" variant="ghost" onClick={fetchRepos} className="shrink-0 text-mute-2">
-              Sync again
+            <Button size="sm" variant="ghost" onClick={() => void loadConnected()} className="shrink-0 text-mute-2">
+              Done
             </Button>
           </div>
         )}

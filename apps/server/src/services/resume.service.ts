@@ -136,11 +136,12 @@ export async function generateResume(userId: string): Promise<Resume | null> {
   const used = await usedToday(profile.id);
   if (used >= RESUME_DAILY_LIMIT) throw new QuotaExceededError(used, RESUME_DAILY_LIMIT);
 
-  if (!profile.careerPaths[0]) return null;
+  const activePath = profile.careerPaths[0];
+  const target = mapper.toTarget(activePath, profile.targetRole);
+  if (!target.targetRole) return null;
 
   return acquireLock(userId, async () => {
     const snapshot = mapper.toSnapshot(user.name, user.email, profile);
-    const target = mapper.toTarget(profile.careerPaths[0]!);
 
     const content = await aiGenerateResume(snapshot, target);
     const { atsScore, atsIssues } = await scoreAts(content, target);
@@ -155,7 +156,7 @@ export async function generateResume(userId: string): Promise<Resume | null> {
     const row = await prisma.resume.create({
       data: {
         profileId: profile.id,
-        careerPathId: profile.careerPaths[0]?.id ?? null,
+        careerPathId: activePath?.id ?? null,
         targetRole: target.targetRole,
         version,
         content: content as unknown as Prisma.InputJsonValue,
@@ -197,6 +198,7 @@ export async function analyzeResume(userId: string, id: string): Promise<Resume 
     where: { userId },
     select: {
       id: true,
+      targetRole: true,
       careerPaths: {
         where: { isActive: true },
         select: { id: true, title: true, milestones: true },
@@ -210,11 +212,11 @@ export async function analyzeResume(userId: string, id: string): Promise<Resume 
     where: { id, profileId: profile.id },
   });
   if (!row) return null;
-  if (!profile.careerPaths[0]) return null;
+  const target = mapper.toTarget(profile.careerPaths[0], profile.targetRole);
+  if (!target.targetRole) return null;
 
   return acquireLock(userId, async () => {
     const content = row.content as unknown as ResumeContent;
-    const target = mapper.toTarget(profile.careerPaths[0]!);
     const { atsScore, atsIssues } = await scoreAts(content, target);
 
     const updated = await prisma.resume.update({
@@ -241,7 +243,8 @@ export async function improveResumeAts(userId: string, id: string): Promise<Resu
     where: { id, profileId: profile.id },
   });
   if (!row) return null;
-  if (!profile.careerPaths[0]) return null;
+  const target = mapper.toTarget(profile.careerPaths[0], profile.targetRole);
+  if (!target.targetRole) return null;
 
   const used = improvesUsedToday(profile.id);
   if (used >= IMPROVE_ATS_DAILY_LIMIT) throw new QuotaExceededError(used, IMPROVE_ATS_DAILY_LIMIT);
@@ -250,7 +253,6 @@ export async function improveResumeAts(userId: string, id: string): Promise<Resu
     const content = row.content as unknown as ResumeContent;
     const atsIssues = (row.atsIssues as unknown as AtsIssue[]) ?? [];
     const snapshot = mapper.toSnapshot(user.name, user.email, profile);
-    const target = mapper.toTarget(profile.careerPaths[0]!);
     const draft = await improveResumeForAts(content, atsIssues, target, snapshot);
 
     recordImproveUsed(profile.id);

@@ -48,3 +48,27 @@ export async function recordDecision(req: Request, res: Response): Promise<void>
   });
   ok(res, { recorded: true });
 }
+
+export async function getMeta(req: Request, res: Response): Promise<void> {
+  const data = await chatService.getChatMeta(req.user!.id);
+  ok(res, data);
+}
+
+export async function getSuggestedPrompts(req: Request, res: Response): Promise<void> {
+  const prompts = await chatService.getSuggestedPrompts(req.user!.id);
+  ok(res, { prompts });
+}
+
+export async function deleteConversation(req: Request, res: Response): Promise<void> {
+  const conversationId = String(req.params.id);
+  if (!conversationId) throw Errors.badRequest("Conversation id required");
+  try {
+    await chatService.deleteConversation(req.user!.id, conversationId);
+    ok(res, { deleted: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Delete failed";
+    if (message.includes("not found")) throw Errors.notFound(message);
+    if (message.includes("main thread")) throw Errors.badRequest(message);
+    throw err;
+  }
+}

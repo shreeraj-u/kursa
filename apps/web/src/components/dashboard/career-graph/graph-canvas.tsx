@@ -261,6 +261,8 @@ export default function GraphCanvas({
   }
 
   function onPointerDownBg(e: React.PointerEvent) {
+    if (dragRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
     panRef.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
   }
 
@@ -272,10 +274,12 @@ export default function GraphCanvas({
       dragRef.current.moved = true;
       return;
     }
-    if (panRef.current) {
-      const dx = e.clientX - panRef.current.x;
-      const dy = e.clientY - panRef.current.y;
-      setView((v) => ({ ...v, x: panRef.current!.vx + dx, y: panRef.current!.vy + dy }));
+    const pan = panRef.current;
+    if (pan) {
+      const dx = e.clientX - pan.x;
+      const dy = e.clientY - pan.y;
+      const { vx, vy } = pan;
+      setView((v) => ({ ...v, x: vx + dx, y: vy + dy }));
     }
   }
 

@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-export function TypingIndicator() {
+export function TypingIndicator({ avatar = "K" }: { avatar?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -9,7 +9,7 @@ export function TypingIndicator() {
       className="flex items-center gap-2"
     >
       <div className="flex h-7 w-7 items-center justify-center rounded-full border border-accent bg-bg-sub text-xs text-ink mono">
-        K
+        {avatar}
       </div>
       <div className="flex gap-1 rounded-2xl px-3 py-2 bg-bg-sub border border-line">
         {[0, 1, 2].map((dot) => (

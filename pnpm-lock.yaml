@@ -257,6 +257,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@better-auth/utils':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@kursa/env':
         specifier: workspace:*
         version: link:../env

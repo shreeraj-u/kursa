@@ -43,6 +43,11 @@ export default async function DashboardLayout({
             (a) => a.status === "active"
         ).length ?? 0;
 
+    const proposalsResult = await serverFetch<{ data: unknown[]; total: number }>(
+        "/api/v1/profile/me/skill-proposals?status=pending&limit=1",
+    );
+    const skillsProposalCount = proposalsResult.ok ? proposalsResult.data.total : 0;
+
     const user = {
         name: session.user.name,
         email: session.user.email,
@@ -57,6 +62,7 @@ export default async function DashboardLayout({
                 user={user}
                 attentionCount={attentionCount}
                 applicationCount={applicationCount}
+                skillsProposalCount={skillsProposalCount}
             />
             <main
                 className="flex-1 overflow-y-auto"

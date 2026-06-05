@@ -13,6 +13,7 @@
         "db:push": "prisma db push",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
+        "db:migrate:deploy": "prisma migrate deploy",
         "postinstall": "prisma generate",
         "db:studio": "prisma studio",
         "seed:dashboard": "SEED_SCENARIO=dashboard pnpm prisma db seed",
@@ -20,6 +21,7 @@
         "seed:tester2": "SEED_SCENARIO=tester2 pnpm prisma db seed"
     },
     "dependencies": {
+        "@better-auth/utils": "^0.4.0",
         "@kursa/env": "workspace:*",
         "@neondatabase/serverless": "^1.0.2",
         "@prisma/adapter-neon": "^7.8.0",

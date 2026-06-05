@@ -7,7 +7,7 @@
     ],
     "type": "module",
     "scripts": {
-        "dev": "turbo dev",
+        "dev": "pnpm db:migrate && turbo dev",
         "build": "turbo build",
         "check-types": "turbo check-types",
         "dev:web": "turbo -F web dev",
@@ -15,7 +15,8 @@
         "db:push": "turbo -F @kursa/db db:push",
         "db:studio": "turbo -F @kursa/db db:studio",
         "db:generate": "turbo -F @kursa/db db:generate",
-        "db:migrate": "turbo -F @kursa/db db:migrate"
+        "db:migrate": "turbo -F @kursa/db db:migrate",
+        "db:migrate:deploy": "turbo -F @kursa/db db:migrate:deploy"
     },
     "dependencies": {
         "@kursa/env": "workspace:*",
