@@ -1,6 +1,6 @@
 import type { AchievementType, ResumeAchievement, ResumeContent, ResumeSectionKey } from "@kursa/types";
 
-export const DEFAULT_RESUME_SECTION_ORDER: ResumeSectionKey[] = [
+const DEFAULT_RESUME_SECTION_ORDER: ResumeSectionKey[] = [
   "summary",
   "skills",
   "experience",

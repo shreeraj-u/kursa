@@ -56,7 +56,7 @@ async function ingestLinkedInSyncEvent(
   userId: string,
   snapshot: { linkedInUrl: string; currentRole: string | null; skillCount: number },
 ): Promise<void> {
-  const { ingestEvent } = await import("./events.service.js");
+  const { ingestEvent } = await import("./career-event-intelligence/index.js");
   await ingestEvent(userId, {
     type: "system",
     source: "system",

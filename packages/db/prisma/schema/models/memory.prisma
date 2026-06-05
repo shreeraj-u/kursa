@@ -10,6 +10,7 @@ enum CareerEventType {
   profile_import
   onboarding_complete
   application_update
+  github_sync
   system
   chat_insight
 }
@@ -29,6 +30,7 @@ enum SkillSource {
   market
   path
   user_edited
+  github_import
 }
 
 enum SkillProposalType {

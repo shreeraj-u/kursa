@@ -44,6 +44,12 @@ export async function getDashboardMetrics(userId: string) {
               body: e.body?.slice(0, 80) ?? "",
               occurredAt: e.occurredAt,
             })),
+          recentEvents: context.recentEvents.map((e) => ({
+            id: e.id,
+            type: e.type,
+            body: e.body,
+            occurredAt: e.occurredAt,
+          })),
         }
       : null,
   };

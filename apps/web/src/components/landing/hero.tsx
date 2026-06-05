@@ -7,6 +7,7 @@ import { AnimatedWord } from "@/components/motion/animated-word";
 import HeroDashboardMock from "@/components/mocks/hero-dashboard";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
+const SIGNALS = ["profile memory", "journey reasoning", "resume tailoring", "journal intelligence"];
 
 function FadeChild({
   children,
@@ -32,73 +33,66 @@ export default function Hero() {
   const reduced = useReducedMotion();
 
   return (
-    <header className="relative py-24 border-b border-[var(--line)] overflow-hidden">
-      {/* Ambient gradient orbs */}
-      {!reduced && (
-        <>
-          <motion.div
-            className="absolute pointer-events-none select-none"
-            style={{
-              width: 700,
-              height: 700,
-              borderRadius: "50%",
-              background: "radial-gradient(circle, var(--accent-soft) 0%, transparent 65%)",
-              top: -260,
-              left: -200,
-            }}
-            animate={{ x: [0, 60, 0], y: [0, 45, 0] }}
-            transition={{ duration: 16, ease: "easeInOut", repeat: Infinity }}
-          />
-          <motion.div
-            className="absolute pointer-events-none select-none"
-            style={{
-              width: 500,
-              height: 500,
-              borderRadius: "50%",
-              background: "radial-gradient(circle, var(--accent-soft) 0%, transparent 65%)",
-              bottom: -80,
-              right: -80,
-            }}
-            animate={{ x: [0, -40, 0], y: [0, -30, 0] }}
-            transition={{ duration: 12, ease: "easeInOut", repeat: Infinity, delay: 4 }}
-          />
-        </>
-      )}
+    <header className="relative min-h-[calc(100svh-3.5rem)] border-b border-[var(--line)] overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to right, color-mix(in srgb, var(--line) 60%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--line) 60%, transparent) 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
+          maskImage: "linear-gradient(to bottom, black 0%, black 62%, transparent 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-x-0 top-0 h-48 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, color-mix(in srgb, var(--surface) 72%, transparent), transparent)",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-16 h-px w-[min(1180px,calc(100vw-48px))] -translate-x-1/2 pointer-events-none"
+        style={{ background: "linear-gradient(to right, transparent, var(--accent-line), transparent)" }}
+      />
 
-      <div className="relative mx-auto max-w-6xl px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Copy — staggered page-load */}
-          <div className="flex flex-col gap-5">
+      <div className="relative mx-auto max-w-6xl px-6 py-14 sm:py-18 lg:px-8 lg:py-20">
+        <div className="flex min-h-[calc(100svh-9.5rem)] flex-col items-center justify-center gap-10">
+          <div className="mx-auto flex max-w-[960px] flex-col items-center gap-6 text-center">
             <FadeChild delay={0} reduced={reduced}>
               <span className="chip live inline-flex">
                 <span className="dot" />
-                Beta Test
+                Hackathon preview
               </span>
             </FadeChild>
 
-            {/* Word-level staggered headline */}
             <h1
-              className="font-semibold leading-[1.05] tracking-tight"
-              style={{ fontSize: "clamp(2.4rem, 5vw, 3.25rem)" }}
+              className="max-w-[960px] font-semibold leading-[0.99] tracking-tighter"
+              style={{ fontSize: "clamp(3rem, 6vw, 4.85rem)" }}
             >
               <span className="block">
-                {["A", "career,", "designed."].map((word, i) => (
+                {["A", "career", "operating"].map((word, i) => (
                   <AnimatedWord
                     key={word}
                     word={word}
                     delay={0.08 + i * 0.06}
-
                     color="var(--ink)"
                   />
                 ))}
               </span>
               <span className="block">
-                {["Not", "job-hunted."].map((word, i) => (
+                {["system,"].map((word, i) => (
                   <AnimatedWord
                     key={word}
                     word={word}
-                    delay={0.28 + i * 0.06}
-
+                    delay={0.26 + i * 0.06}
+                    color="var(--ink)"
+                  />
+                ))}
+                {["not", "another", "job", "board."].map((word, i) => (
+                  <AnimatedWord
+                    key={word}
+                    word={word}
+                    delay={0.34 + i * 0.06}
                     color="var(--mute-2)"
                   />
                 ))}
@@ -106,36 +100,59 @@ export default function Hero() {
             </h1>
 
             <FadeChild delay={0.42} reduced={reduced}>
-              <p className="lede max-w-md">
-                Kursa is an AI career operating system. It thinks alongside you between roles,
-                during reviews, and across the years in between. One advisor. Your whole career.
+              <p className="lede max-w-[760px]">
+                Kursa is an AI career advisor with persistent memory. It turns your profile,
+                journal, applications, and wins into specific next steps across the whole career.
               </p>
             </FadeChild>
 
             <FadeChild delay={0.5} reduced={reduced}>
-              <div className="flex items-center gap-5 flex-wrap">
-                <Button size="lg" render={<a href="/login" />} nativeButton={false}>
-                  Get started — free
-                </Button>
-                <a
-                  href="#how"
-                  className="flex items-center gap-1.5 text-[var(--mute)] hover:text-[var(--ink)] transition-colors"
-                  style={{ fontSize: "var(--text-base)" }}
-                >
-                  See how it works <span aria-hidden>→</span>
-                </a>
+              <div className="flex flex-col items-center gap-5">
+                <div className="flex items-center justify-center gap-5 flex-wrap">
+                  <Button size="lg" render={<a href="/login" />} nativeButton={false}>
+                    Enter Kursa
+                  </Button>
+                  <a
+                    href="#how"
+                    className="flex items-center gap-1.5 text-[var(--mute)] hover:text-[var(--ink)] transition-colors"
+                    style={{ fontSize: "var(--text-base)" }}
+                  >
+                    See the demo flow <span aria-hidden>→</span>
+                  </a>
+                </div>
+                <div className="grid max-w-xl grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center">
+                  {SIGNALS.map((signal) => (
+                    <span
+                      key={signal}
+                      className="mono rounded-md border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_72%,transparent)] px-3 py-2 text-[var(--mute)]"
+                      style={{ fontSize: "var(--text-xs)" }}
+                    >
+                      {signal}
+                    </span>
+                  ))}
+                </div>
               </div>
             </FadeChild>
           </div>
 
-          {/* Mock — delayed fade-in + subtle scale */}
           <motion.div
-            className="hidden lg:block"
+            className="relative w-full max-w-[920px]"
             initial={{ opacity: 0, y: reduced ? 0 : 20, scale: reduced ? 1 : 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
           >
-            <HeroDashboardMock />
+            <div
+              className="absolute -inset-3 rounded-[18px]"
+              style={{
+                background:
+                  "linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--bg-sub) 86%, transparent))",
+                border: "1px solid var(--line)",
+                boxShadow: "0 28px 80px color-mix(in srgb, var(--ink) 10%, transparent)",
+              }}
+            />
+            <div className="relative mx-auto">
+              <HeroDashboardMock />
+            </div>
           </motion.div>
         </div>
       </div>

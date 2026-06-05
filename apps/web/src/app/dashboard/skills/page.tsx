@@ -1,33 +1,29 @@
-import type { SkillsOverviewResponse } from "@kursa/types";
+import type { CareerJourneyResponse, SkillsOverviewResponse, UserProfile } from "@kursa/types";
 
 import { requireOnboarded } from "@/lib/require-onboarded";
 import { serverFetch } from "@/lib/server-fetch";
 
-import SkillsPageClient from "@/components/dashboard/skills/skills-page-client";
+import { SkillsStudio } from "@/components/dashboard/skills/skills-studio";
 
-export default async function SkillsPage() {
+export default async function Page() {
   await requireOnboarded();
 
-  const result = await serverFetch<SkillsOverviewResponse>("/api/v1/profile/me/skills/overview");
+  const [profileResult, journeyResult, overviewResult] = await Promise.all([
+    serverFetch<{ profile: UserProfile | null }>("/api/v1/profile/me"),
+    serverFetch<CareerJourneyResponse>("/api/v1/profile/me/journey"),
+    serverFetch<SkillsOverviewResponse>("/api/v1/profile/me/skills/overview"),
+  ]);
+
+  const profile = profileResult.ok ? profileResult.data.profile : null;
+  const activePath = journeyResult.ok ? journeyResult.data.journey : null;
+  const overview = overviewResult.ok ? overviewResult.data : null;
 
   return (
-    <SkillsPageClient
-      initialOverview={
-        result.ok
-          ? result.data
-          : {
-              skills: [],
-              recommendations: [],
-              proposals: [],
-              learningGoals: [],
-              signals: {
-                profileCompleteness: 0,
-                staleCount: 0,
-                marketAlignedCount: 0,
-                pendingProposalCount: 0,
-              },
-            }
-      }
+    <SkillsStudio
+      initialSkills={profile?.skills ?? []}
+      initialGoals={profile?.learningGoals ?? []}
+      activePath={activePath}
+      initialOverview={overview}
     />
   );
 }

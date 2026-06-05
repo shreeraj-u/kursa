@@ -29,7 +29,7 @@ const SIZES = {
   xl: { fontSize: 44,  arrow: 22 },
 } as const;
 
-export type LogoSize = keyof typeof SIZES;
+type LogoSize = keyof typeof SIZES;
 
 // ─── Arrow mark SVG ───────────────────────────────────────────────────────────
 
@@ -151,7 +151,7 @@ type LogoMarkProps = {
 };
 
 /** Standalone accent arrow — use in favicons, small badges, icon-only contexts. */
-export function LogoMark({
+function LogoMark({
   size = "md",
   color = ACCENT,
   className,

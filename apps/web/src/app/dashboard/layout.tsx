@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import DashboardFirstRunGuide from "@/components/dashboard/dashboard-first-run-guide";
 import Sidebar from "@/components/dashboard/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { serverFetch } from "@/lib/server-fetch";
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
 
     const now = Date.now();
 
+    // Must stay in sync with dashboard.compute.ts greeting.attentionCount logic
     const attentionCount =
         profile?.learningGoals?.filter(
             (g) => g.deadline !== null && new Date(g.deadline).getTime() < now
@@ -52,6 +54,8 @@ export default async function DashboardLayout({
         createdAt: session.user.createdAt.toString(),
     };
 
+    const shouldShowFirstRunGuide = Boolean(profile?.onboardingDone && !profile.dashboardGuideCompletedAt);
+
     return (
         <div className="flex h-svh overflow-hidden" style={{ background: "var(--bg)" }}>
             <Sidebar
@@ -68,6 +72,7 @@ export default async function DashboardLayout({
                     {children}
                 </div>
             </main>
+            <DashboardFirstRunGuide shouldShow={shouldShowFirstRunGuide} />
         </div>
     );
 }

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "ignorePatterns": [
+    "apps/server/scripts/**",
+    "apps/web/scripts/**",
+    "packages/db/scripts/**",
+    "packages/db/prisma/seed-*.ts",
+    "designs/**",
+    "apps/web/src/components/dashboard/career-journey/journey-pulse-panel.tsx",
+    "apps/web/src/components/header.tsx",
+    "apps/web/src/components/motion/animated-button.tsx",
+    "apps/web/src/components/user-menu.tsx"
+  ],
+  "ignoreDependencies": ["dotenv", "zod", "@neondatabase/serverless"],
+  "ignoreExports": [{ "file": "apps/server/src/controllers/**", "exports": ["*"] },
+    {
+      "file": "apps/server/src/lib/ai/resume.generate.ts",
+      "exports": ["*"]
+    },
+    {
+      "file": "apps/server/src/services/resume.service.ts",
+      "exports": ["*"]
+    }]
+}

@@ -3,22 +3,29 @@
 import { env } from "@kursa/env/web";
 import type {
   AchievementInput,
-  CareerPath,
-  ChatActionChip,
+  CareerJourney,
+  CareerJourneyResponse,
   ChatDecisionType,
   ChatMetaResponse,
   ChatSendResponse,
   ConversationListItem,
-  ProactiveNudge,
+  JourneyPreferences,
+  LearningGoalCreateInput,
+  LearningGoalUpdateInput,
+  OnboardingReviewResponse,
   ProjectInput,
+  ProactiveNudge,
   RelevanceSummary,
   Resume,
   ResumeContent,
+  ResumeImproveAtsResponse,
   SkillCreateInput,
   SkillProposalListResponse,
   SkillsOverviewResponse,
   SkillSummary,
   SkillUpdateInput,
+  UserLearningGoal,
+  UserSkill,
   UserSocialLink,
 } from "@kursa/types";
 
@@ -40,7 +47,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data;
 }
 
-export type ResumeUploadResult = {
+type ResumeUploadResult = {
   importedSkills: Array<{ name: string; category: "technical" | "soft" | "tool"; confidenceRating: number }>;
   importedWorkHistory: Array<{ companyName: string; roleTitle: string; outcomes: string; startDate: string | null; endDate: string | null; isCurrent: boolean }>;
   importedProjects: ProjectInput[];
@@ -63,6 +70,11 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  dismissDashboardGuide: () =>
+    request<{ dashboardGuideCompletedAt: string }>("/api/v1/profile/me/dashboard-guide/dismiss", {
+      method: "POST",
+    }),
+
   createSocialLink: (body: { platform: string; url: string }) =>
     request<{ socialLink: UserSocialLink }>("/api/v1/profile/me/social-links", {
       method: "POST",
@@ -80,15 +92,60 @@ export const api = {
       method: "DELETE",
     }),
 
-  paths: {
-    generate: () =>
-      request<{ paths: CareerPath[] }>("/api/v1/profile/me/paths/generate", {
+  // Skill inventory
+  createSkill: (body: SkillCreateInput) =>
+    request<{ skill: UserSkill }>("/api/v1/profile/me/skills", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateSkill: (id: string, body: SkillUpdateInput) =>
+    request<{ skill: UserSkill }>(`/api/v1/profile/me/skills/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteSkill: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/skills/${id}`, {
+      method: "DELETE",
+    }),
+
+  // Learning goals
+  createLearningGoal: (body: LearningGoalCreateInput) =>
+    request<{ learningGoal: UserLearningGoal }>("/api/v1/profile/me/learning-goals", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateLearningGoal: (id: string, body: LearningGoalUpdateInput) =>
+    request<{ learningGoal: UserLearningGoal }>(`/api/v1/profile/me/learning-goals/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteLearningGoal: (id: string) =>
+    request<{ deleted: boolean }>(`/api/v1/profile/me/learning-goals/${id}`, {
+      method: "DELETE",
+    }),
+
+  journey: {
+    get: () => request<CareerJourneyResponse>("/api/v1/profile/me/journey"),
+
+    generate: (journeyPreferences?: JourneyPreferences) =>
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/generate", {
         method: "POST",
+        body: JSON.stringify(journeyPreferences ? { journeyPreferences } : {}),
       }),
 
-    activate: (id: string) =>
-      request<{ paths: CareerPath[] }>(`/api/v1/profile/me/paths/${id}/activate`, {
-        method: "PUT",
+    updateMilestone: (order: number, status: import("@kursa/types").MilestoneStatus | null) =>
+      request<{ journey: CareerJourney }>(`/api/v1/profile/me/journey/milestones/${order}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
+
+    extend: () =>
+      request<{ journey: CareerJourney }>("/api/v1/profile/me/journey/extend", {
+        method: "POST",
       }),
   },
 
@@ -150,9 +207,20 @@ export const api = {
       request<{ resume: Resume }>(`/api/v1/profile/me/resumes/${id}/analyze`, {
         method: "POST",
       }),
+
+    improveAts: (id: string) =>
+      request<ResumeImproveAtsResponse>(`/api/v1/profile/me/resumes/${id}/improve-ats`, {
+        method: "POST",
+      }),
   },
 
   onboarding: {
+    review: (payload: unknown) =>
+      request<OnboardingReviewResponse>("/api/v1/onboarding/review", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+
     complete: (payload: unknown) =>
       request<{ ok: true }>("/api/v1/onboarding/complete", {
         method: "POST",
@@ -338,6 +406,28 @@ export const api = {
       }),
   },
 
+  applications: {
+    list: () =>
+      request<import("@kursa/types").ApplicationListResponse>("/api/v1/profile/me/applications"),
+
+    create: (body: import("@kursa/types").ApplicationCreateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>("/api/v1/profile/me/applications", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: import("@kursa/types").ApplicationUpdateInput) =>
+      request<{ application: import("@kursa/types").JobApplication }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/api/v1/profile/me/applications/${id}`, {
+        method: "DELETE",
+      }),
+  },
+
   linkedin: {
     sync: () =>
       request<{ synced: boolean; titleChanged: boolean; newSkills: string[]; message: string }>(
@@ -345,5 +435,15 @@ export const api = {
         { method: "POST" },
       ),
     status: () => request<{ url: string | null; configured: boolean }>("/api/v1/linkedin/status"),
+  },
+
+  github: {
+    repos: () =>
+      request<import("@kursa/types").GitHubSyncPreviewResponse>("/api/v1/github/repos"),
+    sync: (body: import("@kursa/types").GitHubSyncConfirmRequest) =>
+      request<import("@kursa/types").GitHubSyncSummaryResponse>("/api/v1/github/sync", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
   },
 };

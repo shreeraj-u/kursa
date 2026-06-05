@@ -5,7 +5,7 @@ import { assembleAdvisorContext, hashAdvisorContext } from "../lib/advisor-conte
 import { classifyCareerTrajectory } from "../lib/ai/insights.classify.js";
 import { generateObservations, type Observation } from "../lib/ai/insights.generate.js";
 import { generateRuleBasedObservations } from "../compute/observations.fallback.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const OBSERVATION_TTL_MS = 86400000;
 
@@ -18,6 +18,7 @@ const FALLBACK_PATTERNS = [
   /You haven't applied to any .* roles yet/,
 ] as const;
 
+// fallow-ignore-next-line unused-export
 export function isFallbackObservationText(text: string): boolean {
   return FALLBACK_PATTERNS.some((pattern) => pattern.test(text));
 }
@@ -168,7 +169,10 @@ async function getObservationsInner(
       }));
 
       if (observations.length < 4) {
-        observations = supplementFromMemories(observations, context);
+        observations = supplementFromMemories(observations, context).map((o) => ({
+          ...o,
+          source: "llm" as const,
+        }));
       }
 
       return paginateObservations(observations, page, limit, {
@@ -310,7 +314,3 @@ function paginateObservations(
   };
 }
 
-export async function getMaterialChangeFlag(userId: string): Promise<boolean> {
-  const context = await assembleAdvisorContext(userId, "paths");
-  return context?.materialChangeDetected ?? false;
-}

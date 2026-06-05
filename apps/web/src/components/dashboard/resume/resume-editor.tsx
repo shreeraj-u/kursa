@@ -11,28 +11,34 @@ import type {
   ResumeProject,
   ResumeSectionKey,
 } from "@kursa/types";
+import {
+  MAX_ACHIEVEMENTS,
+  MAX_BULLETS,
+  MAX_CERTIFICATIONS,
+  MAX_EDUCATION,
+  MAX_PROJECTS,
+  MAX_ROLES,
+  MAX_SKILLS,
+} from "@kursa/types";
 
 import {
   ACHIEVEMENT_TYPE_LABELS,
   normalizeResumeSectionOrder,
   RESUME_SECTION_LABELS,
 } from "@/lib/dashboard/resume/section-order";
+import {
+  estimatePageWeight,
+  PAGE_FIT_WARNING_THRESHOLD,
+} from "@/lib/dashboard/resume/page-weight";
 import { Button } from "@kursa/ui/components/button";
 import { Input } from "@kursa/ui/components/input";
 
 interface ResumeEditorProps {
   value: ResumeContent;
   onChange: (next: ResumeContent) => void;
+  changedPaths?: string[];
 }
 
-const MAX_EXPERIENCE = 6;
-const MAX_BULLETS = 5;
-const MAX_SKILLS = 20;
-const MAX_EDUCATION = 5;
-const MAX_CERTIFICATIONS = 5;
-const MAX_PROJECTS = 4;
-const MAX_ACHIEVEMENTS = 12;
-const PAGE_FIT_WARNING_THRESHOLD = 112;
 
 const ACHIEVEMENT_TYPES = Object.keys(ACHIEVEMENT_TYPE_LABELS) as AchievementType[];
 
@@ -56,9 +62,9 @@ const emptyEducation: ResumeEducation = { credential: "", issuer: "", year: "" }
 const emptyCertification: ResumeCertification = { name: "", issuer: "", year: "" };
 const emptyAchievement: ResumeAchievement = { type: "HACKATHON", title: "", issuer: "", url: "", year: "" };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, changed = false }: { label: string; children: React.ReactNode; changed?: boolean }) {
   return (
-    <div>
+    <div className={changed ? "rounded-md ring-1 ring-warn/60 bg-warn/5 p-2 -m-2" : undefined}>
       <span className={labelCls}>{label}</span>
       {children}
     </div>
@@ -143,53 +149,30 @@ function ReorderControls({
   );
 }
 
-function estimatePageWeight(content: ResumeContent): number {
-  const projects = content.projects ?? [];
-  const summaryWeight = Math.ceil(content.summary.length / 95);
-  const bulletWeight = content.experience.reduce(
-    (total, exp) => total + exp.bullets.reduce((sum, bullet) => sum + 4 + Math.ceil(bullet.length / 90), 0),
-    0,
-  );
-  const roleWeight = content.experience.length * 7;
-  const projectWeight = projects.reduce(
-    (total, project) =>
-      total +
-      5 +
-      Math.ceil(
-        (project.title.length +
-          project.description.length +
-          (project.period?.length ?? 0) +
-          (project.url?.length ?? 0) +
-          (project.bullets ?? []).join(" ").length) /
-          120,
-      ),
-    0,
-  );
-  const credentialWeight = (content.education.length + content.certifications.length) * 3;
-  const achievementCount = content.achievements?.length ?? 0;
-  const achievementWeight = achievementCount > 0 ? 3 + Math.ceil(achievementCount / 3) : 0;
-  const skillsWeight = Math.ceil(content.skills.length / 4);
-  const contactWeight = Math.ceil(
-    [content.contact.email, content.contact.location, ...content.contact.links]
-      .filter(Boolean)
-      .join(" ").length / 120,
-  );
 
-  return summaryWeight + bulletWeight + roleWeight + projectWeight + credentialWeight + achievementWeight + skillsWeight + contactWeight;
-}
-
-export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
+export default function ResumeEditor({ value, onChange, changedPaths = [] }: ResumeEditorProps) {
   const projects = value.projects ?? [];
   const achievements = value.achievements ?? [];
   const sectionOrder = normalizeResumeSectionOrder(value);
   const likelyOverOnePage = estimatePageWeight(value) > PAGE_FIT_WARNING_THRESHOLD;
 
+  function isChanged(path: string): boolean {
+    return changedPaths.some((changedPath) => changedPath === path || changedPath.startsWith(`${path}.`));
+  }
+
+  function isSectionChanged(section: ResumeSectionKey): boolean {
+    const root = section === "others" ? "achievements" : section;
+    return isChanged(root) || isChanged("sectionOrder");
+  }
+
+  function changedCardCls(path: string): string {
+    return isChanged(path) ? " ring-1 ring-warn/60 bg-warn/5" : "";
+  }
+
   function patch(p: Partial<ResumeContent>) {
     onChange({ ...value, ...p });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _disablePageFitEstimate = estimatePageWeight;
 
   function setExperience(i: number, next: ResumeExperience) {
     patch({ experience: value.experience.map((e, idx) => (idx === i ? next : e)) });
@@ -233,7 +216,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
   function SectionShell({ section, children }: { section: ResumeSectionKey; children: React.ReactNode }) {
     const index = sectionOrder.indexOf(section);
     return (
-      <div className="rounded-lg border border-line bg-bg-sub p-3 flex flex-col gap-3">
+      <div className={`rounded-lg border border-line bg-bg-sub p-3 flex flex-col gap-3${isSectionChanged(section) ? " ring-1 ring-warn/60" : ""}`}>
         <div className="flex items-center justify-between gap-2 border-b border-line pb-2">
           <div className="flex items-center gap-2">
             <ReorderControls
@@ -259,7 +242,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
 
   const sections: Record<ResumeSectionKey, React.ReactNode> = {
     summary: (
-      <Field label="Summary">
+      <Field label="Summary" changed={isChanged("summary")}>
         <textarea
           className={`${inputCls} min-h-16 resize-y`}
           value={value.summary}
@@ -272,12 +255,12 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
         <SectionHeader
           label="Experience"
           count={value.experience.length}
-          max={MAX_EXPERIENCE}
+          max={MAX_ROLES}
           addLabel="add experience"
           onAdd={() => patch({ experience: [...value.experience, { ...emptyExperience }] })}
         />
         {value.experience.map((exp, i) => (
-          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+          <div key={i} className={`rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2${changedCardCls(`experience.${i}`)}`}>
             <div className="flex items-start justify-between gap-2">
               <ReorderControls
                 index={i}
@@ -366,7 +349,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
       </div>
     ),
     skills: (
-      <Field label={`Skills (comma-separated, max ${MAX_SKILLS})`}>
+      <Field label={`Skills (comma-separated, max ${MAX_SKILLS})`} changed={isChanged("skills")}>
         <textarea
           className={`${inputCls} min-h-12 resize-y`}
           value={value.skills.join(", ")}
@@ -410,7 +393,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
           onAdd={() => patch({ projects: [...projects, { ...emptyProject }] })}
         />
         {projects.map((project, i) => (
-          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+          <div key={i} className={`rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2${changedCardCls(`projects.${i}`)}`}>
             <div className="flex items-start gap-2">
               <ReorderControls
                 index={i}
@@ -484,7 +467,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
           onAdd={() => patch({ achievements: [...achievements, { ...emptyAchievement }] })}
         />
         {achievements.map((achievement, i) => (
-          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+          <div key={i} className={`rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2${changedCardCls(`achievements.${i}`)}`}>
             <div className="flex items-start gap-2">
               <ReorderControls
                 index={i}
@@ -559,7 +542,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
           onAdd={() => patch({ education: [...value.education, { ...emptyEducation }] })}
         />
         {value.education.map((education, i) => (
-          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+          <div key={i} className={`rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2${changedCardCls(`education.${i}`)}`}>
             <div className="flex items-start gap-2">
               <ReorderControls
                 index={i}
@@ -612,7 +595,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
           onAdd={() => patch({ certifications: [...value.certifications, { ...emptyCertification }] })}
         />
         {value.certifications.map((certification, i) => (
-          <div key={i} className="rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2">
+          <div key={i} className={`rounded-md border border-line p-3 flex flex-col gap-2 bg-bg-sub-2${changedCardCls(`certifications.${i}`)}`}>
             <div className="flex items-start gap-2">
               <ReorderControls
                 index={i}
@@ -672,7 +655,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
         </div>
       )}
 
-      <Field label="Full name">
+      <Field label="Full name" changed={isChanged("fullName")}>
         <Input
           className={inputCls}
           value={value.fullName}
@@ -681,7 +664,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Email">
+        <Field label="Email" changed={isChanged("contact.email")}>
           <Input
             className={inputCls}
             value={value.contact.email ?? ""}
@@ -690,7 +673,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
             }
           />
         </Field>
-        <Field label="Location">
+        <Field label="Location" changed={isChanged("contact.location")}>
           <Input
             className={inputCls}
             value={value.contact.location ?? ""}
@@ -701,7 +684,7 @@ export default function ResumeEditor({ value, onChange }: ResumeEditorProps) {
         </Field>
       </div>
 
-      <Field label="Links (comma-separated)">
+      <Field label="Links (comma-separated)" changed={isChanged("contact.links")}>
         <Input
           className={inputCls}
           value={value.contact.links.join(", ")}

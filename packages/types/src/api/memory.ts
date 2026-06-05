@@ -1,7 +1,7 @@
-import type { ProfileInput, ProfileSignals } from "./insights.js";
-import type { CareerPath } from "./paths.js";
-import type { CareerEventSummary } from "./events.js";
-import type { MarketContext } from "./market.js";
+import type { ProfileInput, ProfileSignals } from "./insights";
+import type { CareerJourney } from "./journey";
+import type { CareerEventSummary } from "./events";
+import type { MarketContext } from "./market";
 
 export interface UserMemorySummary {
   id: string;
@@ -35,6 +35,17 @@ export interface ProfileUpdateDelta {
   newLearningGoals?: NewLearningGoalDelta[];
 }
 
+export interface GapSignals {
+  activePathTitle: string | null;
+  totalGaps: number;
+  coveredCount: number;
+  inProgressCount: number;
+  completedCount: number;
+  missingCount: number;
+  highPriorityMissing: string[];
+  highPriorityCompletedCount: number;
+}
+
 export interface AdvisorSignals extends ProfileSignals {
   sentimentTrend12w: number | null;
   checkInStreak: number;
@@ -44,6 +55,7 @@ export interface AdvisorSignals extends ProfileSignals {
   pathMilestonesTotal: number;
   intentionActionGap: boolean;
   recentMemoryFacts: string[];
+  gapSignals: GapSignals;
 }
 
 export type AdvisorPurpose = "observations" | "paths" | "journal" | "chat";
@@ -54,7 +66,7 @@ export interface AdvisorContext {
   signals: AdvisorSignals;
   recentEvents: CareerEventSummary[];
   memories: UserMemorySummary[];
-  activePath: CareerPath | null;
+  activePath: CareerJourney | null;
   materialChangeDetected: boolean;
   marketContext: MarketContext | null;
 }

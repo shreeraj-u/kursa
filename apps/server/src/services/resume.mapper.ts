@@ -89,7 +89,7 @@ export function toTarget(
   return { targetRole: activePath.title, pathTitle: activePath.title, requiredSkills };
 }
 
-export function formatPeriod(start: Date, end: Date | null, isCurrent: boolean): string {
+function formatPeriod(start: Date, end: Date | null, isCurrent: boolean): string {
   const s = new Date(start).getFullYear();
   const e = isCurrent ? "Present" : end ? new Date(end).getFullYear() : "";
   return e ? `${s} – ${e}` : `${s}`;

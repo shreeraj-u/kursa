@@ -1,4 +1,4 @@
-import type { EventEnrichment, MilestoneEvidence } from "./intelligence.js";
+import type { EventEnrichment, MilestoneEvidence } from "./intelligence";
 
 export type CareerEventType =
   | "checkin_weekly"
@@ -12,6 +12,7 @@ export type CareerEventType =
   | "profile_import"
   | "onboarding_complete"
   | "application_update"
+  | "github_sync"
   | "system"
   | "chat_insight";
 
@@ -75,6 +76,7 @@ export interface ApplicationUpdateStructured {
   roleTitle: string;
   previousStage?: string;
   newStage: string;
+  status?: string;
 }
 
 export interface ChatInsightFact {
@@ -192,6 +194,7 @@ export interface RelevanceSummary {
   staleSkills: string[];
   winsThisQuarter: number;
   engagementTrend: SentimentTrendPoint[];
+  engagementTrendLabel: string;
   intentionActionGap: boolean;
   recentMemoryFacts: string[];
   materialChangeDetected: boolean;

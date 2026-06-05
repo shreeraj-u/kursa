@@ -1,7 +1,7 @@
 import prisma from "@kursa/db";
 import type { CheckInNextResponse, SubmitCheckInInput } from "@kursa/types";
 
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const WEEKLY_QUESTIONS: CheckInNextResponse["questions"] = [
   { id: "energyFocus", label: "What took most of your energy this week?", kind: "text" },
@@ -9,41 +9,14 @@ const WEEKLY_QUESTIONS: CheckInNextResponse["questions"] = [
   { id: "rememberThis", label: "Anything you want Aria to remember? (optional)", kind: "text" },
 ];
 
-const MONTHLY_QUESTIONS: CheckInNextResponse["questions"] = [
-  { id: "satisfaction", label: "Overall satisfaction with your role", kind: "scale" },
-  { id: "growth", label: "Growth and learning this month", kind: "scale" },
-  { id: "management", label: "Relationship with your manager", kind: "scale" },
-  { id: "valuesAlignment", label: "Alignment with your values", kind: "scale" },
-  { id: "blockers", label: "Biggest blockers right now", kind: "text" },
-  { id: "winsSinceLast", label: "Wins since your last review", kind: "text" },
-];
-
 export async function getNextCheckIn(userId: string): Promise<CheckInNextResponse> {
   const now = new Date();
   const weekStart = startOfWeek(now);
 
-  const [lastWeekly, lastMonthly] = await Promise.all([
-    prisma.careerEvent.findFirst({
-      where: { userId, type: "checkin_weekly", deletedAt: null },
-      orderBy: { occurredAt: "desc" },
-    }),
-    prisma.careerEvent.findFirst({
-      where: { userId, type: "checkin_monthly", deletedAt: null },
-      orderBy: { occurredAt: "desc" },
-    }),
-  ]);
-
-  const monthlyDue =
-    !lastMonthly || now.getTime() - lastMonthly.occurredAt.getTime() > 86400000 * 28;
-
-  if (monthlyDue && (!lastMonthly || now.getDate() <= 7)) {
-    return {
-      due: true,
-      type: "checkin_monthly",
-      questions: MONTHLY_QUESTIONS,
-      lastCompletedAt: lastMonthly?.occurredAt.toISOString() ?? null,
-    };
-  }
+  const lastWeekly = await prisma.careerEvent.findFirst({
+    where: { userId, type: "checkin_weekly", deletedAt: null },
+    orderBy: { occurredAt: "desc" },
+  });
 
   const weeklyDue =
     !lastWeekly || lastWeekly.occurredAt.getTime() < weekStart.getTime();
@@ -107,5 +80,5 @@ function summarizeWeekly(r: Record<string, unknown>): string {
 }
 
 function summarizeMonthly(r: Record<string, unknown>): string {
-  return `Monthly review — satisfaction ${r.satisfaction ?? "?"}/5`;
+  return `Monthly check-in — satisfaction ${r.satisfaction ?? "?"}/5`;
 }

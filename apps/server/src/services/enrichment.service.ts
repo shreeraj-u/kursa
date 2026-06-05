@@ -1,6 +1,6 @@
 import prisma from "@kursa/db";
 import type { CareerEventType, EventEnrichment } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone as Milestone } from "@kursa/types";
 
 import { buildRuleEnrichment } from "../compute/enrichment.rules.js";
 import { extractEnrichmentWithLlm } from "../lib/ai/enrichment.extract.js";
@@ -35,7 +35,7 @@ export async function resolveInitialLinks(
   };
 }
 
-export async function enrichEventAsync(
+async function enrichEventAsync(
   userId: string,
   profileId: string,
   eventId: string,
@@ -115,6 +115,15 @@ export async function enrichEventAsync(
     },
   });
 
+  await applyEnrichmentSideEffects(userId, eventId, ctx.activePathId, enrichment);
+}
+
+async function applyEnrichmentSideEffects(
+  userId: string,
+  eventId: string,
+  activePathId: string | null,
+  enrichment: EventEnrichment,
+): Promise<void> {
   if (enrichment.memoryCandidates?.length) {
     await mergeMemoryCandidates(
       userId,
@@ -127,8 +136,8 @@ export async function enrichEventAsync(
     );
   }
 
-  if (ctx.activePathId && enrichment.linkedMilestoneOrders.length > 0) {
-    await updateMilestonesFromEnrichment(userId, ctx.activePathId, enrichment);
+  if (activePathId && enrichment.linkedMilestoneOrders.length > 0) {
+    await updateMilestonesFromEnrichment(userId, activePathId, enrichment);
   }
 }
 

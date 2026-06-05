@@ -2,7 +2,7 @@ import { Stagger, StaggerItem } from "@/components/motion/stagger";
 
 const COMPANIES = ["Stripe", "Linear", "Ramp", "Vercel", "Anthropic", "Notion", "Figma", "Datadog"];
 
-export default function LogoRow() {
+function LogoRow() {
   return (
     <div className="py-10 border-b border-[var(--line)]">
       <div className="mx-auto max-w-6xl px-6">
@@ -25,3 +25,4 @@ export default function LogoRow() {
     </div>
   );
 }
+export default LogoRow;

@@ -525,8 +525,8 @@ export default function AriaChat() {
             Journal
           </Link>
           {" · "}
-          <Link href="/dashboard/career-path" className="underline hover:text-mute">
-            Career path
+          <Link href="/dashboard/career-journey" className="underline hover:text-mute">
+            Career journey
           </Link>
         </p>
       </div>

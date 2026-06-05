@@ -1,6 +1,6 @@
 import prisma from "@kursa/db";
 import type { EventEnrichment } from "@kursa/types";
-import type { Milestone, MilestoneStatus } from "@kursa/types";
+import type { JourneyMilestone, MilestoneStatus } from "@kursa/types";
 
 const EVIDENCE_TO_COMPLETE = 3;
 const EVIDENCE_TO_IN_PROGRESS = 1;
@@ -17,7 +17,7 @@ export async function updateMilestonesFromEnrichment(
   });
   if (!path) return;
 
-  const milestones = path.milestones as unknown as Milestone[];
+  const milestones = path.milestones as unknown as JourneyMilestone[];
   const evidenceCounts = new Map<number, number>();
 
   const linkedEvents = await prisma.careerEvent.findMany({
@@ -44,6 +44,8 @@ export async function updateMilestonesFromEnrichment(
   const updated = milestones.map((m) => {
     const count = evidenceCounts.get(m.order) ?? 0;
     let status: MilestoneStatus = m.status;
+
+    if (m.manuallySet) return m;
 
     if (count >= EVIDENCE_TO_COMPLETE) {
       status = "completed";
@@ -77,7 +79,7 @@ export async function getMilestoneEvidenceForUser(userId: string): Promise<
   });
   if (!path) return [];
 
-  const milestones = path.milestones as unknown as Milestone[];
+  const milestones = path.milestones as unknown as JourneyMilestone[];
   const events = await prisma.careerEvent.findMany({
     where: { userId, linkedPathId: path.id, deletedAt: null },
     orderBy: { occurredAt: "desc" },

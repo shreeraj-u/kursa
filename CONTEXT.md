@@ -13,40 +13,109 @@ constraints, learning goals, social links, aspirations, and job applications.
 "The profile is the product" — every feature's quality depends on it. One Profile
 per User.
 
-### Career Path
-An AI-generated projection of a realistic professional trajectory for a user,
-derived from their Profile. A user has several at once (typically 3). Each Career
-Path has a title, description, confidence score (0–1, how achievable given the
-current Profile), projected timeline, and an ordered list of **Milestones**.
+### Skill
+A single skill or ability in a user's [[Profile]], with a name and a category
+(`technical` / `soft` / `tool`). A skill's strength is captured on **two distinct
+dimensions**: **confidence** (`confidenceRating`, 1–5 — how self-assured the user
+feels) and **proficiency** (`proficiencyLevel` — `beginner` / `intermediate` /
+`advanced` / `expert`, the actual mastery level). These are independent: a user can
+be highly confident yet objectively intermediate, or expert but rusty. A Skill also
+tracks **recency** (`lastUsedDate`) and a **source** (self-reported, résumé, or
+inferred). Skill names are unique per Profile (case-insensitive). Skills are
+created in bulk at onboarding but maintained one at a time afterwards (see
+[[Skill inventory]]).
 
-Career Paths are **disposable**: regeneration freely replaces a user's existing
-paths with a fresh set. They are AI output, not durable user records. The only
-user state attached to a path is **activation** (see Active Path).
+### Skill inventory
+The user-facing surface (the Skills page) for viewing and maintaining the [[Skill]]s
+in a Profile: add a skill, rate its confidence and proficiency, recategorise, and
+remove it — each as an individual change, not a bulk rewrite. Skills are grouped by
+category; recency (`lastUsedDate`) is shown read-only where present (no manual
+editing — it is populated by later phases). The same surface also manages the user's
+**learning goals** (the "being built" set). Distinct from **skill-gap analysis**,
+which compares the inventory against the [[Career Journey]] and is a separate surface
+owned elsewhere.
+
+### Dormant skill
+A [[Skill]] not used recently — `lastUsedDate` older than ~6 months, especially when
+confidence is high (≥4). Surfaced as faded in the [[Skill inventory]] and as a
+dashboard observation, prompting the user to refresh or re-apply it.
+
+### Career Journey
+An AI-generated projection of a realistic professional trajectory for a user,
+derived from their Profile. A user has a **single** Career Journey: the one
+best-fit trajectory the AI commits to (no alternatives to choose between). Each
+Career Journey has a title, description, confidence score (0–1, how achievable
+given the current Profile), projected timeline, and an ordered list of
+**Milestones**. Downstream features (skill gaps, job matching, resume) align to
+the Career Journey.
+
+### Journey Preferences
+Optional user-provided guidance collected immediately before generating a
+[[Career Journey]], such as preferred direction, pace, priorities, constraints,
+and paths to avoid. Journey Preferences shape the single AI-committed Career
+Journey but are not the journey itself and do not allow the AI to invent Profile
+evidence.
 
 ### Milestone
-An ordered step within a Career Path: title, description, estimated months from
+An ordered step within a Career Journey: title, description, estimated months from
 now, salary band, and the skills it requires. A Milestone carries a **status**
-(`not_started` / `in_progress` / `completed`) that is **inferred by the AI at
-generation time** from the Profile — it is NOT user-edited in Phase 2. Manual
-milestone progress tracking is deferred to a later phase.
-
-### Active Path
-The single Career Path a user has chosen as their primary focus. Activation is the
-only piece of user state on a path. Downstream features (skill gaps, job matching,
-resume) are intended to align to the Active Path. At most one path is active at a
-time.
+(`not_started` / `in_progress` / `completed`) that is set by the AI from journal
+evidence **or** by the user as a manual override — user-set status always takes
+precedence and is never overridden by AI enrichment. Manual status is lost when
+the user regenerates their journey (they are warned before proceeding).
 
 ### Regeneration
-Replacing a user's current set of Career Paths with a freshly generated set.
-Triggered explicitly by the user ("regenerate paths") and, in later phases,
-automatically when the Profile changes significantly. Because paths are disposable,
-regeneration does not preserve milestone status and **clears activation** — the new
-path set comes back with nothing active, and the user re-selects their Active Path.
+Generating a fresh Career Journey to replace the user's current one. Triggered
+explicitly by the user ("regenerate journey") and, in later phases, automatically
+when the Profile changes significantly. Regeneration does not preserve milestone
+status. Separately, the journey **auto-extends**: when the user marks **every**
+milestone as `completed`, the AI appends new milestones that continue the journey
+beyond the completed ones — extending rather than replacing it.
+
+### Journey Details
+AI-generated justification for a [[Career Journey]]: why it fits the user's Profile
+(fit reasons), skill gaps to close, suggested next actions, risks and mitigations,
+and the Profile evidence the AI used. Generated once alongside the journey and
+rarely changes. Secondary/contextual — not needed on every visit to the Journey
+page; rendered collapsed by default. Distinct from the [[Action Queue]], which is
+live and cross-domain.
+
+### Action Queue
+A journey-wide, urgency-sorted (`urgent` / `important` / `later`) list of concrete
+next steps computed dynamically from the full Profile state. Spans three domains:
+**path** (milestone-related), **skill** (skill gaps), and **application** (job
+applications). Each item carries a deep link to the relevant surface. Lives on the
+[[Career Journey]] page as the primary "what do I do next" answer. Distinct from
+the static "next actions" inside [[Journey Details]], which are narrative AI
+suggestions generated once at journey creation time with no links.
+
+### Journey Pulse
+Retrospective health data about a user's engagement with their [[Career Journey]]:
+path-alignment score, accomplishments this quarter, dormant skills, milestone
+evidence, engagement trend, and distilled memories. Lives on the main dashboard
+as a widget, not on the Journey page itself.
+
+### Career Graph
+An interactive node-link rendering of the **entire** [[Profile]] as a single
+connected graph, with the [[Career Journey]] as its **spine** (You → [[Milestone]]s
+→ target role). Nodes are Profile entities ([[Skill]]s, Projects, work history,
+achievements, education, milestones, the target role); edges are **only** the
+relationships actually present in the data — a milestone requiring a skill, a
+learning goal targeting a skill, a project built at a job, the milestone sequence —
+never AI-invented links (see [[Career Graph edge truthfulness]] reasoning in
+`docs/adr/`). [[Skill]]s are the connective tissue: the graph's colour/treatment
+channel encodes skill **state** — owned, [[Dormant skill]], **gap** (a skill a
+milestone requires but the Profile lacks), and **being-built** (a learning goal) —
+so it reads as advice, not decoration. Distinct from the [[Career Journey]] page,
+which lists the same trajectory as a linear roadmap; the Career Graph shows the
+whole identity as a web. Degrades gracefully: with no Career Journey it renders the
+identity nodes without the spine or gap state. Lives at `/dashboard/career-graph`.
+_Avoid_: "career map", "constellation", "graph" (unqualified — collides with charts).
 
 ### Résumé
 A generated document that starts as a live output of the system's knowledge of the
 user. AI generation is derived from the Profile and shaped toward the user's
-Active Path / target role. Its section order is **seniority-aware**: the engine
+Career Journey / target role. Its section order is **seniority-aware**: the engine
 chooses the order from the Profile (new grads lead with education and projects and
 omit the summary; experienced users lead with summary and experience). The Profile's
 **Achievements** surface here as the **Others** section — a compact block grouping
@@ -73,6 +142,14 @@ for its target role, produced alongside a list of specific, actionable issues
 on demand ("analyze ATS again") after the user edits the text. Re-analysis updates
 the score in place, does **not** consume the Generation quota (it creates no new
 version), and is guarded by the single-in-flight lock.
+
+
+### ATS improvement draft
+A temporary résumé-only draft produced by AI from the selected [[Resume version]] and
+its current [[ATS score]] issues. It applies ATS fixes in edit mode for user review
+before persistence, may only make truth-preserving changes grounded in the résumé or
+Profile, and does not write back to the Profile. Saving the draft mutates the
+selected Resume version in place and re-runs ATS scoring.
 
 ### Impact statement
 A work-experience bullet written as context → action → outcome with concrete,
@@ -103,3 +180,13 @@ and they **persist** to the Profile on completion. The uploaded source file and
 raw extracted text are ephemeral import inputs, not durable user artifacts; after
 parsing, only reviewed structured Profile data persists. Extraction never invents
 data not present in the résumé.
+
+
+### Profile Intake Review
+An ephemeral AI/deterministic review that runs after onboarding data entry and
+before final Profile persistence. It checks the structured draft for validation
+errors, unsafe prompt-like content, thin entries, and obvious consistency issues,
+then returns critical issues, warnings, and suggestions for the user to accept or
+ignore. It is **suggest-only**: proposed values are grounded in user-provided draft
+fields, no review output is durable, and only user-accepted final Profile data is
+persisted. It is distinct from the durable Profile source of truth.

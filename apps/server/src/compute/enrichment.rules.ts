@@ -1,5 +1,5 @@
 import type { EventEnrichment, MemoryCategory } from "@kursa/types";
-import type { Milestone } from "@kursa/types";
+import type { JourneyMilestone as Milestone } from "@kursa/types";
 
 const THEME_KEYWORDS: Record<string, string[]> = {
   leadership: ["lead", "team", "manage", "mentor", "direct", "people"],
@@ -15,7 +15,7 @@ export function extractThemes(text: string): string[] {
     .map(([theme]) => theme);
 }
 
-export function extractEntities(text: string): string[] {
+function extractEntities(text: string): string[] {
   const entities = new Set<string>();
   for (const match of text.match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/g) ?? []) {
     if (match.length > 2 && match.length < 40) entities.add(match);
@@ -64,7 +64,7 @@ export function estimateSentiment(text: string): number {
   return Math.max(-1, Math.min(1, score));
 }
 
-export function extractSkillNamesFromText(text: string, profileSkills: string[]): string[] {
+function extractSkillNamesFromText(text: string, profileSkills: string[]): string[] {
   const lower = text.toLowerCase();
   const found: string[] = [];
 
@@ -115,22 +115,4 @@ export function buildRuleEnrichment(
     sentiment: sentiment !== 0 ? sentiment : undefined,
     memoryCandidates,
   };
-}
-
-export function countEvidencePerMilestone(
-  events: Array<{ id: string; enrichment: EventEnrichment | null; occurredAt: string }>,
-  milestones: Milestone[],
-): Array<{ order: number; title: string; status: Milestone["status"]; eventCount: number; recentEventIds: string[] }> {
-  return milestones.map((m) => {
-    const linked = events.filter((e) =>
-      e.enrichment?.linkedMilestoneOrders?.includes(m.order),
-    );
-    return {
-      order: m.order,
-      title: m.title,
-      status: m.status,
-      eventCount: linked.length,
-      recentEventIds: linked.slice(0, 5).map((e) => e.id),
-    };
-  });
 }

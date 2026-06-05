@@ -67,7 +67,7 @@ export function FormField({
   );
 }
 
-export function FormError({ message }: { message: string }) {
+function FormError({ message }: { message: string }) {
   return (
     <p className="text-warn" style={{ fontSize: "var(--text-xs)" }}>
       {message}

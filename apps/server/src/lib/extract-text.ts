@@ -1,6 +1,6 @@
 export type ResumeFileKind = "pdf" | "docx" | "txt";
 
-export function resolveResumeFileKind(fileName: string): ResumeFileKind | null {
+function resolveResumeFileKind(fileName: string): ResumeFileKind | null {
   const lower = fileName.toLowerCase();
   if (lower.endsWith(".pdf")) return "pdf";
   if (lower.endsWith(".docx")) return "docx";

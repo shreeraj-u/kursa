@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DashboardMetrics } from "@/types/profile";
 
 interface InFlightProps {
@@ -41,14 +42,20 @@ export default function InFlight({ metrics }: InFlightProps) {
                     <span className="mono text-2xs text-mute-3">
                         {activeCount} active · {closedCount} closed
                     </span>
+                    <Link href="/dashboard/applications" className="mono text-2xs text-mute-3 hover:text-ink transition-colors">
+                        →
+                    </Link>
                 </div>
             </div>
 
             {applications.length === 0 ? (
                 <div className="py-6 text-center">
                     <p className="text-xs text-mute-3 leading-relaxed">
-                        No active applications. Add roles from the shortlist to track them here.
+                        No active applications yet. Add roles you care about so Kursa can learn which opportunities fit your path.
                     </p>
+                    <Link href="/dashboard/applications" className="mono mt-2 inline-block text-2xs text-accent hover:underline">
+                        open tracker →
+                    </Link>
                 </div>
             ) : (
                 <div>

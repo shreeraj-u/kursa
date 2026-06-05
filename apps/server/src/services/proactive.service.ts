@@ -4,7 +4,7 @@ import type { ProactiveNudge } from "@kursa/types";
 import { assembleAdvisorContext } from "../lib/advisor-context.js";
 import { shouldRegeneratePaths } from "../compute/advisor.compute.js";
 import { getMilestoneEvidenceForUser } from "./milestone.service.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 import { getNextCheckIn } from "./checkins.service.js";
 
 export async function getProactiveNudges(userId: string): Promise<ProactiveNudge[]> {
@@ -18,9 +18,9 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
       id: "path-regen",
       type: "path_regen",
       title: "Profile shifted",
-      message: "Your recent activity suggests your career path may need updating.",
-      actionLabel: "Regenerate paths",
-      actionHref: "/dashboard/career-path",
+      message: "Your recent activity suggests your career journey may need updating.",
+      actionLabel: "Regenerate journey",
+      actionHref: "/dashboard/career-journey",
       priority: "high",
     });
   }
@@ -58,7 +58,7 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
     nudges.push({
       id: "checkin-reminder",
       type: "checkin_reminder",
-      title: checkIn.type === "checkin_monthly" ? "Monthly review due" : "Weekly pulse due",
+      title: "Weekly pulse due",
       message: "A quick check-in helps Aria track your momentum.",
       actionLabel: "Complete check-in",
       priority: "medium",
@@ -89,7 +89,7 @@ export async function getProactiveNudges(userId: string): Promise<ProactiveNudge
   return nudges;
 }
 
-export async function recordProactiveNudgeDelivered(
+async function recordProactiveNudgeDelivered(
   userId: string,
   nudge: ProactiveNudge,
 ): Promise<void> {

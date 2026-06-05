@@ -1,4 +1,5 @@
 import type { JobApplication } from './job';
+import type { JourneyPreferences } from '../api/journey';
 
 export interface UserSkill {
   id: string;
@@ -8,6 +9,7 @@ export interface UserSkill {
   proficiencyLevel: string | null;
   confidenceRating: number | null;
   lastUsedDate: Date | null;
+  source: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,8 +99,9 @@ export interface UserLearningGoal {
   profileId: string;
   skillName: string;
   targetProficiency: string | null;
-  deadline: Date | null;
+  deadline: string | null;
   status: string;
+  position: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -130,6 +133,7 @@ export interface ProfileValues {
   maxSalary?: number;
   currency?: string;
   geographicConstraints?: string[];
+  journeyPreferences?: JourneyPreferences;
 }
 
 export interface UserProfile {
@@ -142,6 +146,7 @@ export interface UserProfile {
   aspirations: ProfileAspirations | null;
   values: ProfileValues | null;
   onboardingDone: boolean;
+  dashboardGuideCompletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 

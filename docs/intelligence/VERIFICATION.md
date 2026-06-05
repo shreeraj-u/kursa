@@ -43,9 +43,9 @@ Journal sidebar now shows:
 - **What Aria knows** — distilled memories (`GET /api/v1/memory`)
 - **Engagement chart** — composite trend (check-ins + journal activity)
 
-### 3. Monthly check-in
+### 3. Weekly pulse
 
-When backend returns `checkin_monthly` due, sidebar renders all 6 monthly questions (not hardcoded weekly).
+When backend returns a due check-in, the journal sidebar renders the weekly pulse questions and no separate monthly review is scheduled.
 
 ### 4. Evidence-based path alignment
 

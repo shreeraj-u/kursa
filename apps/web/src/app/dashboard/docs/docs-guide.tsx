@@ -7,17 +7,17 @@ const SECTIONS = [
   {
     id: "home",
     title: "Home",
-    body: `Your dashboard at a glance. Career pulse tracks growth, visibility, and progression signals from your profile and activity. Aria noticed surfaces observations generated from your journal, check-ins, and career data — not generic tips. Recent activity and in-flight items show what you've been working on.`,
+    body: `Your dashboard at a glance. The top strip shows Kursa's loop: memory from profile and journal, reasoning from journeys and gaps, and execution from résumés and applications. Aria noticed surfaces observations generated from your profile, journal, applications, and career data — not generic tips.`,
   },
   {
-    id: "career-path",
-    title: "Career path",
-    body: `Generate realistic paths forward from your profile — each with milestones, salary estimates, and a timeline. Pick one to focus on and track milestone progress. Path pulse (below the roadmap) shows how aligned your recent activity is with that path: alignment score, accomplishments this quarter, stale skills, engagement trend, and distilled memories.`,
+    id: "career-journey",
+    title: "Career journey",
+    body: `Generate the single realistic trajectory Kursa commits to from your Profile — with milestones, salary estimates, and a timeline. Track milestone progress, use the action queue for what to do next, and open advisor reasoning when you want the why, risks, and evidence.`,
   },
   {
     id: "skills",
     title: "Skills",
-    body: `Your skills profile powers path generation, resume tailoring, and Aria's advice. Skills gain confidence from resume import and stay fresh when you log accomplishments that use them. Stale high-confidence skills appear in Path pulse if unused for six months.`,
+    body: `Your skills profile powers journey generation, résumé tailoring, learning goals, and Aria's advice. Skills gain confidence from résumé import and stay fresh when you log accomplishments that use them. The most important question is not “how many skills?” but “which skills move this journey forward?”`,
   },
   {
     id: "aria",
@@ -37,12 +37,12 @@ const SECTIONS = [
   {
     id: "resume",
     title: "Resume studio",
-    body: `Tailor résumé versions to roles using your profile and path context. (Early access — full experience shipping soon.)`,
+    body: `Tailor résumé versions to roles using your Profile and Career Journey context. The flow is simple: generate from profile memory, edit with control, re-score ATS, apply truth-preserving improvement drafts, and download a PDF.`,
   },
   {
-    id: "shortlist",
-    title: "Shortlist",
-    body: `Track applications from interest through offer. Active count appears as a badge in the sidebar. (Early access — full experience shipping soon.)`,
+    id: "applications",
+    title: "Applications",
+    body: `Track applications from interest through offer. Keep stage, status, links, notes, and next actions current so active roles appear correctly in dashboard signals and future recommendations can learn from outcomes.`,
   },
 ] as const;
 

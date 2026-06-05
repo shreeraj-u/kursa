@@ -26,10 +26,10 @@ export default function LandingNav() {
         {/* Center links */}
         <div className="hidden md:flex items-center gap-7">
           {[
-            { label: "how it works", href: "#how" },
-            { label: "the product", href: "#features" },
-            { label: "pricing", href: "#pricing" },
-            { label: "faq", href: "#faq" },
+            { label: "how it works", href: "/#how" },
+            { label: "the product", href: "/#features" },
+            { label: "pricing", href: "/#pricing" },
+            { label: "faq", href: "/#faq" },
           ].map(({ label, href }) => (
             <a
               key={href}
@@ -52,7 +52,7 @@ export default function LandingNav() {
             Log in
           </Link>
           <Button size="sm" render={<a href="/login" />} nativeButton={false}>
-            Get started
+            Enter demo
           </Button>
         </div>
       </div>

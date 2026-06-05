@@ -1,11 +1,27 @@
 import type { Request, Response } from "express";
+import type { ZodSchema } from "zod";
 
+import { z } from "zod";
 import { Errors } from "../errors/http-error.js";
 import { ok, created } from "../lib/respond.js";
 import * as profileService from "../services/profile.service.js";
 import * as insightsService from "../services/insights.service.js";
-import { z } from "zod";
-import { profileUpdateSchema, socialLinkCreateSchema, socialLinkUpdateSchema } from "../validators/profile.validator.js";
+import { ingestEvent } from "../services/career-event-intelligence/index.js";
+import {
+  profileUpdateSchema,
+  socialLinkCreateSchema,
+  socialLinkUpdateSchema,
+  skillCreateSchema,
+  skillUpdateSchema,
+  learningGoalCreateSchema,
+  learningGoalUpdateSchema,
+} from "../validators/profile.validator.js";
+
+function parseOrThrow<T>(schema: ZodSchema<T>, data: unknown): T {
+  const result = schema.safeParse(data);
+  if (!result.success) throw Errors.badRequest("Invalid request body", z.flattenError(result.error));
+  return result.data;
+}
 
 /**
  * GET /api/v1/profile/me
@@ -25,13 +41,21 @@ export async function updateMe(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const parsed = profileUpdateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw Errors.badRequest("Invalid request body", z.flattenError(parsed.error));
-  }
-
-  const profile = await profileService.upsertProfile(req.user!.id, parsed.data);
+  const data = parseOrThrow(profileUpdateSchema, req.body);
+  const profile = await profileService.upsertProfile(req.user!.id, data);
   ok(res, { profile });
+}
+
+
+/**
+ * POST /api/v1/profile/me/dashboard-guide/dismiss
+ */
+export async function dismissDashboardGuide(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const dashboardGuideCompletedAt = await profileService.dismissDashboardGuide(req.user!.id);
+  ok(res, { dashboardGuideCompletedAt });
 }
 
 /**
@@ -62,11 +86,8 @@ export async function createSocialLink(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const parsed = socialLinkCreateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw Errors.badRequest("Invalid request body", z.flattenError(parsed.error));
-  }
-  const socialLink = await profileService.createSocialLink(req.user!.id, parsed.data);
+  const data = parseOrThrow(socialLinkCreateSchema, req.body);
+  const socialLink = await profileService.createSocialLink(req.user!.id, data);
   created(res, { socialLink });
 }
 
@@ -77,11 +98,8 @@ export async function updateSocialLink(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const parsed = socialLinkUpdateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw Errors.badRequest("Invalid request body", z.flattenError(parsed.error));
-  }
-  const socialLink = await profileService.updateSocialLink(req.user!.id, req.params.id as string, parsed.data);
+  const data = parseOrThrow(socialLinkUpdateSchema, req.body);
+  const socialLink = await profileService.updateSocialLink(req.user!.id, req.params.id as string, data);
   ok(res, { socialLink });
 }
 
@@ -93,5 +111,80 @@ export async function deleteSocialLink(
   res: Response,
 ): Promise<void> {
   await profileService.deleteSocialLink(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Skill inventory ─────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/profile/me/skills
+ */
+export async function createSkill(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(skillCreateSchema, req.body);
+  const skill = await profileService.createSkill(req.user!.id, data);
+  created(res, { skill });
+}
+
+/**
+ * PATCH /api/v1/profile/me/skills/:id
+ */
+export async function updateSkill(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(skillUpdateSchema, req.body);
+  const skill = await profileService.updateSkill(req.user!.id, req.params.id as string, data);
+  ok(res, { skill });
+}
+
+/**
+ * DELETE /api/v1/profile/me/skills/:id
+ */
+export async function deleteSkill(req: Request, res: Response): Promise<void> {
+  await profileService.deleteSkill(req.user!.id, req.params.id as string);
+  ok(res, { deleted: true });
+}
+
+// ── Learning goals ──────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/profile/me/learning-goals
+ */
+export async function createLearningGoal(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(learningGoalCreateSchema, req.body);
+  const learningGoal = await profileService.createLearningGoal(req.user!.id, data);
+
+  if (data.gapPriority) {
+    ingestEvent(req.user!.id, {
+      type: "learning",
+      source: "user",
+      body: `Identified skill gap: ${data.skillName} (${data.gapPriority} priority${data.pathTitle ? ` for ${data.pathTitle}` : ""})`,
+      structured: {
+        skillName: data.skillName,
+        gapPriority: data.gapPriority,
+        pathTitle: data.pathTitle,
+        whyItMatters: data.whyItMatters,
+        context: "gap_tracking",
+      },
+      skipDelta: true,
+    }).catch((err: unknown) => {
+      console.warn("[gap_tracking] ingestEvent failed silently:", err);
+    });
+  }
+
+  created(res, { learningGoal });
+}
+
+/**
+ * PATCH /api/v1/profile/me/learning-goals/:id
+ */
+export async function updateLearningGoal(req: Request, res: Response): Promise<void> {
+  const data = parseOrThrow(learningGoalUpdateSchema, req.body);
+  const learningGoal = await profileService.updateLearningGoal(req.user!.id, req.params.id as string, data);
+  ok(res, { learningGoal });
+}
+
+/**
+ * DELETE /api/v1/profile/me/learning-goals/:id
+ */
+export async function deleteLearningGoal(req: Request, res: Response): Promise<void> {
+  await profileService.deleteLearningGoal(req.user!.id, req.params.id as string);
   ok(res, { deleted: true });
 }

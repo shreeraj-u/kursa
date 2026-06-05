@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, Sparkles } from "lucide-react";
 import type { AtsIssue, Resume, ResumeContent, ResumeQuota } from "@kursa/types";
 
 import PageHeader from "@/components/dashboard/page-header";
+import PageHelpButton from "@/components/dashboard/page-help-button";
+import { DASHBOARD_PAGE_HELP } from "@/components/dashboard/page-help";
 import { Button } from "@kursa/ui/components/button";
 import { api } from "@/lib/api";
 
@@ -16,6 +18,7 @@ import { downloadResumePdf } from "./resume-pdf";
 interface ResumeStudioProps {
   initialResumes: Resume[];
   quota: ResumeQuota;
+  activeJourneyTitle?: string | null;
 }
 
 const SEVERITY_BG: Record<AtsIssue["severity"], string> = {
@@ -24,22 +27,35 @@ const SEVERITY_BG: Record<AtsIssue["severity"], string> = {
   low: "bg-mute-3",
 };
 
+const RESUME_FLOW = [
+  "generate from profile",
+  "edit with control",
+  "score ATS",
+  "download PDF",
+];
 
-export default function ResumeStudio({ initialResumes, quota: initialQuota }: ResumeStudioProps) {
+export default function ResumeStudio({
+  initialResumes,
+  quota: initialQuota,
+  activeJourneyTitle = null,
+}: ResumeStudioProps) {
   const router = useRouter();
   const [resumes, setResumes] = useState(initialResumes);
   const [quota, setQuota] = useState(initialQuota);
   const [generating, setGenerating] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [improving, setImproving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(resumes[0]?.id ?? null);
   const [draft, setDraft] = useState<ResumeContent | null>(null); // non-null = editing
+  const [aiDraftActive, setAiDraftActive] = useState(false);
+  const [aiChangedPaths, setAiChangedPaths] = useState<string[]>([]);
 
   const selected = resumes.find((r) => r.id === selectedId) ?? resumes[0] ?? null;
   const quotaReached = quota.used >= quota.limit;
   const editing = draft !== null;
-  const busy = generating || analyzing || saving;
+  const busy = generating || analyzing || improving || saving;
 
   useEffect(() => {
     if (initialResumes.length > 0) return;
@@ -81,7 +97,10 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
     setError(null);
     try {
       await api.resume.update(selected.id, draft);
+      if (aiDraftActive) await api.resume.analyze(selected.id);
       setDraft(null);
+      setAiDraftActive(false);
+      setAiChangedPaths([]);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save changes");
@@ -101,6 +120,23 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
       setError(e instanceof Error ? e.message : "Failed to analyze resume");
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+
+  async function improveAts() {
+    if (!selected) return;
+    setImproving(true);
+    setError(null);
+    try {
+      const result = await api.resume.improveAts(selected.id);
+      setDraft(result.draft);
+      setAiChangedPaths(result.changedPaths);
+      setAiDraftActive(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to apply ATS improvements");
+    } finally {
+      setImproving(false);
     }
   }
 
@@ -126,12 +162,22 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
     return (
       <div className="flex flex-col min-h-full">
         <PageHeader pageTitle="Resume studio" />
-        <div className="px-8 pt-6 pb-8 flex flex-1 items-center justify-center">
+        <div className="px-8 pt-6 pb-8 flex flex-1 flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tighter text-ink">Resume studio</h1>
+            <PageHelpButton help={DASHBOARD_PAGE_HELP.resume} label="Resume studio" />
+          </div>
+          <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4 max-w-sm text-center">
             <div className="text-sm text-ink font-medium">No résumé yet</div>
             <div className="text-xs text-mute-2">
               Generate an ATS-scored résumé from your profile, shaped toward your active
               career path. You can edit it, re-analyze it, and download any version as a PDF.
+            </div>
+            <div className="mono text-2xs text-mute-3">
+              {activeJourneyTitle
+                ? `Shaped by active journey: ${activeJourneyTitle}`
+                : "General résumé — generate a journey for sharper targeting."}
             </div>
             <Button
               onClick={generate}
@@ -149,6 +195,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
             )}
             {error && <div className="mono text-2xs text-warn">{error}</div>}
           </div>
+          </div>
         </div>
       </div>
     );
@@ -160,9 +207,18 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
       <div className="px-8 pt-6 pb-8 flex flex-col gap-4 flex-1">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="mono text-xs text-mute">
-            {selected.targetRole ? `tailored · ${selected.targetRole}` : "general résumé"}
-            {editing && " · editing"}
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tighter text-ink">Resume studio</h1>
+              <PageHelpButton help={DASHBOARD_PAGE_HELP.resume} label="Resume studio" />
+            </div>
+            <div className="mono mt-1 text-xs text-mute">
+              {selected.targetRole ? `tailored · ${selected.targetRole}` : "general résumé"}
+              {editing && " · editing"}
+            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">
+              A résumé version is generated from the same profile memory that powers your journey. Improve it, re-score it, and export without losing control of the truth.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="mono text-2xs text-mute-3">
@@ -173,7 +229,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDraft(null)}
+                  onClick={() => { setDraft(null); setAiDraftActive(false); setAiChangedPaths([]); }}
                   disabled={saving}
                   className="mono text-mute border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
@@ -186,7 +242,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
                   disabled={saving}
                   className="mono text-ink border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
-                  {saving ? "saving…" : "save"}
+                  {saving ? (aiDraftActive ? "saving + analyzing…" : "saving…") : "save"}
                 </Button>
               </>
             ) : (
@@ -194,7 +250,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDraft(structuredClone(selected.content))}
+                  onClick={() => { setDraft(structuredClone(selected.content)); setAiDraftActive(false); setAiChangedPaths([]); }}
                   disabled={busy}
                   className="mono text-ink border-line rounded-sm px-2.5 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
                 >
@@ -230,6 +286,21 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
               </>
             )}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-line bg-surface px-3 py-2 mono text-2xs text-mute">
+          {activeJourneyTitle
+            ? `Shaped by active journey: ${activeJourneyTitle}`
+            : "General résumé — generate a journey for sharper targeting."}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {RESUME_FLOW.map((step, index) => (
+            <div key={step} className="rounded-lg border border-line bg-surface px-3 py-2">
+              <div className="mono text-2xs text-mute-3">step {index + 1}</div>
+              <div className="mt-0.5 text-xs font-medium text-ink">{step}</div>
+            </div>
+          ))}
         </div>
 
         {/* Version bar */}
@@ -270,7 +341,14 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
         {/* Body: document/editor + ATS panel */}
         <div className="grid grid-cols-[1fr_280px] gap-5 max-lg:flex max-lg:flex-col">
           {editing && draft ? (
-            <ResumeEditor value={draft} onChange={setDraft} />
+            <div className="flex flex-col gap-3">
+              {aiDraftActive && (
+                <div className="rounded-lg border border-line bg-surface px-4 py-3 mono text-2xs text-mute leading-relaxed">
+                  AI applied ATS suggestions — review highlighted changes before saving. Saving will re-score ATS automatically.
+                </div>
+              )}
+              <ResumeEditor value={draft} onChange={setDraft} changedPaths={aiChangedPaths} />
+            </div>
           ) : (
             <div className="rounded-lg p-5 bg-bg-sub overflow-auto">
               <ResumeDocument content={selected.content} />
@@ -281,7 +359,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
             {/* ATS score */}
             <div className="rounded-lg p-4 border border-line bg-surface flex items-center gap-3">
               <AtsScoreCircle score={selected.atsScore} />
-              <div>
+              <div className="flex-1">
                 <div className="font-medium text-ink text-[11px]">
                   ATS readability
                 </div>
@@ -291,6 +369,17 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
                     : `${selected.atsIssues.length} suggestion${selected.atsIssues.length === 1 ? "" : "s"} to improve.`}
                 </div>
               </div>
+              {selected.atsIssues.length > 0 && !editing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={improveAts}
+                  disabled={busy}
+                  className="mono text-ink border-line rounded-sm px-2 py-1 bg-bg hover:bg-bg-sub-2 flex items-center gap-1.5"
+                >
+                  <Sparkles size={11} /> {improving ? "applying…" : "apply with AI"}
+                </Button>
+              )}
             </div>
 
             {/* ATS issues */}
@@ -316,7 +405,7 @@ export default function ResumeStudio({ initialResumes, quota: initialQuota }: Re
             )}
             {editing && (
               <div className="mono text-2xs text-mute-3">
-                save your edits, then run “analyze ATS again” to re-score.
+                {aiDraftActive ? "save to apply this AI draft and re-score automatically." : "save your edits, then run “analyze ATS again” to re-score."}
               </div>
             )}
           </div>

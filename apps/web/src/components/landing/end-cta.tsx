@@ -22,9 +22,11 @@ export default function EndCTA() {
           <br />
           <span style={{ color: "var(--mute-2)" }}>Now it has someone watching.</span>
         </h2>
-        <p className="lede mb-8">Start in three minutes. No résumé upload. No quiz.</p>
+        <p className="lede mb-8">
+          Walk through the live product: memory, journey reasoning, résumé tailoring, and the journal loop.
+        </p>
         <Button size="lg" render={<a href="/login" />} nativeButton={false}>
-          Get started — free
+          Enter the demo
         </Button>
       </FadeUp>
     </section>

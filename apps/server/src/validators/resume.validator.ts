@@ -1,15 +1,24 @@
 import { z } from "zod";
+import {
+  achievementTypeSchema,
+  MAX_ROLES,
+  MAX_BULLETS,
+  MAX_SKILLS,
+  MAX_EDUCATION,
+  MAX_CERTIFICATIONS,
+  MAX_PROJECTS,
+  MAX_ACHIEVEMENTS,
+} from "@kursa/types";
 
-// --- output bounds (guardrails) ---
-export const MAX_ROLES = 6;
-export const MAX_BULLETS = 5;
-export const MAX_SKILLS = 20;
-export const MAX_EDUCATION = 5;
-export const MAX_CERTIFICATIONS = 5;
-export const MAX_PROJECTS = 4;
-export const MAX_ACHIEVEMENTS = 12;
+export {
+  MAX_ROLES,
+  MAX_BULLETS,
+  MAX_SKILLS,
+  MAX_PROJECTS,
+  MAX_ACHIEVEMENTS,
+};
 
-export const sectionKeySchema = z.enum([
+const sectionKeySchema = z.enum([
   "summary",
   "experience",
   "skills",
@@ -19,17 +28,8 @@ export const sectionKeySchema = z.enum([
   "others",
 ]);
 
-export const achievementTypeSchema = z.enum([
-  "HACKATHON",
-  "AWARD",
-  "PUBLICATION",
-  "SPEAKING",
-  "OPEN_SOURCE",
-  "VOLUNTEER",
-  "OTHER",
-]);
 
-export const experienceSchema = z.object({
+const experienceSchema = z.object({
   company: z.string().min(1),
   roleTitle: z.string().min(1),
   period: z.string().min(1),
@@ -93,7 +93,7 @@ export const resumeContentSchema = z.object({
   sectionOrder: z.array(sectionKeySchema).optional(),
 });
 
-export const atsIssueSchema = z.object({
+const atsIssueSchema = z.object({
   severity: z.enum(["high", "medium", "low"]),
   message: z.string().min(1),
   fix: z.string().min(1),

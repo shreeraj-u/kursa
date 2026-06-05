@@ -61,7 +61,7 @@ export default function AriaNoticed({ initialObservations, initialError = null }
     return (
         <div>
             <div className="flex items-center justify-between mb-3">
-                <span className="mono text-2xs text-mute-2">
+                <span className="mono text-2xs text-mute-2 leading-relaxed">
                     aria noticed · {newCount} insight{newCount === 1 ? "" : "s"}
                     {data.generationSource === "llm" && newCount > 0 && (
                         <span className="text-accent"> · personalized</span>
@@ -71,6 +71,9 @@ export default function AriaNoticed({ initialObservations, initialError = null }
                     )}
                 </span>
             </div>
+            <p className="mb-3 text-xs leading-relaxed text-mute">
+                Observations are generated from your profile, journal, applications, and journey context — not generic career tips.
+            </p>
 
             {error ? (
                 <div
@@ -94,7 +97,7 @@ export default function AriaNoticed({ initialObservations, initialError = null }
                     <p className="mono mt-2 text-2xs text-mute-3">
                         {isLoading
                             ? "Aria is reading your latest career signals."
-                            : "Aria is watching. Observations will surface as your profile grows."}
+                            : "Add a win, feedback note, application, or check-in to give Aria more evidence."}
                     </p>
                 </div>
             ) : (
@@ -109,7 +112,7 @@ export default function AriaNoticed({ initialObservations, initialError = null }
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                         {obs.text}
                                     </p>
-                                    <div className="flex items-center gap-3 mt-1">
+                                    <div className="flex items-center gap-2 mt-1">
                                         <span className="mono text-2xs text-mute-3">
                                             {obs.timeAgo}
                                             {obs.source === "llm" && " · llm"}
@@ -118,10 +121,10 @@ export default function AriaNoticed({ initialObservations, initialError = null }
                                             href={`/dashboard/aria?prompt=${encodeURIComponent(obs.text)}` as Route}
                                             className="text-2xs text-accent hover:underline"
                                         >
-                                            open
+                                            open in aria
                                         </Link>
-                                        <span className="text-2xs text-mute-3 cursor-pointer hover:underline">
-                                            dis
+                                        <span className="mono rounded-full border border-line bg-bg-sub px-1.5 py-px text-2xs text-mute-3">
+                                            profile-grounded
                                         </span>
                                     </div>
                                 </div>

@@ -1,4 +1,4 @@
-import type { CareerPathSkillGap, Milestone, SkillRecommendation } from "@kursa/types";
+import type { CareerJourneySkillGap, JourneyMilestone, SkillRecommendation } from "@kursa/types";
 
 import { extractSkillsFromTaxonomy } from "../lib/resume-taxonomy.js";
 import { normalizeSkillName } from "../lib/skill-normalize.js";
@@ -6,10 +6,10 @@ import { normalizeSkillName } from "../lib/skill-normalize.js";
 const META_GAP_SKILLS = new Set(["profile depth"]);
 
 /** Normalize path skillGaps whether stored as strings or CareerPathSkillGap objects. */
-export function parsePathSkillGaps(raw: unknown): CareerPathSkillGap[] {
+export function parsePathSkillGaps(raw: unknown): CareerJourneySkillGap[] {
   if (!Array.isArray(raw)) return [];
 
-  const gaps: CareerPathSkillGap[] = [];
+  const gaps: CareerJourneySkillGap[] = [];
   for (const item of raw) {
     if (typeof item === "string" && item.trim()) {
       gaps.push({
@@ -29,7 +29,7 @@ export function parsePathSkillGaps(raw: unknown): CareerPathSkillGap[] {
             ? (item as { whyItMatters: string }).whyItMatters
             : "Identified on your active career path",
         priority:
-          (item as { priority?: CareerPathSkillGap["priority"] }).priority ?? "medium",
+          (item as { priority?: CareerJourneySkillGap["priority"] }).priority ?? "medium",
       });
     }
   }
@@ -62,7 +62,7 @@ export function extractMilestoneSkills(milestones: unknown): string[] {
   const seen = new Set<string>();
 
   for (const raw of milestones) {
-    const milestone = raw as Milestone;
+    const milestone = raw as JourneyMilestone;
     if (milestone.status === "completed") continue;
     for (const skill of milestone.requiredSkills ?? []) {
       const normalized = normalizeSkillName(skill);

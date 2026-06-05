@@ -21,7 +21,7 @@ import { isMarketTableMissingError } from "../lib/market/safe-market-db.js";
 import { runChatLearning } from "./chat-learn.service.js";
 import { countPendingProposals } from "./skills.service.js";
 import { getSkillsOverview } from "./skills-intelligence.service.js";
-import { ingestEvent } from "./events.service.js";
+import { ingestEvent } from "./career-event-intelligence/index.js";
 
 const DECISION_LABELS: Record<ChatDecisionType, string> = {
   offer_evaluation: "Offer evaluation",

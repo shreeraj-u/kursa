@@ -34,8 +34,11 @@ export async function applyProfileUpdateDelta(
           where: { profileId, skillName: goal.skillName },
         });
         if (!existing) {
+          const position = await tx.learningGoal.count({
+            where: { profileId, status: "PLANNED" },
+          });
           await tx.learningGoal.create({
-            data: { profileId, skillName: goal.skillName, status: "PLANNED" },
+            data: { profileId, skillName: goal.skillName, status: "PLANNED", position },
           });
         }
       }

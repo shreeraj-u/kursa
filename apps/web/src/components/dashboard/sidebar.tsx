@@ -7,12 +7,13 @@ import { useEffect, useState } from "react";
 import {
     House,
     MapPin,
+    Waypoints,
     BarChart2,
     Sparkles,
-    Route as RouteIcon,
     FileText,
     Bookmark,
     BookOpen,
+    Briefcase,
     Pencil,
     Settings,
     ChevronRight,
@@ -32,15 +33,16 @@ interface SidebarProps {
 
 const WORKSPACE_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
     { href: "/dashboard" as Route, label: "Home", Icon: House, key: "home" },
-    { href: "/dashboard/career-path" as Route, label: "Career path", Icon: MapPin, key: "career" },
+    { href: "/dashboard/career-journey" as Route, label: "Career journey", Icon: MapPin, key: "career" },
+    { href: "/dashboard/career-graph" as Route, label: "Career graph", Icon: Waypoints, key: "graph" },
     { href: "/dashboard/skills" as Route, label: "Skills", Icon: BarChart2, key: "skills" },
     { href: "/dashboard/aria" as Route, label: "Aria", Icon: Sparkles, key: "aria" },
 ];
 
 const JOB_SEARCH_NAV: Array<{ href: Route; label: string; Icon: React.ElementType; key: string }> = [
-    { href: "/dashboard/roadmap" as Route, label: "Roadmap", Icon: RouteIcon, key: "roadmap" },
     { href: "/dashboard/resume" as Route, label: "Resume studio", Icon: FileText, key: "resume" },
     { href: "/dashboard/shortlist" as Route, label: "Shortlist", Icon: Bookmark, key: "shortlist" },
+    { href: "/dashboard/applications" as Route, label: "Applications", Icon: Briefcase, key: "applications" },
     { href: "/dashboard/journal" as Route, label: "Journal", Icon: BookOpen, key: "journal" },
 ];
 
@@ -241,7 +243,7 @@ export default function Sidebar({ user, attentionCount, applicationCount, skills
                             Icon={Icon}
                             isActive={isActive(href)}
                             badge={
-                                key === "shortlist" &&
+                                key === "applications" &&
                                     applicationCount !== undefined &&
                                     applicationCount > 0 ? (
                                     <Badge>{applicationCount}</Badge>
@@ -254,39 +256,55 @@ export default function Sidebar({ user, attentionCount, applicationCount, skills
                 </div>
             </div>
 
-            {/* ── Help ───────────────────────────────────────── */}
-            <div className="px-2 pt-3">
-                <div
-                    className="eyebrow px-1 mb-1"
-                    style={{ fontSize: 9, letterSpacing: "0.06em" }}
-                >
-                    help
-                </div>
-                <NavItem
-                    href={"/dashboard/docs" as Route}
-                    label="Guide"
-                    Icon={CircleHelp}
-                    isActive={isActive("/dashboard/docs" as Route)}
-                />
-            </div>
 
-            {/* ── Quick find ──────────────────────────────────── */}
-            <div className="mt-auto mx-3 mb-3">
+            {/* ── Help / Docs Nudge Card ────────────────────────── */}
+            <div className="px-2 mt-auto pb-3">
                 <div
-                    className="flex items-center gap-2 rounded-md px-2.5 py-1.5"
+                    className="rounded-lg p-3 relative overflow-hidden transition-all group"
                     style={{
-                        border: "1px solid var(--line)",
-                        background: "var(--bg)",
-                        cursor: "text",
+                        border: "1px solid var(--line-2)",
+                        background: "linear-gradient(135deg, var(--bg-sub) 0%, var(--bg-sub-2) 100%)",
                     }}
                 >
-                    <span
-                        className="mono flex-1"
-                        style={{ fontSize: "var(--text-xs)", color: "var(--mute-3)" }}
+                    {/* Tiny accent decoration dot */}
+                    <div
+                        className="absolute top-0 right-0 w-8 h-8 rounded-full pointer-events-none opacity-20"
+                        style={{
+                            background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
+                            transform: "translate(25%, -25%)",
+                        }}
+                    />
+                    
+                    <div className="flex items-center gap-1.5 mb-1.5 text-accent font-medium">
+                        <CircleHelp size={12} style={{ color: "var(--accent)" }} />
+                        <span className="mono" style={{ fontSize: 9, letterSpacing: "0.06em", textTransform: "lowercase", color: "var(--accent)" }}>
+                            kursa docs
+                        </span>
+                    </div>
+
+                    <p 
+                        style={{ 
+                            fontSize: 9.5, 
+                            color: "var(--mute)", 
+                            lineHeight: 1.45, 
+                            marginBottom: 8 
+                        }}
                     >
-                        Quick find...
-                    </span>
-                    <kbd className="kbd" style={{ fontSize: 9 }}>⌘K</kbd>
+                        Learn how Kursa works with your career telemetry & journal.
+                    </p>
+
+                    <Link
+                        href={"/dashboard/docs" as Route}
+                        className="mono inline-flex items-center justify-center w-full rounded py-1 px-2 transition-all text-center font-medium hover:opacity-90"
+                        style={{
+                            fontSize: 9,
+                            background: "var(--accent)",
+                            color: "#ffffff",
+                            textDecoration: "none",
+                        }}
+                    >
+                        explore guides
+                    </Link>
                 </div>
             </div>
 

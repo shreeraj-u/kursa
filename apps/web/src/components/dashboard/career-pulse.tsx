@@ -4,9 +4,6 @@ interface CareerPulseProps {
     metrics: DashboardMetrics | null;
 }
 
-// TODO: Make this dynamic with AI 
-const HEIGHTS = [3, 8, 14];
-
 export default function CareerPulse({ metrics }: CareerPulseProps) {
     if (!metrics) {
         return (
@@ -29,9 +26,9 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
     };
 
     return (
-        <div className="flex gap-5">
+        <div className="flex gap-5 max-md:flex-col">
             {cols.map((col) => (
-                <div key={col.label} className="flex-1">
+                <div key={col.label} className="flex-1 rounded-md border border-line bg-bg-sub/60 p-3">
                     <div className="flex items-center justify-between mb-1">
                         <span className="mono text-2xs text-mute-2">
                             {col.label}
@@ -46,7 +43,7 @@ export default function CareerPulse({ metrics }: CareerPulseProps) {
                                 key={i}
                                 className="not-italic flex-1 rounded-[1px]"
                                 style={{
-                                    height: HEIGHTS[v],
+                                    height: Math.max(2, v * 9),
                                     background:
                                         i >= 10 && v > 0
                                             ? "var(--accent)"
