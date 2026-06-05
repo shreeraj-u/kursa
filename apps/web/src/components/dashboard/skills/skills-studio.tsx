@@ -255,15 +255,14 @@ export function SkillsStudio({
                 key={`${rec.skillName}-${rec.source}`}
                 type="button"
                 onClick={() => {
-                  void api.skills
-                    .create({
+                  void api
+                    .createSkill({
                       name: rec.skillName,
                       category: "technical",
                       confidenceRating: 3,
-                      source: rec.source === "market" ? "market" : rec.source === "path" ? "path" : "self_reported",
                     })
                     .then(({ skill }) => {
-                      setSkills((prev) => [...prev, skill as UserSkill]);
+                      setSkills((prev) => [...prev, skill]);
                       toast.success(`Added ${rec.skillName}`);
                     })
                     .catch((e) => toast.error(e instanceof Error ? e.message : "Could not add skill"));
