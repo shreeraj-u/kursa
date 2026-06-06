@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useState } from "react";
 import type { ObservationsResponse } from "@/types/profile";
-import { env } from "@kursa/env/web";
 
 interface AriaNoticedProps {
     initialObservations: ObservationsResponse | null;
@@ -31,7 +30,7 @@ export default function AriaNoticed({ initialObservations, initialError = null }
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=${page}&limit=4`, {
+            const res = await fetch(`/api/v1/profile/me/observations?page=${page}&limit=4`, {
                 credentials: "include",
             });
             const json = (await res.json()) as {

@@ -1,7 +1,5 @@
 "use client";
 
-import { env } from "@kursa/env/web";
-
 import { getOpenAIKeyHeader } from "@/lib/openai-key";
 import type {
   AchievementCreateInput,
@@ -55,7 +53,7 @@ import type {
   WorkHistoryUpdateInput,
 } from "@kursa/types";
 
-const BASE = env.NEXT_PUBLIC_SERVER_URL;
+const BASE = "";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

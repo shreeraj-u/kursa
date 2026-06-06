@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 
-import { env } from "@kursa/env/web";
 import type { ApiResponse } from "@kursa/types";
 
 export type ServerFetchResult<T> =
@@ -23,7 +22,7 @@ export async function serverFetch<T>(
   const timeoutMs = options?.timeoutMs ?? SERVER_FETCH_TIMEOUT_MS;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}${path}`, {
+    const res = await fetch(`${process.env.SERVER_INTERNAL_URL ?? "http://127.0.0.1:3000"}${path}`, {
       headers: { cookie },
       cache: "no-store",
       signal: AbortSignal.timeout(timeoutMs),

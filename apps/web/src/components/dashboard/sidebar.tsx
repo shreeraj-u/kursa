@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { Logo } from "../logo";
 import { ModeToggle } from "../mode-toggle";
-import { env } from "@kursa/env/web";
 import { api } from "@/lib/api";
 
 interface SidebarProps {
@@ -126,7 +125,7 @@ export default function Sidebar({ user, attentionCount, applicationCount, skills
             if (next.due) count += 1;
 
             void fetch(
-                `${env.NEXT_PUBLIC_SERVER_URL}/api/v1/profile/me/observations?page=1&limit=1`,
+                `/api/v1/profile/me/observations?page=1&limit=1`,
                 { credentials: "include" },
             )
                 .then((r) => (r.ok ? r.json() : null))
